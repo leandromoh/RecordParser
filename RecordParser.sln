@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.181
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordParser", "RecordParser\RecordParser.csproj", "{BA47D31A-475B-452F-BDE1-604465A57811}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordParser.Test", "RecordParser.Test\RecordParser.Test.csproj", "{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BA47D31A-475B-452F-BDE1-604465A57811}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA47D31A-475B-452F-BDE1-604465A57811}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA47D31A-475B-452F-BDE1-604465A57811}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA47D31A-475B-452F-BDE1-604465A57811}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5F0E27D7-C2F6-4888-833C-F5CE947A18B2}
+	EndGlobalSection
+EndGlobal
