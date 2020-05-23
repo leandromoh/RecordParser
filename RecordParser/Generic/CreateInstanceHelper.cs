@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace RecordParser
+namespace RecordParser.Generic
 {
     internal static class CreateInstanceHelper
     {
-        public static Func<T> GetInstanceGenerator<T>(IEnumerable<string> mapped)
+        public static Func<T> GetInstanceGenerator<T>(IEnumerable<MemberExpression> mapped)
         {
             var root = new Node(typeof(T));
 
@@ -29,7 +28,7 @@ namespace RecordParser
             var memberBinds = type
                 .PropertiesToInitialize
                 .Select(info =>
-                    Expression.Bind(info.Value.MemberInfo,
+                    Expression.Bind(info.Value.MemberInfo.Member,
                                     GetNewExpressionWithNestedMemberInit(info.Value)));
 
             var newExpression = GetNewExpressionFor(type.MemberType);
@@ -67,44 +66,42 @@ namespace RecordParser
             public readonly IDictionary<string, Node> PropertiesToInitialize = new Dictionary<string, Node>();
 
             public Node(Type path) => MemberType = path;
-            public Node(MemberInfo prop) : this(prop.GetUnderlyingType())
+            public Node(MemberExpression prop) : this(prop.Type)
             {
                 MemberInfo = prop;
             }
 
             public Type MemberType { get; private set; }
-            public MemberInfo MemberInfo { get; private set; }
+            public MemberExpression MemberInfo { get; private set; }
 
-            public void AddPath(string path)
+            public void AddPath(MemberExpression path)
             {
                 // Parse into a sequence of parts.
-                string[] parts = path.Split('.',
-                    StringSplitOptions.RemoveEmptyEntries);
+                var parts = path.GetNested();
 
                 // The current node.  Start with this.
                 Node current = this;
 
                 // Iterate through the parts.
-                foreach (string part in parts)
+                foreach (var part in parts)
                 {
                     // The child node.
                     Node child;
 
                     // Does the part exist in the current node?  If
                     // not, then add.
-                    if (!current.PropertiesToInitialize.TryGetValue(part, out child))
+                    if (!current.PropertiesToInitialize.TryGetValue(part.Member.Name, out child))
                     {
-                        var prop = current.MemberType.GetMember(part)[0];
-                        var childType = prop.GetUnderlyingType();
+                        var childType = part.Type;//.GetUnderlyingType();
 
                         if (childType.IsValueType || childType == typeof(string))
                             return;
 
                         // Add the child.
-                        child = new Node(prop);
+                        child = new Node(part);
 
                         // Add to the dictionary.
-                        current.PropertiesToInitialize[part] = child;
+                        current.PropertiesToInitialize[part.Member.Name] = child;
                     }
 
                     // Set the current to the child.
@@ -116,24 +113,19 @@ namespace RecordParser
 
     public static class MemberExtensions
     {
-        public static Type GetUnderlyingType(this MemberInfo member)
+        public static IEnumerable<MemberExpression> GetNested(this MemberExpression ex)
         {
-            switch (member.MemberType)
+            var q = new List<MemberExpression>();
+
+            while (ex?.Expression != null)
             {
-                case MemberTypes.Event:
-                    return ((EventInfo)member).EventHandlerType;
-                case MemberTypes.Field:
-                    return ((FieldInfo)member).FieldType;
-                case MemberTypes.Method:
-                    return ((MethodInfo)member).ReturnType;
-                case MemberTypes.Property:
-                    return ((PropertyInfo)member).PropertyType;
-                default:
-                    throw new ArgumentException
-                    (
-                     "Input MemberInfo must be if type EventInfo, FieldInfo, MethodInfo, or PropertyInfo"
-                    );
+                q.Add(ex);
+                ex = ex.Expression as MemberExpression;
             }
+
+            q.Reverse();
+
+            return q;
         }
     }
 }
