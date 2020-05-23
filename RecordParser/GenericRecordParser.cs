@@ -10,137 +10,128 @@ namespace RecordParser
     public class GenericRecordParser<T>
         where T : class
     {
-        private readonly IReadOnlyDictionary<string, Action<T, string>> _setterByProperty;
         private readonly IEnumerable<string> _mappedColumns;
         private readonly HashSet<string> _columnsThatIfEmptyShouldParseObjectAsNull;
+
+        private readonly Func<T, string[], T> _funcThatSetProperties;
         private readonly Func<T> _getNewInstance;
 
-        public GenericRecordParser(string[] mappedColumns, string[] columnsThatIfEmptyShouldObjectParseAsNull = null)
+        public GenericRecordParser(IEnumerable<string> mappedColumns, IEnumerable<string> columnsThatIfEmptyShouldObjectParseAsNull = null)
         {
+            foreach (var skipColumn in columnsThatIfEmptyShouldObjectParseAsNull ?? Enumerable.Empty<string>())
+                if (!mappedColumns.Contains(skipColumn))
+                    throw new ArgumentException($"Property '{skipColumn}' is not mapped in mappedColumns parameter");
+
             _mappedColumns = mappedColumns;
-            _setterByProperty = FillSetterByProperty(mappedColumns);
-            _columnsThatIfEmptyShouldParseObjectAsNull = columnsThatIfEmptyShouldObjectParseAsNull?.ToHashSet()
-                                                              ?? new HashSet<string>();
-
-            foreach (var skipColumn in _columnsThatIfEmptyShouldParseObjectAsNull)
-            {
-                if (!_setterByProperty.TryGetValue(skipColumn, out var _))
-                {
-                    throw new ArgumentException($"Property {skipColumn} is not mapped in mappedColumns argument");
-                }
-            }
-
+            _funcThatSetProperties = GetFuncThatSetProperties(mappedColumns);
+            _columnsThatIfEmptyShouldParseObjectAsNull = columnsThatIfEmptyShouldObjectParseAsNull?.ToHashSet() ?? new HashSet<string>();
             _getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(_mappedColumns);
         }
 
         public T Parse(string line)
         {
-            return Parse(_getNewInstance(), line);
+            T obj = _getNewInstance();
+
+            return Parse(obj, line);
         }
 
         public T Parse(T obj, string line)
         {
-            foreach ((var propertyName, var value) in _mappedColumns.Zip(line.Split(';'), ValueTuple.Create))
-            {
-                if (propertyName is null)
-                    continue;
+            var values = line.Split(';');
 
-                if (string.IsNullOrWhiteSpace(value) && _columnsThatIfEmptyShouldParseObjectAsNull.Contains(propertyName))
-                    return null;
+            var skipParse = _mappedColumns
+                 .Zip(values, (propertyName, value) => (propertyName, value))
+                 .Any(y => string.IsNullOrWhiteSpace(y.value) && _columnsThatIfEmptyShouldParseObjectAsNull.Contains(y.propertyName));
 
-                _setterByProperty[propertyName](obj, value);
-            }
-
-            return obj;
+            return skipParse
+                   ? null
+                   : _funcThatSetProperties(obj, values);
         }
 
-        private static Dictionary<string, Action<T, string>> FillSetterByProperty(IEnumerable<string> mappedColumns)
+        private static Func<T, string[], T> GetFuncThatSetProperties(IEnumerable<string> mappedColumns)
         {
-            var setterByProperty = new Dictionary<string, Action<T, string>>();
-
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "x");
-            ParameterExpression valueParameter = Expression.Variable(typeof(string), "value");
+            ParameterExpression valueParameter = Expression.Variable(typeof(string[]), "values");
 
             MethodInfo isNullOrWhiteSpaceMethodInfo = GetIsNullOrWhiteSpaceMethodInfo();
+            var assignsExpressions = new List<Expression>();
+            var i = 0;
 
             foreach (var propertyName in mappedColumns)
             {
+                Expression textValue = Expression.ArrayIndex(valueParameter, Expression.Constant(i++));
+
                 if (propertyName is null)
                     continue;
 
                 var propertyType = propertyName
                     .Split('.')
-                    .Aggregate(typeof(T), (type, member) => type.GetProperty(member).PropertyType);
+                    .Aggregate(typeof(T), (type, member) => type.GetMember(member)[0].GetUnderlyingType());
 
-                var isPropertyNullable = propertyType.IsGenericType &&
-                                         propertyType.GetGenericTypeDefinition() == typeof(Nullable<>);
-
-                var propertyUnderlyingType = isPropertyNullable
-                                                ? propertyType.GetGenericArguments()[0]
-                                                : propertyType;
+                var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
+                var isPropertyNullable = nullableUnderlyingType != null;
+                var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
 
                 Expression valueToBeSetExpression = GetValueToBeSetExpression(
                                                         propertyUnderlyingType,
-                                                        valueParameter);
+                                                        textValue);
 
                 if (isPropertyNullable)
                 {
                     valueToBeSetExpression =
                         WrapWithTernaryThatReturnsNullIfValueIsEmpty(
                             valueToBeSetExpression,
-                            valueParameter,
+                            textValue,
                             propertyType,
                             isNullOrWhiteSpaceMethodInfo);
                 }
 
-                setterByProperty[propertyName] = GetSetterFunction(
-                                                    valueToBeSetExpression,
-                                                    objectParameter,
-                                                    valueParameter,
-                                                    propertyName);
+                var assign = GetAssignExpression(valueToBeSetExpression,
+                                           objectParameter,
+                                           propertyName);
+
+                assignsExpressions.Add(assign);
             }
 
-            return setterByProperty;
+            assignsExpressions.Add(objectParameter);
+
+            var blockExpr = Expression.Block(typeof(T), new ParameterExpression[] { }, assignsExpressions);
+
+            return Expression.Lambda<Func<T, string[], T>>(blockExpr, new[] { objectParameter, valueParameter }).Compile();
         }
 
-        private static Expression GetValueToBeSetExpression(Type propertyType, ParameterExpression valueParameter)
+        private static Expression GetValueToBeSetExpression(Type propertyType, Expression valueText)
         {
-            if (propertyType.IsEnum)
-                return GetEnumParseExpression(valueParameter, propertyType);
+            if (propertyType == typeof(string))
+                return valueText;
 
-            return GetParseExpression(propertyType, valueParameter);
+            if (propertyType.IsEnum)
+                return GetEnumParseExpression(propertyType, valueText);
+
+            return GetParseExpression(propertyType, valueText);
         }
 
-        private static Action<T, string> GetSetterFunction(
+        private static Expression GetAssignExpression(
             Expression valueToBeSetExpression,
             ParameterExpression objectParameter,
-            ParameterExpression valueParameter,
             string propertyName)
         {
             var memberExpression = propertyName
                 .Split('.')
                 .Aggregate((Expression)objectParameter, (body, member) => Expression.PropertyOrField(body, member));
 
-            BinaryExpression assignExpression = Expression.Assign(memberExpression, valueToBeSetExpression);
-            ParameterExpression[] parametersExpression = new[] { objectParameter, valueParameter };
-
-            return
-                Expression
-                    .Lambda<Action<T, string>>(
-                        assignExpression,
-                        parametersExpression)
-                    .Compile();
+            return Expression.Assign(memberExpression, valueToBeSetExpression);
         }
 
         private static Expression WrapWithTernaryThatReturnsNullIfValueIsEmpty(
             Expression valueToBeSetExpression,
-            ParameterExpression valueParameter,
+            Expression valueText,
             Type propertyType,
             MethodInfo isNullOrWhiteSpaceMethodInfo)
         {
             ConditionalExpression conditional =
                 Expression.Condition(
-                    test: Expression.Call(isNullOrWhiteSpaceMethodInfo, valueParameter),
+                    test: Expression.Call(isNullOrWhiteSpaceMethodInfo, valueText),
                     ifTrue: Expression.Convert(Expression.Constant(null), propertyType),
                     ifFalse: Expression.Convert(valueToBeSetExpression, propertyType));
 
@@ -160,12 +151,15 @@ namespace RecordParser
             return isNullOrWhiteSpaceMethodInfo;
         }
 
-        private static Expression GetEnumParseExpression(ParameterExpression valueParameter, Type propertyType)
+        private static object ParseEnum(Type enumType, string value, bool ignoreCase) =>
+            Enum.Parse(enumType, value?.Replace(" ", string.Empty), ignoreCase);
+
+        private static Expression GetEnumParseExpression(Type propertyType, Expression valueText)
         {
             MethodInfo methodParse =
-                            typeof(Enum)
-                                .GetMethod(nameof(Enum.Parse),
-                                           BindingFlags.Static | BindingFlags.Public,
+                            typeof(GenericRecordParser<T>)
+                                .GetMethod(nameof(ParseEnum),
+                                           BindingFlags.Static | BindingFlags.NonPublic,
                                            null,
                                            new Type[]
                                            {
@@ -177,13 +171,13 @@ namespace RecordParser
 
             var parsedValue = Expression.Call(methodParse,
                                          Expression.Constant(propertyType),
-                                         valueParameter,
+                                         valueText,
                                          Expression.Constant(true));
 
             return Expression.Convert(parsedValue, propertyType);
         }
 
-        private static Expression GetParseExpression(Type type, ParameterExpression valueParameter)
+        private static Expression GetParseExpression(Type type, Expression valueText)
         {
             MethodInfo methodParse =
                             typeof(Convert)
@@ -199,7 +193,7 @@ namespace RecordParser
                                            null);
 
             var parsedValue = Expression.Call(methodParse,
-                                         valueParameter,
+                                         valueText,
                                          Expression.Constant(type),
                                          Expression.Constant(CultureInfo.InvariantCulture));
 
@@ -225,15 +219,15 @@ namespace RecordParser
             return getNewInstance;
         }
 
-        private static MemberInitExpression GetNewExpressionWithNestedMemberInit(Node root)
+        private static MemberInitExpression GetNewExpressionWithNestedMemberInit(Node type)
         {
-            var memberBinds = root
-                ._nodes
+            var memberBinds = type
+                .PropertiesToInitialize
                 .Select(info =>
-                    Expression.Bind(info.Value.Prop,
+                    Expression.Bind(info.Value.MemberInfo,
                                     GetNewExpressionWithNestedMemberInit(info.Value)));
 
-            var newExpression = GetNewExpressionFor(root.Path);
+            var newExpression = GetNewExpressionFor(type.MemberType);
 
             var member = Expression.MemberInit(newExpression, memberBinds);
 
@@ -265,16 +259,16 @@ namespace RecordParser
 
         internal class Node
         {
-            public readonly IDictionary<string, Node> _nodes = new Dictionary<string, Node>();
+            public readonly IDictionary<string, Node> PropertiesToInitialize = new Dictionary<string, Node>();
 
-            public Node(Type path) => Path = path;
-            public Node(PropertyInfo prop) : this(prop.PropertyType)
+            public Node(Type path) => MemberType = path;
+            public Node(MemberInfo prop) : this(prop.GetUnderlyingType())
             {
-                Prop = prop;
+                MemberInfo = prop;
             }
 
-            public Type Path { get; private set; }
-            public PropertyInfo Prop { get; private set; }
+            public Type MemberType { get; private set; }
+            public MemberInfo MemberInfo { get; private set; }
 
             public void AddPath(string path)
             {
@@ -293,10 +287,10 @@ namespace RecordParser
 
                     // Does the part exist in the current node?  If
                     // not, then add.
-                    if (!current._nodes.TryGetValue(part, out child))
+                    if (!current.PropertiesToInitialize.TryGetValue(part, out child))
                     {
-                        var prop = current.Path.GetProperty(part);
-                        var childType = prop.PropertyType;
+                        var prop = current.MemberType.GetMember(part)[0];
+                        var childType = prop.GetUnderlyingType();
 
                         if (childType.IsValueType || childType == typeof(string))
                             return;
@@ -305,12 +299,35 @@ namespace RecordParser
                         child = new Node(prop);
 
                         // Add to the dictionary.
-                        current._nodes[part] = child;
+                        current.PropertiesToInitialize[part] = child;
                     }
 
                     // Set the current to the child.
                     current = child;
                 }
+            }
+        }
+    }
+
+    public static class MemberExtensions
+    {
+        public static Type GetUnderlyingType(this MemberInfo member)
+        {
+            switch (member.MemberType)
+            {
+                case MemberTypes.Event:
+                    return ((EventInfo)member).EventHandlerType;
+                case MemberTypes.Field:
+                    return ((FieldInfo)member).FieldType;
+                case MemberTypes.Method:
+                    return ((MethodInfo)member).ReturnType;
+                case MemberTypes.Property:
+                    return ((PropertyInfo)member).PropertyType;
+                default:
+                    throw new ArgumentException
+                    (
+                     "Input MemberInfo must be if type EventInfo, FieldInfo, MethodInfo, or PropertyInfo"
+                    );
             }
         }
     }
