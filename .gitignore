@@ -1,0 +1,34 @@
+# DOTNET
+[Bb]in/
+[Dd]ebug/
+[Dd]ist/
+[Ll]og/
+[Oo]bj/
+[Pp]ackages/
+[Pp]ublish/
+[Rr]elease/
+[Tt]est[Rr]esult*/
+x64/
+x86/
+
+# DOCKER
+
+# NUGET
+*.nupkg
+*.nuget.props
+*.nuget.targets
+
+# OTHER
+TODO
+**/Properties/launchSettings.json
+coverage.info
+coverage.json
+coverage.xml
+*.coverage
+*.coveragexml
+
+# TOOLS
+.vs/
+.vscode/
+.idea/
+*.user
