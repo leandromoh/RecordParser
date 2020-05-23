@@ -53,7 +53,6 @@ namespace RecordParser
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "x");
             ParameterExpression valueParameter = Expression.Variable(typeof(string[]), "values");
 
-            MethodInfo isNullOrWhiteSpaceMethodInfo = GetIsNullOrWhiteSpaceMethodInfo();
             var assignsExpressions = new List<Expression>();
             var i = 0;
 
@@ -82,8 +81,7 @@ namespace RecordParser
                         WrapWithTernaryThatReturnsNullIfValueIsEmpty(
                             valueToBeSetExpression,
                             textValue,
-                            propertyType,
-                            isNullOrWhiteSpaceMethodInfo);
+                            propertyType);
                 }
 
                 var assign = GetAssignExpression(valueToBeSetExpression,
@@ -126,76 +124,35 @@ namespace RecordParser
         private static Expression WrapWithTernaryThatReturnsNullIfValueIsEmpty(
             Expression valueToBeSetExpression,
             Expression valueText,
-            Type propertyType,
-            MethodInfo isNullOrWhiteSpaceMethodInfo)
+            Type propertyType)
         {
             ConditionalExpression conditional =
                 Expression.Condition(
-                    test: Expression.Call(isNullOrWhiteSpaceMethodInfo, valueText),
+                    test: GetIsNullOrWhiteSpaceExpression(valueText),
                     ifTrue: Expression.Convert(Expression.Constant(null), propertyType),
                     ifFalse: Expression.Convert(valueToBeSetExpression, propertyType));
 
             return conditional;
         }
 
-        private static MethodInfo GetIsNullOrWhiteSpaceMethodInfo()
+        private static Expression GetEnumParseExpression(Type type, Expression valueText)
         {
-            MethodInfo isNullOrWhiteSpaceMethodInfo =
-                            typeof(string)
-                                 .GetMethod(nameof(string.IsNullOrWhiteSpace),
-                                  BindingFlags.Static | BindingFlags.Public,
-                                  null,
-                                  new Type[] { typeof(string) },
-                                  null);
-
-            return isNullOrWhiteSpaceMethodInfo;
-        }
-
-        private static object ParseEnum(Type enumType, string value, bool ignoreCase) =>
-            Enum.Parse(enumType, value?.Replace(" ", string.Empty), ignoreCase);
-
-        private static Expression GetEnumParseExpression(Type propertyType, Expression valueText)
-        {
-            MethodInfo methodParse =
-                            typeof(GenericRecordParser<T>)
-                                .GetMethod(nameof(ParseEnum),
-                                           BindingFlags.Static | BindingFlags.NonPublic,
-                                           null,
-                                           new Type[]
-                                           {
-                                               typeof(Type),
-                                               typeof(string),
-                                               typeof(bool)
-                                           },
-                                           null);
-
-            var parsedValue = Expression.Call(methodParse,
-                                         Expression.Constant(propertyType),
-                                         valueText,
-                                         Expression.Constant(true));
-
-            return Expression.Convert(parsedValue, propertyType);
+            return GetExpression(text => Enum.Parse(type, text?.Replace(" ", string.Empty), true), type, valueText);
         }
 
         private static Expression GetParseExpression(Type type, Expression valueText)
         {
-            MethodInfo methodParse =
-                            typeof(Convert)
-                                .GetMethod(nameof(Convert.ChangeType),
-                                           BindingFlags.Static | BindingFlags.Public,
-                                           null,
-                                           new Type[]
-                                           {
-                                               typeof(object),
-                                               typeof(Type),
-                                               typeof(CultureInfo)
-                                           },
-                                           null);
+            return GetExpression(text => Convert.ChangeType(text, type, CultureInfo.InvariantCulture), type, valueText);
+        }
 
-            var parsedValue = Expression.Call(methodParse,
-                                         valueText,
-                                         Expression.Constant(type),
-                                         Expression.Constant(CultureInfo.InvariantCulture));
+        private static Expression GetIsNullOrWhiteSpaceExpression(Expression valueText)
+        {
+            return GetExpression(text => string.IsNullOrWhiteSpace(text), typeof(bool), valueText);
+        }
+
+        private static Expression GetExpression(Func<string, object> f, Type type, Expression valueText)
+        {
+            var parsedValue = Expression.Call(Expression.Constant(f.Target), f.Method, valueText);
 
             return Expression.Convert(parsedValue, type);
         }
