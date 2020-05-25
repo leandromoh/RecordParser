@@ -8,10 +8,8 @@ namespace RecordParser.Generic
 {
     public class GenericRecordParser<T>
     {
-        private readonly IEnumerable<(MemberExpression prop, Expression func)> _mappedColumns;
-        private readonly HashSet<string> _columnsThatIfEmptyShouldParseObjectAsNull;
-
         private readonly Func<T, string[], T> _funcThatSetProperties;
+        private readonly Func<string[], bool> _shouldSkip;
         private readonly Func<T> _getNewInstance;
 
         public GenericRecordParser(IEnumerable<(MemberExpression prop, Expression func)> mappedColumns, IEnumerable<string> columnsThatIfEmptyShouldObjectParseAsNull = null)
@@ -20,10 +18,21 @@ namespace RecordParser.Generic
                 if (!mappedColumns.Any(m => m.prop.Member.Name == skipColumn))
                     throw new ArgumentException($"Property '{skipColumn}' is not mapped in mappedColumns parameter");
 
-            _mappedColumns = mappedColumns;
-            _funcThatSetProperties = GetFuncThatSetProperties(mappedColumns);
-            _columnsThatIfEmptyShouldParseObjectAsNull = columnsThatIfEmptyShouldObjectParseAsNull?.ToHashSet() ?? new HashSet<string>();
-            _getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(_mappedColumns.Select(x => x.prop));
+            _funcThatSetProperties = GetFuncThatSetProperties(mappedColumns).Compile();
+            _getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop)).Compile();
+
+            if (columnsThatIfEmptyShouldObjectParseAsNull?.Any() == true)
+            {
+                var index = mappedColumns
+                    .Select((x, i) => (x, i))
+                    .Where(p => columnsThatIfEmptyShouldObjectParseAsNull.Contains(p.x.prop.Member.Name))
+                    .Select(p => p.i)
+                    .ToArray();
+
+                var ex = GetShouldSkip(index);
+
+                _shouldSkip = ex.Compile();
+            }
         }
 
         public T Parse(string[] line)
@@ -35,16 +44,29 @@ namespace RecordParser.Generic
 
         public T Parse(T obj, string[] values)
         {
-            var skipParse = _columnsThatIfEmptyShouldParseObjectAsNull != null && _mappedColumns
-                 .Zip(values, (propertyName, value) => (propertyName: propertyName.prop, value))
-                 .Any(y => string.IsNullOrWhiteSpace(y.value) && _columnsThatIfEmptyShouldParseObjectAsNull.Contains(y.propertyName.Member.Name));
+            if (_shouldSkip != null && _shouldSkip(values))
+                return default;
 
-            return skipParse
-                   ? default
-                   : _funcThatSetProperties(obj, values);
+            return _funcThatSetProperties(obj, values);
         }
 
-        private static Func<T, string[], T> GetFuncThatSetProperties(IEnumerable<(MemberExpression prop, Expression func)> mappedColumns)
+        private static Expression<Func<string[], bool>> GetShouldSkip(IEnumerable<int> columns)
+        {
+            ParameterExpression valueParameter = Expression.Variable(typeof(string[]), "values");
+
+            var validations = columns
+                .Select(index =>
+                {
+                    var indexExp = Expression.Constant(index);
+                    var textExp = Expression.ArrayIndex(valueParameter, indexExp);
+                    return GetIsNullOrWhiteSpaceExpression(textExp);
+                })
+                .Aggregate((acc, x) => Expression.OrElse(acc, x));
+
+            return Expression.Lambda<Func<string[], bool>>(validations, valueParameter);
+        }
+
+        private static Expression<Func<T, string[], T>> GetFuncThatSetProperties(IEnumerable<(MemberExpression prop, Expression func)> mappedColumns)
         {
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "a");
             ParameterExpression valueParameter = Expression.Variable(typeof(string[]), "values");
@@ -92,7 +114,7 @@ namespace RecordParser.Generic
 
             var blockExpr = Expression.Block(typeof(T), new ParameterExpression[] { }, assignsExpressions);
 
-            return Expression.Lambda<Func<T, string[], T>>(blockExpr, new[] { objectParameter, valueParameter }).Compile();
+            return Expression.Lambda<Func<T, string[], T>>(blockExpr, new[] { objectParameter, valueParameter });
         }
 
         private static Expression GetValueToBeSetExpression(Type propertyType, Expression valueText, Expression func)
