@@ -15,7 +15,7 @@ namespace RecordParser.Parsers
         {
             config = list.OrderBy(x => x.start).ToArray();
             nth = config.Last().start;
-            parser = new GenericRecordParser<T>(config.Select(x => (x.prop, x.fmask)));
+            parser = new GenericRecordParser<T>(list);
         }
 
         public T Parse(string str)

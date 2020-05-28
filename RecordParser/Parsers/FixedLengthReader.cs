@@ -7,12 +7,12 @@ namespace RecordParser.Parsers
     public class FixedLengthReader<T>
     {
         private readonly GenericRecordParser<T> parser;
-        private readonly MappingConfiguration[] config;
+        private readonly (int start, int length)[] config;
 
         public FixedLengthReader(IEnumerable<MappingConfiguration> list)
         {
-            config = list.ToArray();
-            parser = new GenericRecordParser<T>(config.Select(x => (x.prop, x.fmask)));
+            config = list.Select(x => (x.start, x.length.Value)).ToArray();
+            parser = new GenericRecordParser<T>(list);
         }
 
         public T Parse(string line)

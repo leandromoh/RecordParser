@@ -10,16 +10,13 @@ namespace RecordParser.Parsers
     {
         private readonly Dictionary<int, MappingConfiguration> list = new Dictionary<int, MappingConfiguration>();
 
-        public CSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum, string mask = null)
+        public CSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum,
+            Expression<Func<string, R>> convert = null,
+            Expression<Func<string, bool>> skipRecordWhen = null)
         {
-            list.Add(indexColum, new MappingConfiguration
-            {
-                prop = ex.Body as MemberExpression ?? throw new Exception("cu"),
-                start = indexColum,
-                type = typeof(R),
-                mask = mask
-            });
-
+            var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
+            var config = new MappingConfiguration(member, indexColum, null, typeof(R), convert, skipRecordWhen);
+            list.Add(indexColum, config);
             return this;
         }
 
