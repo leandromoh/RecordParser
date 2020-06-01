@@ -96,7 +96,7 @@ namespace RecordParser.Test
         }
     }
 
-    public static class UserCustomExampleExtensions
+    public static class FixedLengthCustomExtensions
     {
         public static FixedLengthReaderBuilder<T> MyMap<T>(
             this FixedLengthReaderBuilder<T> source,
