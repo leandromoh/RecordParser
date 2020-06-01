@@ -2,6 +2,7 @@ using FluentAssertions;
 using RecordParser.Parsers;
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using Xunit;
 
 namespace RecordParser.Test
@@ -75,6 +76,48 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo((Age: 30,
                                             MotherAge: 42,
                                             FatherAge: 52));
+        }
+
+
+        [Fact]
+        public void Custom_format_configurations_can_be_simplified_with_user_defined_extension_methods()
+        {
+            var reader = new FixedLengthReaderBuilder<(string Name, decimal Balance, DateTime Date)>()
+                .MyMap(x => x.Balance, 0, 12, decimalPlaces: 3)
+                .MyMap(x => x.Date, 13, 8, format: "ddMMyyyy")
+                .Map(x => x.Name, 22, 7)
+                .MyBuild();
+
+            var result = reader.Parse("012345678901 23052020 FOOBAR ");
+
+            result.Should().BeEquivalentTo((Name: "foobar",
+                                            Balance: 012345678.901M,
+                                            Date: new DateTime(2020, 05, 23)));
+        }
+    }
+
+    public static class UserCustomExampleExtensions
+    {
+        public static FixedLengthReaderBuilder<T> MyMap<T>(
+            this FixedLengthReaderBuilder<T> source,
+            Expression<Func<T, DateTime>> ex, int startIndex, int length,
+            string format)
+        {
+            return source.Map(ex, startIndex, length, value => DateTime.ParseExact(value, format, null));
+        }
+
+        public static FixedLengthReaderBuilder<T> MyMap<T>(
+            this FixedLengthReaderBuilder<T> source,
+            Expression<Func<T, decimal>> ex, int startIndex, int length,
+            int decimalPlaces)
+        {
+            return source.Map(ex, startIndex, length, value => decimal.Parse(value) / (decimal) Math.Pow(10, decimalPlaces));
+        }
+
+        public static FixedLengthReader<T> MyBuild<T>(this FixedLengthReaderBuilder<T> source)
+        {
+            return source.DefaultConvert(value => value.Trim().ToLower())
+                         .Build();
         }
     }
 }
