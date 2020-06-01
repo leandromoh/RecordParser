@@ -21,7 +21,7 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public FixedLengthReaderBuilder<T> DefaultConvert<R>(Expression<Func<string, R>> ex)
+        public FixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
         {
             dic.Add(typeof(R), ex);
             return this;

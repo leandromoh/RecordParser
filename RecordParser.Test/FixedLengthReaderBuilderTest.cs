@@ -32,8 +32,8 @@ namespace RecordParser.Test
                 .Map(x => x.Balance, 0, 12)
                 .Map(x => x.Date, 13, 8)
                 .Map(x => x.Debit, 22, 6)
-                .DefaultConvert(value => decimal.Parse(value) / 100)
-                .DefaultConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
+                .DefaultTypeConvert(value => decimal.Parse(value) / 100)
+                .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
                 .Build();
 
             var result = reader.Parse("012345678901 23052020 012345");
@@ -68,7 +68,7 @@ namespace RecordParser.Test
                 .Map(x => x.Age, 0, 4, value => int.Parse(value) * 2)
                 .Map(x => x.MotherAge, 4, 4)
                 .Map(x => x.FatherAge, 8, 4)
-                .DefaultConvert(value => int.Parse(value) + 2)
+                .DefaultTypeConvert(value => int.Parse(value) + 2)
                 .Build();
 
             var result = reader.Parse(" 15  40  50 ");
@@ -116,7 +116,7 @@ namespace RecordParser.Test
 
         public static FixedLengthReader<T> MyBuild<T>(this FixedLengthReaderBuilder<T> source)
         {
-            return source.DefaultConvert(value => value.Trim().ToLower())
+            return source.DefaultTypeConvert(value => value.Trim().ToLower())
                          .Build();
         }
     }
