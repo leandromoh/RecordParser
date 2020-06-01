@@ -13,9 +13,9 @@ namespace RecordParser.Parsers
 
         public CSVReader(IEnumerable<MappingConfiguration> list)
         {
-            config = list.OrderBy(x => x.start).ToArray();
-            nth = config.Last().start;
-            parser = new GenericRecordParser<T>(list);
+            config = list.ToArray();
+            nth = config.Max(x => x.start);
+            parser = new GenericRecordParser<T>(config);
         }
 
         public T Parse(string str)
@@ -40,7 +40,7 @@ namespace RecordParser.Parsers
                 var start = positions[index];
                 var length = positions[index + 1] - start - delimiter.Length;
 
-                csv[i] = str.Substring(start, length);
+                csv[i] = str.Substring(start, length).Trim();
             }
 
             return parser.Parse(csv);

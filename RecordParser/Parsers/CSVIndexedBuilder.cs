@@ -9,6 +9,7 @@ namespace RecordParser.Parsers
     public class CSVIndexedBuilder<T>
     {
         private readonly Dictionary<int, MappingConfiguration> list = new Dictionary<int, MappingConfiguration>();
+        private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
 
         public CSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum,
             Expression<Func<string, R>> convert = null,
@@ -20,6 +21,13 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public CSVReader<T> Build() => new CSVReader<T>(list.Select(x => x.Value));
+        public CSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
+        {
+            dic.Add(typeof(R), ex);
+            return this;
+        }
+
+        public CSVReader<T> Build() => 
+            new CSVReader<T>(GenericRecordParser<T>.Merge(list.Select(x => x.Value), dic));
     }
 }

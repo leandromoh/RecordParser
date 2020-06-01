@@ -27,22 +27,7 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public FixedLengthReader<T> Build() => new FixedLengthReader<T>(Merge());
-
-        public List<MappingConfiguration> Merge()
-        {
-            if (dic?.Any() != true)
-                return list;
-
-            var result = list
-                .Select(i =>
-                {
-                    var fmask = i.fmask ?? (dic.TryGetValue(i.type, out var ex) ? ex : null);
-                    return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask, i.skipWhen);
-                })
-                .ToList();
-
-            return result;
-        }
+        public FixedLengthReader<T> Build() => 
+            new FixedLengthReader<T>(GenericRecordParser<T>.Merge(list, dic));
     }
 }

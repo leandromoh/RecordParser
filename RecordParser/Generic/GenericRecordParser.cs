@@ -155,5 +155,23 @@ namespace RecordParser.Generic
         {
             return Expression.Call(Expression.Constant(f.Target), f.Method, valueText);
         }
+
+        public static IEnumerable<MappingConfiguration> Merge(
+            IEnumerable<MappingConfiguration> list, 
+            IReadOnlyDictionary<Type, Expression> dic)
+        {
+            if (dic?.Any() != true)
+                return list;
+
+            var result = list
+                .Select(i =>
+                {
+                    var fmask = i.fmask ?? (dic.TryGetValue(i.type, out var ex) ? ex : null);
+                    return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask, i.skipWhen);
+                })
+                .ToList();
+
+            return result;
+        }
     }
 }
