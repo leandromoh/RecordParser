@@ -109,7 +109,7 @@ namespace RecordParser.Generic
 
             assignsExpressions.Add(objectParameter);
 
-            var blockExpr = Expression.Block(typeof(T), new ParameterExpression[] { }, assignsExpressions);
+            var blockExpr = Expression.Block(typeof(T), assignsExpressions);
 
             return Expression.Lambda<Func<T, string[], T>>(blockExpr, new[] { objectParameter, valueParameter });
         }
