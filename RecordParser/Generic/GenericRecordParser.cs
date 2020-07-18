@@ -117,7 +117,10 @@ namespace RecordParser.Generic
         private static Expression GetValueToBeSetExpression(Type propertyType, Expression valueText, Expression func)
         {
             if (func != null)
-                return Expression.Invoke(func, valueText);
+                if (func is LambdaExpression lamb)
+                    return new ParameterReplacer(valueText).Visit(lamb.Body);
+                else
+                    return Expression.Invoke(func, valueText);
 
             if (propertyType == typeof(string))
                 return valueText;
