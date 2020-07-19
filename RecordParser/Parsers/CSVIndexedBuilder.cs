@@ -6,12 +6,19 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
-    public class CSVIndexedBuilder<T>
+    public interface ICSVIndexedBuilder<T>
+    {
+        ICSVReader<T> Build();
+        ICSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
+        ICSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
+    }
+
+    public class CSVIndexedBuilder<T> : ICSVIndexedBuilder<T>
     {
         private readonly Dictionary<int, MappingConfiguration> list = new Dictionary<int, MappingConfiguration>();
         private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
 
-        public CSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum,
+        public ICSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum,
             Expression<Func<string, R>> convert = null,
             Expression<Func<string, bool>> skipRecordWhen = null)
         {
@@ -21,13 +28,13 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public CSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
+        public ICSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
         {
             dic.Add(typeof(R), ex);
             return this;
         }
 
-        public CSVReader<T> Build() => 
+        public ICSVReader<T> Build() =>
             new CSVReader<T>(GenericRecordParser<T>.Merge(list.Select(x => x.Value), dic));
     }
 }

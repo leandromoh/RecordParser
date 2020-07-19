@@ -6,12 +6,19 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
-    public class FixedLengthReaderBuilder<T>
+    public interface IFixedLengthReaderBuilder<T>
+    {
+        IFixedLengthReader<T> Build();
+        IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
+        IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
+    }
+
+    public class FixedLengthReaderBuilder<T> : IFixedLengthReaderBuilder<T>
     {
         private readonly List<MappingConfiguration> list = new List<MappingConfiguration>();
         private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
 
-        public FixedLengthReaderBuilder<T> Map<R>(
+        public IFixedLengthReaderBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int startIndex, int length,
             Expression<Func<string, R>> convert = null,
             Expression<Func<string, bool>> skipRecordWhen = null)
@@ -21,13 +28,13 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public FixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
+        public IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
         {
             dic.Add(typeof(R), ex);
             return this;
         }
 
-        public FixedLengthReader<T> Build() => 
+        public IFixedLengthReader<T> Build() =>
             new FixedLengthReader<T>(GenericRecordParser<T>.Merge(list, dic));
     }
 }

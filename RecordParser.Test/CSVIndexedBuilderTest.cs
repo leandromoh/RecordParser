@@ -98,15 +98,15 @@ namespace RecordParser.Test
 
     public static class CSVCustomExtensions
     {
-        public static CSVIndexedBuilder<T> MyMap<T>(
-            this CSVIndexedBuilder<T> source,
+        public static ICSVIndexedBuilder<T> MyMap<T>(
+            this ICSVIndexedBuilder<T> source,
             Expression<Func<T, DateTime>> ex, int startIndex,
             string format)
         {
             return source.Map(ex, startIndex, value => DateTime.ParseExact(value, format, null));
         }
 
-        public static CSVReader<T> MyBuild<T>(this CSVIndexedBuilder<T> source)
+        public static ICSVReader<T> MyBuild<T>(this ICSVIndexedBuilder<T> source)
         {
             return source.DefaultTypeConvert(value => value.ToLower())
                          .Build();

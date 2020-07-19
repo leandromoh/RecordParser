@@ -4,7 +4,12 @@ using System.Linq;
 
 namespace RecordParser.Parsers
 {
-    public class FixedLengthReader<T>
+    public interface IFixedLengthReader<T>
+    {
+        T Parse(string line);
+    }
+
+    public class FixedLengthReader<T> : IFixedLengthReader<T>
     {
         private readonly GenericRecordParser<T> parser;
         private readonly (int start, int length)[] config;

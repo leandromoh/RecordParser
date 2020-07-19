@@ -5,7 +5,12 @@ using System.Linq;
 
 namespace RecordParser.Parsers
 {
-    public class CSVReader<T>
+    public interface ICSVReader<T>
+    {
+        T Parse(string str);
+    }
+
+    public class CSVReader<T> : ICSVReader<T>
     {
         public readonly GenericRecordParser<T> parser;
         private readonly int[] config;

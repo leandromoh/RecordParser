@@ -98,23 +98,23 @@ namespace RecordParser.Test
 
     public static class FixedLengthCustomExtensions
     {
-        public static FixedLengthReaderBuilder<T> MyMap<T>(
-            this FixedLengthReaderBuilder<T> source,
+        public static IFixedLengthReaderBuilder<T> MyMap<T>(
+            this IFixedLengthReaderBuilder<T> source,
             Expression<Func<T, DateTime>> ex, int startIndex, int length,
             string format)
         {
             return source.Map(ex, startIndex, length, value => DateTime.ParseExact(value, format, null));
         }
 
-        public static FixedLengthReaderBuilder<T> MyMap<T>(
-            this FixedLengthReaderBuilder<T> source,
+        public static IFixedLengthReaderBuilder<T> MyMap<T>(
+            this IFixedLengthReaderBuilder<T> source,
             Expression<Func<T, decimal>> ex, int startIndex, int length,
             int decimalPlaces)
         {
             return source.Map(ex, startIndex, length, value => decimal.Parse(value) / (decimal) Math.Pow(10, decimalPlaces));
         }
 
-        public static FixedLengthReader<T> MyBuild<T>(this FixedLengthReaderBuilder<T> source)
+        public static IFixedLengthReader<T> MyBuild<T>(this IFixedLengthReaderBuilder<T> source)
         {
             return source.DefaultTypeConvert(value => value.Trim().ToLower())
                          .Build();

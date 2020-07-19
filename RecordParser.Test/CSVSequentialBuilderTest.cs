@@ -134,15 +134,15 @@ namespace RecordParser.Test
 
     public static class CSVSequentialBuilderExtensions
     {
-        public static CSVSequentialBuilder<T> MyMap<T>(
-            this CSVSequentialBuilder<T> source,
+        public static ICSVSequentialBuilder<T> MyMap<T>(
+            this ICSVSequentialBuilder<T> source,
             Expression<Func<T, DateTime>> ex, 
             string format)
         {
             return source.Map(ex, value => DateTime.ParseExact(value, format, null));
         }
 
-        public static CSVReader<T> MyBuild<T>(this CSVSequentialBuilder<T> source)
+        public static ICSVReader<T> MyBuild<T>(this ICSVSequentialBuilder<T> source)
         {
             return source.DefaultTypeConvert(value => value.ToLower())
                          .Build();

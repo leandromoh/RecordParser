@@ -3,12 +3,20 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
-    public class CSVSequentialBuilder<T>
+    public interface ICSVSequentialBuilder<T>
     {
-        private readonly CSVIndexedBuilder<T> indexed = new CSVIndexedBuilder<T>();
+        ICSVReader<T> Build();
+        ICSVSequentialBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
+        ICSVSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
+        ICSVSequentialBuilder<T> Skip(int collumCount);
+    }
+
+    public class CSVSequentialBuilder<T> : ICSVSequentialBuilder<T>
+    {
+        private readonly ICSVIndexedBuilder<T> indexed = new CSVIndexedBuilder<T>();
         private int currentIndex = -1;
 
-        public CSVSequentialBuilder<T> Map<R>(
+        public ICSVSequentialBuilder<T> Map<R>(
             Expression<Func<T, R>> ex,
             Expression<Func<string, R>> convert = null,
             Expression<Func<string, bool>> skipRecordWhen = null)
@@ -17,18 +25,18 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public CSVSequentialBuilder<T> Skip(int collumCount)
+        public ICSVSequentialBuilder<T> Skip(int collumCount)
         {
             currentIndex += collumCount;
             return this;
         }
 
-        public CSVSequentialBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
+        public ICSVSequentialBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
         {
             indexed.DefaultTypeConvert(ex);
             return this;
         }
 
-        public CSVReader<T> Build() => indexed.Build();
+        public ICSVReader<T> Build() => indexed.Build();
     }
 }
