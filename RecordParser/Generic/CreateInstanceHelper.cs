@@ -8,7 +8,7 @@ namespace RecordParser.Generic
 {
     internal static class CreateInstanceHelper
     {
-        public static Func<T> GetInstanceGenerator<T>(IEnumerable<MemberExpression> mapped)
+        public static Expression<Func<T>> GetInstanceGenerator<T>(IEnumerable<MemberExpression> mapped)
         {
             var root = new Node(typeof(T));
 
@@ -18,7 +18,7 @@ namespace RecordParser.Generic
 
             var newTObject = GetNewExpressionWithNestedMemberInit(root);
 
-            var getNewInstance = Expression.Lambda<Func<T>>(newTObject).Compile();
+            var getNewInstance = Expression.Lambda<Func<T>>(newTObject);
 
             return getNewInstance;
         }

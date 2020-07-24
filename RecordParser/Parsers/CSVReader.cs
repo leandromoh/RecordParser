@@ -5,23 +5,45 @@ using System.Linq;
 
 namespace RecordParser.Parsers
 {
-    public class CSVReader<T>
+    public interface ICSVReader<T>
+    {
+        T Parse(string str);
+    }
+
+    public class CSVReader<T> : ICSVReader<T>
     {
         public readonly GenericRecordParser<T> parser;
-        private readonly MappingConfiguration[] config;
+        private readonly int[] config;
         private readonly int nth;
 
         public CSVReader(IEnumerable<MappingConfiguration> list)
         {
-            config = list.OrderBy(x => x.start).ToArray();
-            nth = config.Last().start;
-            parser = new GenericRecordParser<T>(config.Select(x => (x.prop, x.fmask)));
+            config = list.Select(x => x.start).ToArray();
+            nth = config.Max();
+            parser = new GenericRecordParser<T>(list);
         }
 
         public T Parse(string str)
         {
-            var delimiter = ";";
+            var csv = IndexedSplit(str, ";", config, nth);
 
+            return parser.Parse(csv);
+        }
+
+        /// <summary>
+        /// Similar to String.Split, but receives what indexes matters,
+        /// so does not allocates unwated occurrences.
+        /// Equivalent to:
+        /// var occurrences = text.split(separator);
+        /// var matters = indexes.Select(i => occurrences[i])
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="delimiter"></param>
+        /// <param name="config"></param>
+        /// <param name="nth"></param>
+        /// <returns></returns>
+        public static string[] IndexedSplit(string str, string delimiter, int[] config, int nth)
+        {
             Span<int> positions = stackalloc int[nth + 2];
 
             var i = 0;
@@ -33,17 +55,16 @@ namespace RecordParser.Parsers
             if (i < positions.Length)
                 throw new InvalidOperationException("menos colunas do q devia");
 
+            i = 0;
             var csv = new string[config.Length];
-            for (i = 0; i < config.Length; i++)
+            foreach (var index in config)
             {
-                var index = config[i].start;
                 var start = positions[index];
                 var length = positions[index + 1] - start - delimiter.Length;
-
-                csv[i] = str.Substring(start, length);
+                csv[i++] = str.Substring(start, length).Trim();
             }
 
-            return parser.Parse(csv);
+            return csv;
         }
 
         public static IEnumerable<int> IndexOfNth(string str, string value, int nth,

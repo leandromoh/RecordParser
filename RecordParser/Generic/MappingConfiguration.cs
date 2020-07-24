@@ -1,49 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace RecordParser.Generic
 {
-    public class MappingConfiguration
+    public readonly struct MappingConfiguration
     {
-        public MemberExpression prop { get; set; }
-        public int start { get; set; }
-        public int length { get; set; }
-        public Expression fmask { get; set; }
-        public Type type { get; set; }
+        public MemberExpression prop { get; }
+        public int start { get; }
+        public int? length { get; }
+        public Expression fmask { get; }
+        public Expression skipWhen { get; }
+        public Type type { get; }
 
-        private string _mask;
-        public string mask
+        public MappingConfiguration(MemberExpression prop, int start, int? length, Type type, Expression fmask, Expression skipWhen)
         {
-            get => _mask;
-            set
-            {
-                _mask = value;
-                fmask = null;
-
-                var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
-
-                if (underlyingType == typeof(string))
-                {
-                    fmask = ff(text => text.Trim());
-                }
-                else if (_mask != null)
-                {
-                    if (underlyingType == typeof(decimal))
-                    {
-                        var precision = _mask.Length - _mask.LastIndexOf(".") - 1;
-                        fmask = ff(text => decimal.Parse(text) / (decimal)Math.Pow(10, precision));
-                    }
-                    else if (underlyingType == typeof(DateTime))
-                    {
-                        fmask = ff(text => DateTime.ParseExact(text, _mask, CultureInfo.InvariantCulture));
-                    }
-                }
-
-                Expression ff<T>(Expression<Func<string, T>> ex) => ex;
-            }
+            this.prop = prop;
+            this.start = start;
+            this.length = length;
+            this.type = type;
+            this.fmask = fmask;
+            this.skipWhen = skipWhen;
         }
     }
 }
