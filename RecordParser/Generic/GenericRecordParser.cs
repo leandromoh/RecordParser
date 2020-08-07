@@ -139,24 +139,29 @@ namespace RecordParser.Generic
 
         private static Expression GetParseExpression(Type type, Expression valueText)
         {
-            return GetExpressionExp(text =>
-                Convert.ChangeType(text, type, CultureInfo.InvariantCulture), valueText);
+            return Expression.Call(
+                typeof(Convert), nameof(Convert.ChangeType), Type.EmptyTypes,
+                arguments: new[]
+                {
+                    valueText,
+                    Expression.Constant(type, typeof(Type)),
+                    Expression.Constant(CultureInfo.InvariantCulture)
+                });
         }
 
         private static Expression GetIsNullOrWhiteSpaceExpression(Expression valueText)
         {
-            return GetExpressionExp(text =>
-                string.IsNullOrWhiteSpace(text), valueText);
+            return GetExpressionFunc(string.IsNullOrWhiteSpace, valueText);
         }
 
         private static Expression GetExpressionExp<R>(Expression<Func<string, R>> f, Expression valueText)
         {
-            return Expression.Invoke(f, valueText);
+            return new ParameterReplacer(valueText).Visit(f.Body);
         }
 
         private static Expression GetExpressionFunc<R>(Func<string, R> f, Expression valueText)
         {
-            return Expression.Call(Expression.Constant(f.Target), f.Method, valueText);
+            return Expression.Call(f.Target is null ? null : Expression.Constant(f.Target), f.Method, valueText);
         }
 
         public static IEnumerable<MappingConfiguration> Merge(
