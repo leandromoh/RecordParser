@@ -41,6 +41,117 @@ namespace RecordParser.Generic
             return result;
         }
 
+        public static Expression<Func<string, (int, int)[], T>> RecordParserSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
+        {
+            var funcThatSetProperties = GetFuncThatSetPropertiesSpan<T>(mappedColumns);
+            var getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop));
+            var shouldSkip = GetShouldSkip(mappedColumns);
+
+            var instanceParameter = funcThatSetProperties.Parameters[0];
+            var valueParameter = funcThatSetProperties.Parameters[1];
+            var configParameter = funcThatSetProperties.Parameters[2];
+
+            var instanceVariable = Expression.Variable(typeof(T), "inst");
+            var assign = Expression.Assign(instanceVariable, getNewInstance.Body);
+            var body = new ParameterReplacer(instanceVariable, instanceParameter).Visit(funcThatSetProperties.Body);
+            var block = body as BlockExpression;
+
+            Expression set = Expression.Block(
+                typeof(T),
+                variables: block != null ? block.Variables.Prepend(instanceVariable) : new[] { instanceVariable },
+                expressions: block != null ? block.Expressions.Prepend(assign) : new[] { assign, body });
+
+            if (shouldSkip is { })
+            {
+                set = Expression.Condition(
+                            test: Expression.Invoke(shouldSkip, valueParameter),
+                            ifTrue: Expression.Default(typeof(T)),
+                            ifFalse: set);
+            }
+
+            var result = Expression.Lambda<Func<string, (int, int)[], T>>(set, valueParameter, configParameter);
+
+            return result;
+        }
+
+        public static Expression<Func<T, string, (int start, int length)[], T>> GetFuncThatSetPropertiesSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
+        {
+            ParameterExpression objectParameter = Expression.Variable(typeof(T), "a");
+            ParameterExpression valueParameter = Expression.Variable(typeof(string), "value");
+            ParameterExpression configParameter = Expression.Variable(typeof((int start, int length)[]), "config");
+
+            var span = Expression.Variable(typeof(ReadOnlySpan<char>), "span");
+            var like = typeof(MemoryExtensions).GetMethod(nameof(MemoryExtensions.AsSpan), new[] { typeof(string) });
+
+            var replacer = new ParameterReplacer(objectParameter);
+            var assignsExpressions = new List<Expression>()
+            {
+                Expression.Assign(span, Expression.Call(null, like, valueParameter))
+            };
+
+            var i = -1;
+
+            foreach (var x in mappedColumns)
+            {
+                i++;
+                var (propertyName, func) = (x.prop, x.fmask);
+
+                if (propertyName is null)
+                    continue;
+
+
+                var arrayIndex = Expression.ArrayIndex(configParameter, Expression.Constant(i));
+
+                var propertyType = propertyName.Type;
+                var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
+                var isPropertyNullable = nullableUnderlyingType != null;
+                var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
+
+                Expression textValue = propertyType == typeof(string) && func is null
+                    
+                        ? 
+                        Expression.Call(valueParameter, nameof(string.Substring), Type.EmptyTypes,
+                        Expression.Field(arrayIndex, "Item1"),
+                        Expression.Field(arrayIndex, "Item2"))
+                        
+                        :
+                        Expression.Call(span, nameof(ReadOnlySpan<char>.Slice), Type.EmptyTypes,
+                        Expression.Field(arrayIndex, "Item1"),
+                        Expression.Field(arrayIndex, "Item2"));
+
+                Expression valueToBeSetExpression = GetValueToBeSetExpression(
+                                                        propertyUnderlyingType,
+                                                        textValue,
+                                                        func);
+
+                if (valueToBeSetExpression.Type != propertyType)
+                {
+                    valueToBeSetExpression = Expression.Convert(valueToBeSetExpression, propertyType);
+                }
+
+                if (isPropertyNullable)
+                {
+                    valueToBeSetExpression = Expression.Condition(
+                        test: GetIsNullOrWhiteSpaceExpression(textValue),
+                        ifTrue: Expression.Default(propertyType),
+                        ifFalse: valueToBeSetExpression);
+                }
+
+                var assign = Expression.Assign(replacer.Visit(propertyName), valueToBeSetExpression);
+
+                assignsExpressions.Add(assign);
+            }
+
+            assignsExpressions.Add(objectParameter);
+
+            var blockExpr = Expression.Block(typeof(T), new[] { span }, assignsExpressions);
+
+            return Expression.Lambda<Func<T, string, (int start, int length)[], T>>(blockExpr, 
+                
+                new[] { objectParameter, valueParameter, configParameter });
+        }
+
+
         private static Expression<Func<string[], bool>> GetShouldSkip(IEnumerable<MappingConfiguration> columns)
         {
             ParameterExpression valueParameter = Expression.Variable(typeof(string[]), "values");
@@ -157,6 +268,13 @@ namespace RecordParser.Generic
             return GetExpressionFunc(string.IsNullOrWhiteSpace, valueText);
         }
 
+        private static Expression GetIsWhiteSpaceExpression(Expression valueText)
+        {
+            return Expression.Call(typeof(MemoryExtensions), 
+                nameof(MemoryExtensions.IsWhiteSpace), 
+                Type.EmptyTypes, valueText);
+        }
+
         private static Expression GetExpressionExp<R>(Expression<Func<string, R>> f, Expression valueText)
         {
             return new ParameterReplacer(valueText).Visit(f.Body);
@@ -184,5 +302,10 @@ namespace RecordParser.Generic
 
             return result;
         }
+    }
+
+    public struct ReadOnlySpanChar
+    {
+        public static implicit operator ReadOnlySpan<char>(ReadOnlySpanChar _) => default;
     }
 }
