@@ -76,14 +76,13 @@ namespace RecordParser.Generic
             foreach (var x in mappedColumns)
             {
                 i++;
-                var (propertyName, func) = (x.prop, x.fmask);
 
-                if (propertyName is null)
+                if (x.prop is null)
                     continue;
 
                 Expression textValue = Expression.ArrayIndex(valueParameter, Expression.Constant(i));
 
-                var propertyType = propertyName.Type;
+                var propertyType = x.prop.Type;
                 var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
                 var isPropertyNullable = nullableUnderlyingType != null;
                 var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
@@ -91,7 +90,7 @@ namespace RecordParser.Generic
                 Expression valueToBeSetExpression = GetValueToBeSetExpression(
                                                         propertyUnderlyingType,
                                                         textValue,
-                                                        func);
+                                                        x.fmask);
 
                 if (valueToBeSetExpression.Type != propertyType)
                 {
@@ -106,7 +105,7 @@ namespace RecordParser.Generic
                         ifFalse: valueToBeSetExpression);
                 }
 
-                var assign = Expression.Assign(replacer.Visit(propertyName), valueToBeSetExpression);
+                var assign = Expression.Assign(replacer.Visit(x.prop), valueToBeSetExpression);
 
                 assignsExpressions.Add(assign);
             }
