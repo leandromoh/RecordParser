@@ -12,7 +12,7 @@ namespace RecordParser.Parsers
 
     public class CSVReader<T> : ICSVReader<T>
     {
-        public readonly GenericRecordParser<T> parser;
+        public readonly Func<string[], T> parser;
         private readonly int[] config;
         private readonly int nth;
 
@@ -20,14 +20,14 @@ namespace RecordParser.Parsers
         {
             config = list.Select(x => x.start).ToArray();
             nth = config.Max();
-            parser = new GenericRecordParser<T>(list);
+            parser = GenericRecordParser.RecordParser<T>(list).Compile();
         }
 
         public T Parse(string str)
         {
             var csv = IndexedSplit(str, ";", config, nth);
 
-            return parser.Parse(csv);
+            return parser(csv);
         }
 
         /// <summary>

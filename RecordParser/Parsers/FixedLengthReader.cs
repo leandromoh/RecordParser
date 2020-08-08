@@ -1,4 +1,5 @@
 ﻿using RecordParser.Generic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,13 +12,13 @@ namespace RecordParser.Parsers
 
     public class FixedLengthReader<T> : IFixedLengthReader<T>
     {
-        private readonly GenericRecordParser<T> parser;
+        private readonly Func<string[], T> parser;
         private readonly (int start, int length)[] config;
 
         public FixedLengthReader(IEnumerable<MappingConfiguration> list)
         {
             config = list.Select(x => (x.start, x.length.Value)).ToArray();
-            parser = new GenericRecordParser<T>(list);
+            parser = GenericRecordParser.RecordParser<T>(list).Compile();
         }
 
         public T Parse(string line)
@@ -27,7 +28,7 @@ namespace RecordParser.Parsers
             for (var i = 0; i < config.Length; i++)
                 csv[i] = line.Substring(config[i].start, config[i].length);
 
-            return parser.Parse(csv);
+            return parser(csv);
         }
     }
 }

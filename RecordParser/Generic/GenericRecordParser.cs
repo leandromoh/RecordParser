@@ -6,35 +6,39 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Generic
 {
-    public class GenericRecordParser<T>
+    public static class GenericRecordParser
     {
-        private readonly Func<T, string[], T> _funcThatSetProperties;
-        private readonly Func<string[], bool> _shouldSkip;
-        private readonly Func<T> _getNewInstance;
-
-        public GenericRecordParser(IEnumerable<MappingConfiguration> mappedColumns)
+        public static Expression<Func<string[], T>> RecordParser<T>(IEnumerable<MappingConfiguration> mappedColumns)
         {
-            _funcThatSetProperties = GetFuncThatSetProperties(mappedColumns).Compile();
-            _getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop)).Compile();
-            _shouldSkip = GetShouldSkip(mappedColumns)?.Compile();
-        }
+            var funcThatSetProperties = GetFuncThatSetProperties<T>(mappedColumns);
+            var getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop));
+            var shouldSkip = GetShouldSkip(mappedColumns);
 
-        public T Parse(string[] values)
-        {
-            if (_shouldSkip != null && _shouldSkip(values))
-                return default;
+            var instanceParameter = funcThatSetProperties.Parameters[0];
+            var valueParameter = funcThatSetProperties.Parameters[1];
 
-            T obj = _getNewInstance();
+            var instanceVariable = Expression.Variable(typeof(T), "inst");
+            var assign = Expression.Assign(instanceVariable, getNewInstance.Body);
+            var body = new ParameterReplacer(instanceVariable, instanceParameter).Visit(funcThatSetProperties.Body);
 
-            return _funcThatSetProperties(obj, values);
-        }
+            Expression set = Expression.Block(
+                typeof(T),
+                variables: new[] { instanceVariable },
+                expressions: body is BlockExpression block
+                     ? block.Expressions.Prepend(assign)
+                     : new[] { assign, body });
 
-        public T Parse(T obj, string[] values)
-        {
-            if (_shouldSkip != null && _shouldSkip(values))
-                return default;
+            if (shouldSkip is { })
+            {
+                set = Expression.Condition(
+                            test: Expression.Invoke(shouldSkip, valueParameter),
+                            ifTrue: Expression.Default(typeof(T)),
+                            ifFalse: set);
+            }
 
-            return _funcThatSetProperties(obj, values);
+            var result = Expression.Lambda<Func<string[], T>>(set, valueParameter);
+
+            return result;
         }
 
         private static Expression<Func<string[], bool>> GetShouldSkip(IEnumerable<MappingConfiguration> columns)
@@ -43,7 +47,7 @@ namespace RecordParser.Generic
             var constitions = new List<Expression>();
             var i = -1;
 
-            foreach(var map in columns)
+            foreach (var map in columns)
             {
                 i++;
                 if (map.skipWhen == null) continue;
@@ -60,7 +64,7 @@ namespace RecordParser.Generic
             return Expression.Lambda<Func<string[], bool>>(validations, valueParameter);
         }
 
-        private static Expression<Func<T, string[], T>> GetFuncThatSetProperties(IEnumerable<MappingConfiguration> mappedColumns)
+        private static Expression<Func<T, string[], T>> GetFuncThatSetProperties<T>(IEnumerable<MappingConfiguration> mappedColumns)
         {
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "a");
             ParameterExpression valueParameter = Expression.Variable(typeof(string[]), "values");
@@ -165,7 +169,7 @@ namespace RecordParser.Generic
         }
 
         public static IEnumerable<MappingConfiguration> Merge(
-            IEnumerable<MappingConfiguration> list, 
+            IEnumerable<MappingConfiguration> list,
             IReadOnlyDictionary<Type, Expression> dic)
         {
             if (dic?.Any() != true)

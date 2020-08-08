@@ -35,6 +35,6 @@ namespace RecordParser.Parsers
         }
 
         public IFixedLengthReader<T> Build() =>
-            new FixedLengthReader<T>(GenericRecordParser<T>.Merge(list, dic));
+            new FixedLengthReader<T>(GenericRecordParser.Merge(list, dic));
     }
 }
