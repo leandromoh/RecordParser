@@ -101,7 +101,7 @@ namespace RecordParser.Generic
                 {
                     valueToBeSetExpression = Expression.Condition(
                         test: GetIsNullOrWhiteSpaceExpression(textValue),
-                        ifTrue: Expression.Default(propertyType),
+                        ifTrue: Expression.Constant(null, propertyType),
                         ifFalse: valueToBeSetExpression);
                 }
 
