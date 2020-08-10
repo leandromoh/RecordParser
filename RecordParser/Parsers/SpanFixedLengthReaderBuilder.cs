@@ -25,7 +25,7 @@ namespace RecordParser.Parsers
             Expression<Func<ReadOnlySpanChar, bool>> skipRecordWhen = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), visitor.Modify(convert), skipRecordWhen));
+            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), visitor.Modify(convert), visitor.Modify(skipRecordWhen)));
             return this;
         }
 
