@@ -302,6 +302,54 @@ namespace RecordParser.Generic
 
             return result;
         }
+        public static T[] IndexedSplit<T>(string str, string delimiter, int[] config, int nth, Func<int, int, T> selector)
+        {
+            Span<int> positions = stackalloc int[nth + 2];
+
+            var i = 0;
+            foreach (var x in IndexOfNth(str, delimiter, nth + 2))
+            {
+                positions[i++] = x;
+            }
+
+            if (i < positions.Length)
+                throw new InvalidOperationException("menos colunas do q devia");
+
+            i = 0;
+            var csv = new T[config.Length];
+            foreach (var index in config)
+            {
+                var start = positions[index];
+                var length = positions[index + 1] - start - delimiter.Length;
+                csv[i++] = selector(start, length);
+            }
+
+            return csv;
+        }
+
+        public static IEnumerable<int> IndexOfNth(string str, string value, int nth,
+            StringComparison comparison = StringComparison.InvariantCultureIgnoreCase)
+        {
+            if (nth <= 0)
+                throw new ArgumentException("Can not find the zeroth index of substring in string. Must start with 1");
+
+            yield return 0;
+
+            int offset = str.IndexOf(value, comparison);
+            int i;
+            for (i = 1; i < nth; i++)
+            {
+                if (offset == -1)
+                    break;
+
+                yield return offset + value.Length;
+
+                offset = str.IndexOf(value, offset + 1, comparison);
+            }
+
+            if (i != nth)
+                yield return str.Length + value.Length;
+        }
     }
 
     public struct ReadOnlySpanChar
