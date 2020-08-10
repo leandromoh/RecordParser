@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using RecordParser.Parsers;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using Xunit;
@@ -69,6 +70,23 @@ namespace RecordParser.Test
                 .Map(x => x.MotherAge, 0)
                 .Map(x => x.FatherAge, 2)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
+                .Build();
+
+            var result = reader.Parse(" 40 ; 15 ; 50 ");
+
+            result.Should().BeEquivalentTo((Age: 30,
+                                            MotherAge: 42,
+                                            FatherAge: 52));
+        }
+
+        [Fact]
+        public void __Given_specified_custom_parser_for_member_should_have_priority_over_custom_parser_for_type()
+        {
+            var reader = new SpanCSVIndexedBuilder<(int Age, int MotherAge, int FatherAge)>()
+                .Map(x => x.Age, 1, value => int.Parse(value, NumberStyles.Integer, null) * 2)
+                .Map(x => x.MotherAge, 0)
+                .Map(x => x.FatherAge, 2)
+                .DefaultTypeConvert(value => int.Parse(value, NumberStyles.Integer, null) + 2)
                 .Build();
 
             var result = reader.Parse(" 40 ; 15 ; 50 ");
