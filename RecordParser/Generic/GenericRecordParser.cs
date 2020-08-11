@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using static RecordParser.Generic.ReadOnlySpanVisitor;
 
 namespace RecordParser.Generic
 {
@@ -107,14 +108,16 @@ namespace RecordParser.Generic
                 var isPropertyNullable = nullableUnderlyingType != null;
                 var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
 
-                Expression textValue = propertyType == typeof(string) && func is null
+                Expression textValue = 
                     
-                        ? 
-                        Expression.Call(valueParameter, nameof(string.Substring), Type.EmptyTypes,
-                        Expression.Field(arrayIndex, "Item1"),
-                        Expression.Field(arrayIndex, "Item2"))
+                        //propertyType == typeof(string) && func is null
+                    
+                        //? 
+                        //Expression.Call(valueParameter, nameof(string.Substring), Type.EmptyTypes,
+                        //Expression.Field(arrayIndex, "Item1"),
+                        //Expression.Field(arrayIndex, "Item2"))
                         
-                        :
+                        //:
                         Expression.Call(span, nameof(ReadOnlySpan<char>.Slice), Type.EmptyTypes,
                         Expression.Field(arrayIndex, "Item1"),
                         Expression.Field(arrayIndex, "Item2"));
@@ -132,7 +135,7 @@ namespace RecordParser.Generic
                 if (isPropertyNullable)
                 {
                     valueToBeSetExpression = Expression.Condition(
-                        test: GetIsNullOrWhiteSpaceExpression(textValue),
+                        test: GetIsWhiteSpaceExpression(textValue),
                         ifTrue: Expression.Default(propertyType),
                         ifFalse: valueToBeSetExpression);
                 }
@@ -236,11 +239,10 @@ namespace RecordParser.Generic
                 else
                     return Expression.Invoke(func, valueText);
 
-            if (propertyType == typeof(string))
-                return valueText;
+            propertyType = propertyType.IsEnum ? typeof(Enum) : propertyType;
 
-            if (propertyType.IsEnum)
-                return GetEnumParseExpression(propertyType, valueText);
+            if (dic.TryGetValue((valueText.Type, propertyType), out var expF))
+                return expF(propertyType, valueText);
 
             return GetParseExpression(propertyType, valueText);
         }
@@ -263,6 +265,15 @@ namespace RecordParser.Generic
                 });
         }
 
+        private static readonly IDictionary<(Type, Type), Func<Type, Expression, Expression>> dic = new Dictionary<(Type, Type), Func<Type, Expression, Expression>>
+        {
+            [(typeof(string), typeof(string))] = (_, ex) => ex,
+            [(typeof(string), typeof(Enum))] = GetEnumParseExpression,
+            [(typeof(ReadOnlySpan<char>), typeof(int))] = GetExpressionExpChar(span => int.Parse(span, NumberStyles.Integer, null)),
+            [(typeof(ReadOnlySpan<char>), typeof(DateTime))] = GetExpressionExpChar(span => DateTime.ParseExact(span, new[] { "ddMMyyyy" }, null, DateTimeStyles.None)),
+            [(typeof(ReadOnlySpan<char>), typeof(string))] = GetExpressionExpChar(span => new string(span)),
+        };
+
         private static Expression GetIsNullOrWhiteSpaceExpression(Expression valueText)
         {
             return GetExpressionFunc(string.IsNullOrWhiteSpace, valueText);
@@ -278,6 +289,13 @@ namespace RecordParser.Generic
         private static Expression GetExpressionExp<R>(Expression<Func<string, R>> f, Expression valueText)
         {
             return new ParameterReplacer(valueText).Visit(f.Body);
+        }
+
+        private static Func<Type, Expression, Expression> GetExpressionExpChar<T>(Expression<Func<ReadOnlySpanChar, T>> ex)
+        {
+            var intTao = new ReadOnlySpanVisitor().Modify(ex);
+
+            return (Type _, Expression valueText) => new ParameterReplacer(valueText).Visit(intTao.Body);
         }
 
         private static Expression GetExpressionFunc<R>(Func<string, R> f, Expression valueText)
