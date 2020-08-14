@@ -315,8 +315,7 @@ namespace RecordParser.Generic
                 {
                     var fmask = i.fmask ?? (dic.TryGetValue(i.type, out var ex) ? ex : null);
                     return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask, i.skipWhen);
-                })
-                .ToList();
+                });
 
             return result;
         }

@@ -35,8 +35,13 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public ISpanFixedLengthReader<T> Build() =>
-            new SpanFixedLengthReader<T>(GenericRecordParser.Merge(list, dic));
+        public ISpanFixedLengthReader<T> Build() 
+        {
+            var map = GenericRecordParser.Merge(list, dic);
+            var func = GenericRecordParser.RecordParserSpan<T>(map).Compile();
+
+            return new SpanFixedLengthReader<T>(map, func);
+        }
     }
 
 }
