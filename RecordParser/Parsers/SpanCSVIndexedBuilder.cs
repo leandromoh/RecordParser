@@ -26,16 +26,23 @@ namespace RecordParser.Parsers
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
             var config = new MappingConfiguration(member, indexColum, null, typeof(R), visitor.Modify(convert), visitor.Modify(skipRecordWhen));
             list.Add(indexColum, config);
+            
             return this;
         }
 
         public ISpanCSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex)
         {
             dic.Add(typeof(R), visitor.Modify(ex));
+            
             return this;
         }
 
-        public ISpanCSVReader<T> Build() =>
-            new SpanCSVReader<T>(GenericRecordParser.Merge(list.Select(x => x.Value), dic));
+        public ISpanCSVReader<T> Build()
+        {
+            var map = GenericRecordParser.Merge(list.Select(x => x.Value), dic);
+            var func = GenericRecordParser.RecordParserSpan<T>(map).Compile();
+            
+            return new SpanCSVReader<T>(map, func);
+        }
     }
 }

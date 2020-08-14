@@ -10,18 +10,19 @@ namespace RecordParser.Parsers
         T Parse(string line);
     }
 
-    public class FixedLengthReader<T> : IFixedLengthReader<T>
+    public interface ISpanFixedLengthReader<T>
+    {
+        T Parse(string line);
+    }
+
+    public class FixedLengthReader<T> : BaseFixedLengthReader<T>, IFixedLengthReader<T>
     {
         private readonly Func<string[], T> parser;
-        private readonly (int start, int length)[] config;
 
-        public FixedLengthReader(IEnumerable<MappingConfiguration> list)
-        {
-            config = list.Select(x => (x.start, x.length.Value)).ToArray();
-            parser = GenericRecordParser.RecordParser<T>(list).Compile();
-        }
+        internal FixedLengthReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser)
+            : base(list) => this.parser = parser;
 
-        public T Parse(string line)
+        public override T Parse(string line)
         {
             var csv = new string[config.Length];
 
@@ -30,5 +31,28 @@ namespace RecordParser.Parsers
 
             return parser(csv);
         }
+    }
+
+    public class SpanFixedLengthReader<T> : BaseFixedLengthReader<T>, ISpanFixedLengthReader<T>
+    {
+        private readonly Func<string, (int, int)[], T> parser;
+
+        internal SpanFixedLengthReader(IEnumerable<MappingConfiguration> list, Func<string, (int, int)[], T> parser)
+            : base(list) => this.parser = parser;
+
+        public override T Parse(string line)
+        {
+            return parser(line, config);
+        }
+    }
+
+    public abstract class BaseFixedLengthReader<T> 
+    {
+        protected readonly (int start, int length)[] config;
+
+        protected BaseFixedLengthReader(IEnumerable<MappingConfiguration> list) =>
+            config = list.Select(x => (x.start, x.length.Value)).ToArray();
+
+        public abstract T Parse(string line);
     }
 }

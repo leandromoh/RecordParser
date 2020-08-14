@@ -40,6 +40,9 @@ namespace RecordParser.Generic
 
         private static NewExpression GetNewExpressionFor(Type objType)
         {
+            if (objType.IsValueType && Nullable.GetUnderlyingType(objType) == null)
+                return Expression.New(objType);
+
             ConstructorInfo ctor = objType
                 .GetConstructors()
                 .OrderBy(x => x.GetParameters().Length)
@@ -54,9 +57,7 @@ namespace RecordParser.Generic
                         x =>
                             x.IsOptional
                                 ? Expression.Convert(Expression.Constant(x.DefaultValue), x.ParameterType)
-                                : x.ParameterType.IsValueType && Nullable.GetUnderlyingType(x.ParameterType) == null
-                                    ? Expression.Default(x.ParameterType)
-                                    : (Expression)GetNewExpressionFor(x.ParameterType)
+                                : (Expression)GetNewExpressionFor(x.ParameterType)
                     )
                 );
         }

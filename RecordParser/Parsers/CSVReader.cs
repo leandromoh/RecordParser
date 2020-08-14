@@ -10,25 +10,54 @@ namespace RecordParser.Parsers
         T Parse(string str);
     }
 
-    public class CSVReader<T> : ICSVReader<T>
+    public interface ISpanCSVReader<T>
     {
-        public readonly Func<string[], T> parser;
-        private readonly int[] config;
-        private readonly int nth;
+        T Parse(string str);
+    }
 
-        public CSVReader(IEnumerable<MappingConfiguration> list)
-        {
-            config = list.Select(x => x.start).ToArray();
-            nth = config.Max();
-            parser = GenericRecordParser.RecordParser<T>(list).Compile();
-        }
+    public class CSVReader<T> : BaseCSVReader<T>, ICSVReader<T>
+    {
+        private readonly Func<string[], T> parser;
 
-        public T Parse(string str)
+        internal CSVReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser)
+            : base(list) => this.parser = parser;
+
+
+        public override T Parse(string str)
         {
             var csv = GenericRecordParser.IndexedSplit(str, ";", config, nth, 
                 (start, length) => str.Substring(start, length).Trim());
 
             return parser(csv);
         }
+    }
+
+    public class SpanCSVReader<T> : BaseCSVReader<T>, ISpanCSVReader<T>
+    {
+        private readonly Func<string, (int, int)[], T> parser;
+
+        internal SpanCSVReader(IEnumerable<MappingConfiguration> list, Func<string, (int, int)[], T> parser)
+            : base(list) => this.parser = parser;
+
+        public override T Parse(string str)
+        {
+            var csv = GenericRecordParser.IndexedSplit(str, ";", config, nth, ValueTuple.Create);
+
+            return parser(str, csv);
+        }
+    }
+
+    public abstract class BaseCSVReader<T> 
+    {
+        protected readonly int[] config;
+        protected readonly int nth;
+
+        protected BaseCSVReader(IEnumerable<MappingConfiguration> list)
+        {
+            config = list.Select(x => x.start).ToArray();
+            nth = config.Max();
+        }
+
+        public abstract T Parse(string str);
     }
 }
