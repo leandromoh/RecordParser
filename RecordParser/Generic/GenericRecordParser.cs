@@ -313,6 +313,7 @@ namespace RecordParser.Generic
             var result = list
                 .Select(i =>
                 {
+                    // if i.fmask != null or fmask == null return i
                     var fmask = i.fmask ?? (dic.TryGetValue(i.type, out var ex) ? ex : null);
                     return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask, i.skipWhen);
                 });
@@ -367,10 +368,5 @@ namespace RecordParser.Generic
             if (i != nth)
                 yield return str.Length + value.Length;
         }
-    }
-
-    public struct ReadOnlySpanChar
-    {
-        public static implicit operator ReadOnlySpan<char>(ReadOnlySpanChar _) => default;
     }
 }

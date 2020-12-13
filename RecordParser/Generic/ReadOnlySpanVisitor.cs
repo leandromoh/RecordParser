@@ -3,11 +3,16 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Generic
 {
+    public struct ReadOnlySpanChar
+    {
+        public static implicit operator ReadOnlySpan<char>(ReadOnlySpanChar _) => default;
+    }
+
+    public delegate T FuncConvert<T>(ReadOnlySpan<char> text);
+
     public class ReadOnlySpanVisitor : ExpressionVisitor
     {
-        public readonly ParameterExpression span = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
-
-        public delegate T FuncConvert<T>(ReadOnlySpan<char> text);
+        private readonly ParameterExpression span = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
 
         public Expression<FuncConvert<T>> Modify<T>(Expression<Func<ReadOnlySpanChar, T>> ex)
         {
