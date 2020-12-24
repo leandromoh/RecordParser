@@ -5,18 +5,18 @@ using System.Linq;
 
 namespace RecordParser.Parsers
 {
-    public interface ICSVReader<T>
+    public interface ISpanCSVReader<T>
     {
         T Parse(string str);
     }
 
-    public class CSVReader<T> : ICSVReader<T>
+    public class SpanCSVReader<T> : ISpanCSVReader<T>
     {
-        private readonly Func<string[], T> parser;
+        private readonly Func<string, (int, int)[], T> parser;
         private readonly int[] config;
         private readonly int nth;
 
-        internal CSVReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser)
+        internal SpanCSVReader(IEnumerable<MappingConfiguration> list, Func<string, (int, int)[], T> parser)
         {
             config = list.Select(x => x.start).ToArray();
             nth = config.Max();
@@ -25,10 +25,9 @@ namespace RecordParser.Parsers
 
         public T Parse(string str)
         {
-            var csv = GenericRecordParser.IndexedSplit(str, ";", config, nth, 
-                (start, length) => str.Substring(start, length).Trim());
+            var csv = GenericRecordParser.IndexedSplit(str, ";", config, nth, ValueTuple.Create);
 
-            return parser(csv);
+            return parser(str, csv);
         }
     }
 }
