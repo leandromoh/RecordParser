@@ -39,10 +39,10 @@ namespace RecordParser.Parsers
 
         public ISpanCSVReader<T> Build()
         {
-            var map = GenericRecordParser.Merge(list.Select(x => x.Value), dic);
+            var map = GenericRecordParser.Merge(list.Select(x => x.Value), dic).OrderBy(x => x.start);
             var func = GenericRecordParser.RecordParserSpan<T>(map).Compile();
 
-            return null;// new SpanCSVReader<T>(map, func);
+            return new SpanCSVReader<T>(map, func);
         }
     }
 }

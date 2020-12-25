@@ -66,7 +66,7 @@ namespace RecordParser.Generic
             return result;
         }
 
- 
+
         public static Expression<FuncTSpanArrayT<T>> GetFuncThatSetPropertiesSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
         {
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "a");
@@ -96,15 +96,15 @@ namespace RecordParser.Generic
                 var isPropertyNullable = nullableUnderlyingType != null;
                 var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
 
-                Expression textValue = 
-                    
+                Expression textValue =
+
                         //propertyType == typeof(string) && func is null
-                    
+
                         //? 
                         //Expression.Call(valueParameter, nameof(string.Substring), Type.EmptyTypes,
                         //Expression.Field(arrayIndex, "Item1"),
                         //Expression.Field(arrayIndex, "Item2"))
-                        
+
                         //:
                         Expression.Call(span, nameof(ReadOnlySpan<char>.Slice), Type.EmptyTypes,
                         Expression.Field(arrayIndex, "Item1"),
@@ -137,8 +137,8 @@ namespace RecordParser.Generic
 
             var blockExpr = Expression.Block(typeof(T), new[] { span }, assignsExpressions);
 
-            return Expression.Lambda<FuncTSpanArrayT<T>>(blockExpr, 
-                
+            return Expression.Lambda<FuncTSpanArrayT<T>>(blockExpr,
+
                 new[] { objectParameter, valueParameter, configParameter });
         }
 
@@ -270,8 +270,8 @@ namespace RecordParser.Generic
 
         private static Expression GetIsWhiteSpaceExpression(Expression valueText)
         {
-            return Expression.Call(typeof(MemoryExtensions), 
-                nameof(MemoryExtensions.IsWhiteSpace), 
+            return Expression.Call(typeof(MemoryExtensions),
+                nameof(MemoryExtensions.IsWhiteSpace),
                 Type.EmptyTypes, valueText);
         }
 
@@ -309,30 +309,6 @@ namespace RecordParser.Generic
 
             return result;
         }
-        public static T[] IndexedSplit<T>(string str, string delimiter, int[] config, int nth, Func<int, int, T> selector)
-        {
-            Span<int> positions = stackalloc int[nth + 2];
-
-            var i = 0;
-            foreach (var x in IndexOfNth(str, delimiter, nth + 2))
-            {
-                positions[i++] = x;
-            }
-
-            if (i < positions.Length)
-                throw new InvalidOperationException("menos colunas do q devia");
-
-            i = 0;
-            var csv = new T[config.Length];
-            foreach (var index in config)
-            {
-                var start = positions[index];
-                var length = positions[index + 1] - start - delimiter.Length;
-                csv[i++] = selector(start, length);
-            }
-
-            return csv;
-        }
 
         public static IEnumerable<int> IndexOfNth(string str, string value, int nth,
             StringComparison comparison = StringComparison.InvariantCultureIgnoreCase)
@@ -356,6 +332,40 @@ namespace RecordParser.Generic
 
             if (i != nth)
                 yield return str.Length + value.Length;
+        }
+
+        public static (int, int)[] IndexOfNth(ReadOnlySpan<char> span, ReadOnlySpan<char> delimiter, int[] config, int size)
+        {
+            var csv = new (int, int)[config.Length];
+            var scanned = -1;
+            var position = 0;
+            var j = 0;
+
+            for (var i = 0; i < size && j < config.Length; i++)
+            {
+                var range = ParseChunk(ref span, ref scanned, ref position, delimiter);
+
+                if (i == config[j])
+                {
+                    csv[j] = range;
+                    j++;
+                }
+            }
+
+            return csv;
+        }
+
+        private static (int, int) ParseChunk(ref ReadOnlySpan<char> span, ref int scanned, ref int position, ReadOnlySpan<char> delimiter)
+        {
+            scanned += position + 1;
+
+            position = span.Slice(scanned, span.Length - scanned).IndexOf(delimiter);
+            if (position < 0)
+            {
+                position = span.Slice(scanned, span.Length - scanned).Length;
+            }
+
+            return (scanned, position);
         }
     }
 }
