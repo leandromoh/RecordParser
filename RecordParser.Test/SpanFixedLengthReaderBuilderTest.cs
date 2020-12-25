@@ -7,7 +7,7 @@ using Xunit;
 
 namespace RecordParser.Test
 {
-    public class SpanFixedLengthReaderTest
+    public class SpanFixedLengthReaderBuilderTest
     {
         [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
