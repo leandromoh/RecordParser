@@ -18,7 +18,7 @@ namespace RecordParser.Test
                 .Map(x => x.Money, 2)
                 .Build();
 
-            var result = reader.Parse("foo bar baz ; 20200523 ; 0123.45");
+            var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45");
 
             result.Should().BeEquivalentTo((Name: "foo bar baz ",
                                             Birthday: new DateTime(2020, 05, 23),

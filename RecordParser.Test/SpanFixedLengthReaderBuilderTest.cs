@@ -14,11 +14,11 @@ namespace RecordParser.Test
         {
             var reader = new SpanFixedLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money)>()
                 .Map(x => x.Name, 0, 12)
-                .Map(x => x.Birthday, 12, 8)
-                .Map(x => x.Money, 21, 7)
+                .Map(x => x.Birthday, 12, 10)
+                .Map(x => x.Money, 23, 7)
                 .Build();
 
-            var result = reader.Parse("foo bar baz 20200523 0123.45");
+            var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
 
             result.Should().BeEquivalentTo((Name: "foo bar baz ",
                                             Birthday: new DateTime(2020, 05, 23),
