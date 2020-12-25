@@ -1,9 +1,9 @@
-﻿using System;
+﻿using RecordParser.Parsers;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
-using static RecordParser.Generic.ReadOnlySpanVisitor;
 
 namespace RecordParser.Generic
 {
@@ -42,11 +42,10 @@ namespace RecordParser.Generic
             return result;
         }
 
-        public static Expression<Func<string, (int, int)[], T>> RecordParserSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
+        public static Expression<FuncSpanArrayT<T>> RecordParserSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
         {
             var funcThatSetProperties = GetFuncThatSetPropertiesSpan<T>(mappedColumns);
             var getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop));
-            var shouldSkip = GetShouldSkip(mappedColumns);
 
             var instanceParameter = funcThatSetProperties.Parameters[0];
             var valueParameter = funcThatSetProperties.Parameters[1];
@@ -59,36 +58,25 @@ namespace RecordParser.Generic
 
             Expression set = Expression.Block(
                 typeof(T),
-                variables: block != null ? block.Variables.Prepend(instanceVariable) : new[] { instanceVariable },
+                variables: new[] { instanceVariable },
                 expressions: block != null ? block.Expressions.Prepend(assign) : new[] { assign, body });
 
-            if (shouldSkip is { })
-            {
-                set = Expression.Condition(
-                            test: Expression.Invoke(shouldSkip, valueParameter),
-                            ifTrue: Expression.Default(typeof(T)),
-                            ifFalse: set);
-            }
-
-            var result = Expression.Lambda<Func<string, (int, int)[], T>>(set, valueParameter, configParameter);
+            var result = Expression.Lambda<FuncSpanArrayT<T>>(set, valueParameter, configParameter);
 
             return result;
         }
 
-        public static Expression<Func<T, string, (int start, int length)[], T>> GetFuncThatSetPropertiesSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
+ 
+        public static Expression<FuncTSpanArrayT<T>> GetFuncThatSetPropertiesSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
         {
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "a");
-            ParameterExpression valueParameter = Expression.Variable(typeof(string), "value");
+            ParameterExpression valueParameter = Expression.Variable(typeof(ReadOnlySpan<char>), "span");
             ParameterExpression configParameter = Expression.Variable(typeof((int start, int length)[]), "config");
 
-            var span = Expression.Variable(typeof(ReadOnlySpan<char>), "span");
-            var like = typeof(MemoryExtensions).GetMethod(nameof(MemoryExtensions.AsSpan), new[] { typeof(string) });
+            var span = valueParameter;
 
             var replacer = new ParameterReplacer(objectParameter);
-            var assignsExpressions = new List<Expression>()
-            {
-                Expression.Assign(span, Expression.Call(null, like, valueParameter))
-            };
+            var assignsExpressions = new List<Expression>();
 
             var i = -1;
 
@@ -149,7 +137,7 @@ namespace RecordParser.Generic
 
             var blockExpr = Expression.Block(typeof(T), new[] { span }, assignsExpressions);
 
-            return Expression.Lambda<Func<T, string, (int start, int length)[], T>>(blockExpr, 
+            return Expression.Lambda<FuncTSpanArrayT<T>>(blockExpr, 
                 
                 new[] { objectParameter, valueParameter, configParameter });
         }
@@ -270,8 +258,9 @@ namespace RecordParser.Generic
             [(typeof(string), typeof(string))] = (_, ex) => ex,
             [(typeof(string), typeof(Enum))] = GetEnumParseExpression,
             [(typeof(ReadOnlySpan<char>), typeof(int))] = GetExpressionExpChar(span => int.Parse(span, NumberStyles.Integer, null)),
-            [(typeof(ReadOnlySpan<char>), typeof(DateTime))] = GetExpressionExpChar(span => DateTime.ParseExact(span, new[] { "ddMMyyyy" }, null, DateTimeStyles.None)),
+            [(typeof(ReadOnlySpan<char>), typeof(DateTime))] = GetExpressionExpChar(span => DateTime.ParseExact(span, new string[] { "yyyyMMdd" }, null, DateTimeStyles.None)),
             [(typeof(ReadOnlySpan<char>), typeof(string))] = GetExpressionExpChar(span => new string(span)),
+            [(typeof(ReadOnlySpan<char>), typeof(decimal))] = GetExpressionExpChar(span => decimal.Parse(span, NumberStyles.Number, CultureInfo.InvariantCulture))
         };
 
         private static Expression GetIsNullOrWhiteSpaceExpression(Expression valueText)
