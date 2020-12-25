@@ -50,7 +50,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, 0, 12, value => new string(value))
                 .Map(x => x.Birthday, 12, 8, value => DateTime.ParseExact(value, new[] { "ddMMyyyy" }, null, DateTimeStyles.None))
                 .Map(x => x.Money, 21, 7)
-                .Map(x => x.Nickname, 28, 8, value => new string(value))
+                .Map(x => x.Nickname, 28, 8)
                 .Build();
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");

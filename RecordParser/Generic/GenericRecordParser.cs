@@ -258,7 +258,7 @@ namespace RecordParser.Generic
             [(typeof(string), typeof(string))] = (_, ex) => ex,
             [(typeof(string), typeof(Enum))] = GetEnumParseExpression,
             [(typeof(ReadOnlySpan<char>), typeof(int))] = GetExpressionExpChar(span => int.Parse(span, NumberStyles.Integer, null)),
-            [(typeof(ReadOnlySpan<char>), typeof(DateTime))] = GetExpressionExpChar(span => DateTime.ParseExact(span, new string[] { "yyyyMMdd" }, null, DateTimeStyles.None)),
+            [(typeof(ReadOnlySpan<char>), typeof(DateTime))] = GetExpressionExpChar(span => DateTime.ParseExact(span, new string[] { "yyyyMMdd" }, null, DateTimeStyles.AllowWhiteSpaces)),
             [(typeof(ReadOnlySpan<char>), typeof(string))] = GetExpressionExpChar(span => new string(span)),
             [(typeof(ReadOnlySpan<char>), typeof(decimal))] = GetExpressionExpChar(span => decimal.Parse(span, NumberStyles.Number, CultureInfo.InvariantCulture))
         };
@@ -296,17 +296,17 @@ namespace RecordParser.Generic
             IEnumerable<MappingConfiguration> list,
             IReadOnlyDictionary<Type, Expression> dic)
         {
-            if (dic?.Any() != true)
-                return list;
+            var result = dic?.Any() != true
+                    ? list
+                    : list.Select(i =>
+                      {
+                          if (i.fmask != null || !dic.TryGetValue(i.type, out var fmask))
+                              return i;
 
-            var result = list
-                .Select(i =>
-                {
-                    if (i.fmask != null || !dic.TryGetValue(i.type, out var fmask))
-                        return i;
+                          return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask, i.skipWhen);
+                      });
 
-                    return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask, i.skipWhen);
-                })
+            result = result
                 .OrderBy(x => x.start)
                 .ToArray();
 
