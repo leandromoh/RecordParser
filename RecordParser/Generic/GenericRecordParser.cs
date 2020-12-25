@@ -302,11 +302,13 @@ namespace RecordParser.Generic
             var result = list
                 .Select(i =>
                 {
-                    // if i.fmask != null or fmask == null return i
-                    var fmask = i.fmask ?? (dic.TryGetValue(i.type, out var ex) ? ex : null);
+                    if (i.fmask != null || !dic.TryGetValue(i.type, out var fmask))
+                        return i;
+
                     return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask, i.skipWhen);
                 })
-                .OrderBy(x => x.start);
+                .OrderBy(x => x.start)
+                .ToArray();
 
             return result;
         }
