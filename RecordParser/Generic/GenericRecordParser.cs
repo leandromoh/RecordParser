@@ -305,33 +305,44 @@ namespace RecordParser.Generic
                     // if i.fmask != null or fmask == null return i
                     var fmask = i.fmask ?? (dic.TryGetValue(i.type, out var ex) ? ex : null);
                     return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask, i.skipWhen);
-                });
+                })
+                .OrderBy(x => x.start);
 
             return result;
         }
 
-        public static IEnumerable<int> IndexOfNth(string str, string value, int nth,
-            StringComparison comparison = StringComparison.InvariantCultureIgnoreCase)
+        public static string[] IndexOfNth(string span, string delimiter, int[] config, int size)
         {
-            if (nth <= 0)
-                throw new ArgumentException("Can not find the zeroth index of substring in string. Must start with 1");
+            var csv = new string[config.Length];
+            var scanned = -1;
+            var position = 0;
+            var j = 0;
 
-            yield return 0;
-
-            int offset = str.IndexOf(value, comparison);
-            int i;
-            for (i = 1; i < nth; i++)
+            for (var i = 0; i < size && j < config.Length; i++)
             {
-                if (offset == -1)
-                    break;
+                var (startIndex, length) = ParseChunk(ref span, ref scanned, ref position, delimiter);
 
-                yield return offset + value.Length;
-
-                offset = str.IndexOf(value, offset + 1, comparison);
+                if (i == config[j])
+                {
+                    csv[j] = span.Substring(startIndex, length).Trim();
+                    j++;
+                }
             }
 
-            if (i != nth)
-                yield return str.Length + value.Length;
+            return csv;
+        }
+
+        private static (int, int) ParseChunk(ref string span, ref int scanned, ref int position, string delimiter)
+        {
+            scanned += position + 1;
+
+            position = span.IndexOf(delimiter, scanned) - scanned;
+            if (position < 0)
+            {
+                position = span.Length - scanned;
+            }
+
+            return (scanned, position);
         }
 
         public static (int, int)[] IndexOfNth(ReadOnlySpan<char> span, ReadOnlySpan<char> delimiter, int[] config, int size)

@@ -28,7 +28,7 @@ namespace RecordParser.Parsers
 
         public T Parse(ReadOnlySpan<char> str)
         {
-            var csv = GenericRecordParser.IndexOfNth(str, delimiter, config, nth + 2);
+            var csv = GenericRecordParser.IndexOfNth(str, delimiter, config, nth + 1);
             var result = parser(str, csv);
             return result;
         }
