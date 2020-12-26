@@ -77,6 +77,7 @@ namespace RecordParser.Generic
 
             var replacer = new ParameterReplacer(objectParameter);
             var assignsExpressions = new List<Expression>();
+            var variables = new List<ParameterExpression>();
 
             var i = -1;
 
@@ -88,6 +89,8 @@ namespace RecordParser.Generic
                 if (propertyName is null)
                     continue;
 
+                var temp = Expression.Variable(typeof(ReadOnlySpan<char>), $"{propertyName.Member.Name}_{i}");
+                variables.Add(temp);
 
                 var arrayIndex = Expression.ArrayIndex(configParameter, Expression.Constant(i));
 
@@ -110,9 +113,12 @@ namespace RecordParser.Generic
                         Expression.Field(arrayIndex, "Item1"),
                         Expression.Field(arrayIndex, "Item2"));
 
+                assignsExpressions.Add(Expression.Assign(temp, textValue));
+
+
                 Expression valueToBeSetExpression = GetValueToBeSetExpression(
                                                         propertyUnderlyingType,
-                                                        textValue,
+                                                        temp,
                                                         func);
 
                 if (valueToBeSetExpression.Type != propertyType)
@@ -123,7 +129,7 @@ namespace RecordParser.Generic
                 if (isPropertyNullable)
                 {
                     valueToBeSetExpression = Expression.Condition(
-                        test: GetIsWhiteSpaceExpression(textValue),
+                        test: GetIsWhiteSpaceExpression(temp),
                         ifTrue: Expression.Constant(null, propertyType),
                         ifFalse: valueToBeSetExpression);
                 }
@@ -135,7 +141,7 @@ namespace RecordParser.Generic
 
             assignsExpressions.Add(objectParameter);
 
-            var blockExpr = Expression.Block(assignsExpressions);
+            var blockExpr = Expression.Block(variables, assignsExpressions);
 
             return Expression.Lambda<FuncTSpanArrayT<T>>(blockExpr,
 
