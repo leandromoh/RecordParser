@@ -28,14 +28,14 @@ namespace RecordParser.Parsers
 
         public T Parse(ReadOnlySpan<char> str)
         {
-            (int, int)[] csv = IndexOfNth(str, delimiter, config, nth + 1);
+            Span<(int, int)> csv = stackalloc (int, int)[config.Length];
+            IndexOfNth(str, delimiter, config, nth + 1, ref csv);
             T result = parser(str, csv);
             return result;
         }
 
-        private static (int, int)[] IndexOfNth(ReadOnlySpan<char> span, ReadOnlySpan<char> delimiter, int[] config, int size)
+        private static void IndexOfNth(ReadOnlySpan<char> span, ReadOnlySpan<char> delimiter, int[] config, int size, ref Span<(int, int)> csv)
         {
-            var csv = new (int, int)[config.Length];
             var scanned = -1;
             var position = 0;
             var j = 0;
@@ -50,8 +50,6 @@ namespace RecordParser.Parsers
                     j++;
                 }
             }
-
-            return csv;
         }
 
         private static (int, int) ParseChunk(ref ReadOnlySpan<char> span, ref int scanned, ref int position, ReadOnlySpan<char> delimiter)

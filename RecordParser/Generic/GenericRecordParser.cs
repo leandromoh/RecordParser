@@ -66,12 +66,11 @@ namespace RecordParser.Generic
             return result;
         }
 
-
         public static Expression<FuncTSpanArrayT<T>> GetFuncThatSetPropertiesSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
         {
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "a");
             ParameterExpression valueParameter = Expression.Variable(typeof(ReadOnlySpan<char>), "span");
-            ParameterExpression configParameter = Expression.Variable(typeof((int start, int length)[]), "config");
+            ParameterExpression configParameter = Expression.Variable(typeof(ReadOnlySpan<(int, int)>), "config");
 
             var span = valueParameter;
 
@@ -88,8 +87,7 @@ namespace RecordParser.Generic
                 if (propertyName is null)
                     continue;
 
-
-                var arrayIndex = Expression.ArrayIndex(configParameter, Expression.Constant(i));
+                var arrayIndex = MakeArray<(int, int)>(configParameter, Expression.Constant(i));
 
                 var propertyType = propertyName.Type;
                 var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
@@ -312,5 +310,19 @@ namespace RecordParser.Generic
 
             return result;
         }
+
+        delegate X FuncSpanIntT<X>(ReadOnlySpan<X> span, int index);
+
+        static Expression GetFunc(Delegate f, params Expression[] args)
+        {
+            return Expression.Call(f.Target is null ? null : Expression.Constant(f.Target), f.Method, args);
+        }
+
+        static Expression MakeArray<X>(params Expression[] args)
+        {
+            return GetFunc((FuncSpanIntT<X>)(Bla), args);
+        }
+
+        static X Bla<X>(ReadOnlySpan<X> spanzin, int i) => spanzin[i];
     }
 }

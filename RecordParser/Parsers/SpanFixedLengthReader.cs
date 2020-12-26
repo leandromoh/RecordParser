@@ -10,13 +10,13 @@ namespace RecordParser.Parsers
         T Parse(ReadOnlySpan<char> line);
     }
 
-    public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, (int, int)[] config);
-    public delegate T FuncTSpanArrayT<T>(T instance, ReadOnlySpan<char> line, (int, int)[] config);
+    public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, ReadOnlySpan<(int, int)> config);
+    public delegate T FuncTSpanArrayT<T>(T instance, ReadOnlySpan<char> line, ReadOnlySpan<(int, int)> config);
 
     public class SpanFixedLengthReader<T> : ISpanFixedLengthReader<T>
     {
         private readonly FuncSpanArrayT<T> parser;
-        private readonly (int start, int length)[] config;
+        private readonly ReadOnlyMemory<(int start, int length)> config;
 
         internal SpanFixedLengthReader(IEnumerable<MappingConfiguration> list, FuncSpanArrayT<T> parser)
         {
@@ -26,7 +26,7 @@ namespace RecordParser.Parsers
 
         public T Parse(ReadOnlySpan<char> line)
         {
-            return parser(line, config);
+            return parser(line, config.Span);
         }
     }
 }
