@@ -58,7 +58,7 @@ namespace RecordParser.Generic
 
             Expression set = Expression.Block(
                 typeof(T),
-                variables: new[] { instanceVariable },
+                variables: block != null ? block.Variables.Prepend(instanceVariable) : new[] { instanceVariable },
                 expressions: block != null ? block.Expressions.Prepend(assign) : new[] { assign, body });
 
             var result = Expression.Lambda<FuncSpanArrayT<T>>(set, valueParameter, configParameter);
@@ -124,7 +124,7 @@ namespace RecordParser.Generic
                 {
                     valueToBeSetExpression = Expression.Condition(
                         test: GetIsWhiteSpaceExpression(textValue),
-                        ifTrue: Expression.Default(propertyType),
+                        ifTrue: Expression.Constant(null, propertyType),
                         ifFalse: valueToBeSetExpression);
                 }
 
@@ -135,7 +135,7 @@ namespace RecordParser.Generic
 
             assignsExpressions.Add(objectParameter);
 
-            var blockExpr = Expression.Block(typeof(T), new[] { span }, assignsExpressions);
+            var blockExpr = Expression.Block(assignsExpressions);
 
             return Expression.Lambda<FuncTSpanArrayT<T>>(blockExpr,
 
