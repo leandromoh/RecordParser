@@ -37,6 +37,7 @@ namespace RecordParser.Generic
                             ifFalse: set);
             }
 
+            set = new ClosureVisitor().Visit(set);
             var result = Expression.Lambda<Func<string[], T>>(set, valueParameter);
 
             return result;
