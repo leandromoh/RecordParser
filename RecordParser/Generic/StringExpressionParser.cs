@@ -96,7 +96,8 @@ namespace RecordParser.Generic
 
         private static Expression GetIsNullOrWhiteSpaceExpression(Expression valueText)
         {
-            return GetExpressionFunc(string.IsNullOrWhiteSpace, valueText);
+            Func<string, bool> func = string.IsNullOrWhiteSpace;
+            return GetExpressionFunc(func, valueText);
         }
 
         private static Expression<Func<string[], bool>> GetShouldSkip(IEnumerable<MappingConfiguration> columns)

@@ -88,9 +88,9 @@ namespace RecordParser.Generic
             return (Type _, Expression valueText) => new ParameterReplacer(valueText).Visit(intTao.Body);
         }
 
-        public static Expression GetExpressionFunc<R>(Func<string, R> f, Expression valueText)
+        public static Expression GetExpressionFunc(Delegate f, params Expression[] args)
         {
-            return Expression.Call(f.Target is null ? null : Expression.Constant(f.Target), f.Method, valueText);
+            return Expression.Call(f.Target is null ? null : Expression.Constant(f.Target), f.Method, args);
         }
 
         public static IEnumerable<MappingConfiguration> Merge(

@@ -13,7 +13,7 @@ namespace RecordParser.Parsers
     public class SpanFixedLengthReader<T> : ISpanFixedLengthReader<T>
     {
         private readonly FuncSpanArrayT<T> parser;
-        private readonly (int start, int length)[] config;
+        private readonly ReadOnlyMemory<(int start, int length)> config;
 
         internal SpanFixedLengthReader(IEnumerable<MappingConfiguration> list, FuncSpanArrayT<T> parser)
         {
@@ -23,7 +23,7 @@ namespace RecordParser.Parsers
 
         public T Parse(ReadOnlySpan<char> line)
         {
-            return parser(line, config);
+            return parser(line, config.Span);
         }
     }
 }

@@ -4,9 +4,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.Generic.GenericRecordParser;
 
+public delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
 public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
-public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, (int, int)[] config);
-public delegate T FuncTSpanArrayT<T>(T instance, ReadOnlySpan<char> line, (int, int)[] config);
+public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, ReadOnlySpan<(int, int)> config);
+public delegate T FuncTSpanArrayT<T>(T instance, ReadOnlySpan<char> line, ReadOnlySpan<(int, int)> config);
 
 namespace RecordParser.Generic
 {
@@ -40,7 +41,7 @@ namespace RecordParser.Generic
         {
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "a");
             ParameterExpression valueParameter = Expression.Variable(typeof(ReadOnlySpan<char>), "span");
-            ParameterExpression configParameter = Expression.Variable(typeof((int start, int length)[]), "config");
+            ParameterExpression configParameter = Expression.Variable(typeof(ReadOnlySpan<(int start, int length)>), "config");
 
             var span = valueParameter;
 
@@ -58,7 +59,7 @@ namespace RecordParser.Generic
                     continue;
 
 
-                var arrayIndex = Expression.ArrayIndex(configParameter, Expression.Constant(i));
+                var arrayIndex = ReadOnlySpanIndex<(int, int)>(configParameter, Expression.Constant(i));
 
                 var propertyType = propertyName.Type;
                 var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
@@ -105,6 +106,13 @@ namespace RecordParser.Generic
             return Expression.Call(typeof(MemoryExtensions),
                 nameof(MemoryExtensions.IsWhiteSpace),
                 Type.EmptyTypes, valueText);
+        }
+
+        private static Expression ReadOnlySpanIndex<T>(params Expression[] args)
+        {
+            static T func(ReadOnlySpan<T> span, int i) => span[i];
+
+            return GetExpressionFunc((FuncSpanIntT<T>)func, args);
         }
     }
 }
