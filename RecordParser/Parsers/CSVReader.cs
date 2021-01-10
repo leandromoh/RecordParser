@@ -38,11 +38,10 @@ namespace RecordParser.Parsers
             var csv = new string[config.Length];
             var scanned = - delimiter.Length;
             var position = 0;
-            var j = 0;
 
-            for (var i = 0; i < size && j < config.Length; i++)
+            for (int i = 0, j = 0; i < size && j < config.Length; i++)
             {
-                var (startIndex, length) = ParseChunk(ref span, ref scanned, ref position, delimiter);
+                var (startIndex, length) = ParseChunk(span, ref scanned, ref position, delimiter);
 
                 if (i == config[j])
                 {
@@ -54,7 +53,7 @@ namespace RecordParser.Parsers
             return csv;
         }
 
-        private static (int, int) ParseChunk(ref string span, ref int scanned, ref int position, string delimiter)
+        private static (int, int) ParseChunk(string span, ref int scanned, ref int position, string delimiter)
         {
             scanned += position + delimiter.Length;
 

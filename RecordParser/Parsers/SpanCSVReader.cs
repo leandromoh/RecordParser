@@ -38,11 +38,10 @@ namespace RecordParser.Parsers
         {
             var scanned = - delimiter.Length;
             var position = 0;
-            var j = 0;
 
-            for (var i = 0; i < size && j < config.Length; i++)
+            for (int i = 0, j = 0; i < size && j < config.Length; i++)
             {
-                var range = ParseChunk(ref span, ref scanned, ref position, delimiter);
+                var range = ParseChunk(in span, ref scanned, ref position, in delimiter);
 
                 if (i == config[j])
                 {
@@ -52,7 +51,7 @@ namespace RecordParser.Parsers
             }
         }
 
-        private static (int, int) ParseChunk(ref ReadOnlySpan<char> span, ref int scanned, ref int position, ReadOnlySpan<char> delimiter)
+        private static (int, int) ParseChunk(in ReadOnlySpan<char> span, ref int scanned, ref int position, in ReadOnlySpan<char> delimiter)
         {
             scanned += position + delimiter.Length;
 
