@@ -36,7 +36,7 @@ namespace RecordParser.Parsers
         private static (int, int)[] IndexOfNth(ReadOnlySpan<char> span, ReadOnlySpan<char> delimiter, int[] config, int size)
         {
             var csv = new (int, int)[config.Length];
-            var scanned = -1;
+            var scanned = - delimiter.Length;
             var position = 0;
             var j = 0;
 
@@ -56,7 +56,7 @@ namespace RecordParser.Parsers
 
         private static (int, int) ParseChunk(ref ReadOnlySpan<char> span, ref int scanned, ref int position, ReadOnlySpan<char> delimiter)
         {
-            scanned += position + 1;
+            scanned += position + delimiter.Length;
 
             position = span.Slice(scanned, span.Length - scanned).IndexOf(delimiter);
             if (position < 0)
