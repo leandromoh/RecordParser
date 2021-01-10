@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -16,9 +17,9 @@ namespace RecordParser.Generic
                 else
                     return Expression.Invoke(func, valueText);
 
-            propertyType = propertyType.IsEnum ? typeof(Enum) : propertyType;
+            var targetType = propertyType.IsEnum ? typeof(Enum) : propertyType;
 
-            if (dic.TryGetValue((valueText.Type, propertyType), out var expF))
+            if (dic.TryGetValue((valueText.Type, targetType), out var expF))
                 return expF(propertyType, valueText);
 
             return GetParseExpression(propertyType, valueText);
@@ -27,18 +28,13 @@ namespace RecordParser.Generic
         private static readonly IDictionary<(Type, Type), Func<Type, Expression, Expression>> dic = new Dictionary<(Type, Type), Func<Type, Expression, Expression>>
         {
             [(typeof(string), typeof(string))] = (_, ex) => ex,
-            [(typeof(string), typeof(Enum))] = GetEnumParseExpression,
+            [(typeof(string), typeof(Enum))] = GetEnumFromStringParseExpression,
+            [(typeof(ReadOnlySpan<char>), typeof(Enum))] = GetEnumFromSpanParseExpression,
             [(typeof(ReadOnlySpan<char>), typeof(int))] = GetExpressionExpChar(span => int.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture)),
             [(typeof(ReadOnlySpan<char>), typeof(DateTime))] = GetExpressionExpChar(span => DateTime.Parse(span, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces)),
             [(typeof(ReadOnlySpan<char>), typeof(string))] = GetExpressionExpChar(span => new string(span)),
             [(typeof(ReadOnlySpan<char>), typeof(decimal))] = GetExpressionExpChar(span => decimal.Parse(span, NumberStyles.Number, CultureInfo.InvariantCulture))
         };
-
-        private static Expression GetEnumParseExpression(Type type, Expression valueText)
-        {
-            return GetExpressionExp(text =>
-                Enum.Parse(type, text.Replace(" ", string.Empty), true), valueText);
-        }
 
         private static Expression GetParseExpression(Type type, Expression valueText)
         {
@@ -55,6 +51,34 @@ namespace RecordParser.Generic
         private static Expression GetExpressionExp<R>(Expression<Func<string, R>> f, Expression valueText)
         {
             return new ParameterReplacer(valueText).Visit(f.Body);
+        }
+
+        private static Expression GetEnumFromStringParseExpression(Type type, Expression valueText)
+        {
+            Debug.Assert(valueText.Type == typeof(string));
+
+            return Expression.Call(
+                typeof(Enum), nameof(Enum.Parse), new[] { type },
+                arguments: new Expression[]
+                {
+                        valueText,
+                        Expression.Constant(true)
+                });
+        }
+
+        private static Expression GetEnumFromSpanParseExpression(Type type, Expression valueText)
+        {
+            Debug.Assert(valueText.Type == typeof(ReadOnlySpan<char>));
+
+            var stringConstructor = typeof(string).GetConstructor(new[] { typeof(ReadOnlySpan<char>) });
+
+            return Expression.Call(
+                typeof(Enum), nameof(Enum.Parse), new[] { type },
+                arguments: new Expression[]
+                {
+                    Expression.New(stringConstructor, valueText),
+                    Expression.Constant(true)
+                });
         }
 
         private static Func<Type, Expression, Expression> GetExpressionExpChar<T>(Expression<Func<ReadOnlySpanChar, T>> ex)

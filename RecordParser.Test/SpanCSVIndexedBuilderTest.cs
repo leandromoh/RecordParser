@@ -12,17 +12,19 @@ namespace RecordParser.Test
         [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
         {
-            var reader = new SpanCSVIndexedBuilder<(string Name, DateTime Birthday, decimal Money)>()
+            var reader = new SpanCSVIndexedBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
                 .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1)
                 .Map(x => x.Money, 2)
+                .Map(x => x.Color, 3)
                 .Build();
 
-            var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45");
+            var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue ");
 
             result.Should().BeEquivalentTo((Name: "foo bar baz ",
                                             Birthday: new DateTime(2020, 05, 23),
-                                            Money: 123.45M));
+                                            Money: 123.45M,
+                                            Color: Color.LightBlue));
         }
 
         [Fact]
