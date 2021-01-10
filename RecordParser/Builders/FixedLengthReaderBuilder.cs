@@ -37,7 +37,7 @@ namespace RecordParser.Parsers
         public IFixedLengthReader<T> Build()
         {
             var map = GenericRecordParser.Merge(list, dic);
-            var func = GenericRecordParser.RecordParser<T>(map).Compile();
+            var func = StringExpressionParser.RecordParser<T>(map).Compile();
 
             return new FixedLengthReader<T>(map, func);
         }

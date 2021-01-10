@@ -10,9 +10,6 @@ namespace RecordParser.Parsers
         T Parse(ReadOnlySpan<char> line);
     }
 
-    public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, (int, int)[] config);
-    public delegate T FuncTSpanArrayT<T>(T instance, ReadOnlySpan<char> line, (int, int)[] config);
-
     public class SpanFixedLengthReader<T> : ISpanFixedLengthReader<T>
     {
         private readonly FuncSpanArrayT<T> parser;

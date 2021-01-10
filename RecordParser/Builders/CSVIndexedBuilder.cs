@@ -37,7 +37,7 @@ namespace RecordParser.Parsers
         public ICSVReader<T> Build()
         {
             var map = GenericRecordParser.Merge(list.Select(x => x.Value), dic);
-            var func = GenericRecordParser.RecordParser<T>(map).Compile();
+            var func = StringExpressionParser.RecordParser<T>(map).Compile();
 
             return new CSVReader<T>(map, func);
         }

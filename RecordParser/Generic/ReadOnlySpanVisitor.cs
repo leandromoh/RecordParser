@@ -8,26 +8,27 @@ namespace RecordParser.Generic
         public static implicit operator ReadOnlySpan<char>(ReadOnlySpanChar _) => default;
     }
 
-    public delegate T FuncConvert<T>(ReadOnlySpan<char> text);
-
     public class ReadOnlySpanVisitor : ExpressionVisitor
     {
         private readonly ParameterExpression span = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
 
-        public Expression<FuncConvert<T>> Modify<T>(Expression<Func<ReadOnlySpanChar, T>> ex)
+        public Expression<FuncSpanT<T>> Modify<T>(Expression<Func<ReadOnlySpanChar, T>> ex)
         {
             if (ex is null) return null;
 
             var body = Visit(ex.Body);
 
-            var lamb = Expression.Lambda<FuncConvert<T>>(body, span);
+            var lamb = Expression.Lambda<FuncSpanT<T>>(body, span);
 
             return lamb;
         }
 
         protected override Expression VisitParameter(ParameterExpression node)
         {
-            return span;
+            if (node.Type == typeof(ReadOnlySpanChar))
+                return span;
+
+            return base.VisitParameter(node);
         }
 
         protected override Expression VisitUnary(UnaryExpression node)
