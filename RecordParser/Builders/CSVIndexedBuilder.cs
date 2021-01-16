@@ -8,7 +8,7 @@ namespace RecordParser.Parsers
 {
     public interface ICSVIndexedBuilder<T>
     {
-        ICSVReader<T> Build();
+        ICSVReader<T> Build(string separator = ";");
         ICSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
         ICSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
     }
@@ -34,12 +34,12 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public ICSVReader<T> Build()
+        public ICSVReader<T> Build(string separator)
         {
             var map = GenericRecordParser.Merge(list.Select(x => x.Value), dic);
             var func = StringExpressionParser.RecordParser<T>(map).Compile();
 
-            return new CSVReader<T>(map, func);
+            return new CSVReader<T>(map, func, separator);
         }
     }
 }

@@ -18,12 +18,12 @@ namespace RecordParser.Parsers
         private readonly int nth;
         private readonly string delimiter;
 
-        internal CSVReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser)
+        internal CSVReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser, string separator)
         {
             config = list.Select(x => x.start).ToArray();
             nth = config.Max();
             this.parser = parser;
-            delimiter = ";";
+            delimiter = separator;
         }
 
         public T Parse(string str)

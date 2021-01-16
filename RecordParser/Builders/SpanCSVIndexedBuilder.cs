@@ -8,7 +8,7 @@ namespace RecordParser.Parsers
 {
     public interface ISpanCSVIndexedBuilder<T>
     {
-        ISpanCSVReader<T> Build();
+        ISpanCSVReader<T> Build(string separator = ";");
         ISpanCSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex);
         ISpanCSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum, Expression<Func<ReadOnlySpanChar, R>> convert = null, Expression<Func<ReadOnlySpanChar, bool>> skipRecordWhen = null);
     }
@@ -37,12 +37,12 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public ISpanCSVReader<T> Build()
+        public ISpanCSVReader<T> Build(string separator)
         {
             var map = GenericRecordParser.Merge(list.Select(x => x.Value), dic);
             var func = SpanExpressionParser.RecordParserSpan<T>(map).Compile();
 
-            return new SpanCSVReader<T>(map, func);
+            return new SpanCSVReader<T>(map, func, separator);
         }
     }
 }

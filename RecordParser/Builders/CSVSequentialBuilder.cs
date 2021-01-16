@@ -5,7 +5,7 @@ namespace RecordParser.Parsers
 {
     public interface ICSVSequentialBuilder<T>
     {
-        ICSVReader<T> Build();
+        ICSVReader<T> Build(string separator = ";");
         ICSVSequentialBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
         ICSVSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
         ICSVSequentialBuilder<T> Skip(int collumCount);
@@ -37,6 +37,6 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public ICSVReader<T> Build() => indexed.Build();
+        public ICSVReader<T> Build(string separator) => indexed.Build(separator);
     }
 }
