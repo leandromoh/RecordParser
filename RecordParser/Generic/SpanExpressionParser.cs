@@ -6,8 +6,8 @@ using static RecordParser.Generic.GenericRecordParser;
 
 public delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
 public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
-public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, ReadOnlySpan<(int, int)> config);
-public delegate T FuncTSpanArrayT<T>(T instance, ReadOnlySpan<char> line, ReadOnlySpan<(int, int)> config);
+public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, ReadOnlySpan<(int start, int length)> config);
+public delegate T FuncTSpanArrayT<T>(T instance, ReadOnlySpan<char> line, ReadOnlySpan<(int start, int length)> config);
 
 namespace RecordParser.Generic
 {
