@@ -27,9 +27,6 @@ namespace RecordParser.Parsers
             delimiter = separator;
         }
 
-#if NET5_0
-        [SkipLocalsInit]
-#endif
         public T Parse(ReadOnlySpan<char> str)
         {
             Span<(int, int)> csv = stackalloc (int, int)[config.Length];

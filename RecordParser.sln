@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29519.181
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordParser", "RecordParser\RecordParser.csproj", "{BA47D31A-475B-452F-BDE1-604465A57811}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecordParser", "RecordParser\RecordParser.csproj", "{BA47D31A-475B-452F-BDE1-604465A57811}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordParser.Test", "RecordParser.Test\RecordParser.Test.csproj", "{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecordParser.Test", "RecordParser.Test\RecordParser.Test.csproj", "{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordParser.Benchmark", "RecordParser.Benchmark\RecordParser.Benchmark.csproj", "{D0F836BF-821C-49CE-994E-E4C866B5B7DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DD1F677C-4BFE-4772-A2D7-C507F2B9C0A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0F836BF-821C-49CE-994E-E4C866B5B7DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0F836BF-821C-49CE-994E-E4C866B5B7DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0F836BF-821C-49CE-994E-E4C866B5B7DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0F836BF-821C-49CE-994E-E4C866B5B7DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
