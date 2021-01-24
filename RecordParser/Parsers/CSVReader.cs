@@ -3,6 +3,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace RecordParser.Parsers
 {
@@ -26,6 +27,9 @@ namespace RecordParser.Parsers
             delimiter = separator;
         }
 
+#if NET5_0
+        [SkipLocalsInit]
+#endif
         public T Parse(string str)
         {
             var span = str.AsSpan();
