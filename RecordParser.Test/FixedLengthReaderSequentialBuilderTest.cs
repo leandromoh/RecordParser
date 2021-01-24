@@ -13,7 +13,8 @@ namespace RecordParser.Test
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
         {
             var reader = new FixedLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money)>()
-                .Map(x => x.Name, 12)
+                .Map(x => x.Name, length: 11)
+                .Skip(1)
                 .Map(x => x.Birthday, 10)
                 .Skip(1)
                 .Map(x => x.Money, 7)
@@ -21,7 +22,7 @@ namespace RecordParser.Test
 
             var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
 
-            result.Should().BeEquivalentTo((Name: "foo bar baz ",
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 123.45M));
         }

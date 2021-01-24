@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Generic
 {
-    public static class GenericRecordParser
+    internal static class GenericRecordParser
     {
         public static Expression GetValueToBeSetExpression(Type propertyType, Expression valueText, Expression func)
         {

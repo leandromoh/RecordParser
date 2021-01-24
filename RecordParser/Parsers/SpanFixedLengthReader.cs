@@ -10,7 +10,7 @@ namespace RecordParser.Parsers
         T Parse(ReadOnlySpan<char> line);
     }
 
-    public class SpanFixedLengthReader<T> : ISpanFixedLengthReader<T>
+    internal class SpanFixedLengthReader<T> : ISpanFixedLengthReader<T>
     {
         private readonly FuncSpanArrayT<T> parser;
         private readonly ReadOnlyMemory<(int start, int length)> config;

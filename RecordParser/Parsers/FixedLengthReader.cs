@@ -10,7 +10,7 @@ namespace RecordParser.Parsers
         T Parse(string line);
     }
 
-    public class FixedLengthReader<T> : IFixedLengthReader<T>
+    internal class FixedLengthReader<T> : IFixedLengthReader<T>
     {
         private readonly Func<string[], T> parser;
         private readonly (int start, int length)[] config;

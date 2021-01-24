@@ -7,19 +7,19 @@ using System.Runtime.CompilerServices;
 
 namespace RecordParser.Parsers
 {
-    public interface ICSVReader<T>
+    public interface IVariableLengthReader<T>
     {
-        T Parse(string str);
+        T Parse(string line);
     }
 
-    public class CSVReader<T> : ICSVReader<T>
+    internal class VariableLengthReader<T> : IVariableLengthReader<T>
     {
         private readonly Func<string[], T> parser;
         private readonly int[] config;
         private readonly int nth;
         private readonly string delimiter;
 
-        internal CSVReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser, string separator)
+        internal VariableLengthReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser, string separator)
         {
             config = list.Select(x => x.start).ToArray();
             nth = config.Max();
@@ -30,9 +30,9 @@ namespace RecordParser.Parsers
 #if NET5_0
         [SkipLocalsInit]
 #endif
-        public T Parse(string str)
+        public T Parse(string line)
         {
-            var span = str.AsSpan();
+            var span = line.AsSpan();
             Span<(int start, int length)> indices = stackalloc (int, int)[config.Length];
             TextFindHelper.SetStartLengthPositions(span, delimiter, config, nth + 1, in indices);
 

@@ -13,14 +13,14 @@ namespace RecordParser.Test
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
         {
             var reader = new FixedLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money)>()
-                .Map(x => x.Name, 0, 12)
+                .Map(x => x.Name, startIndex: 0, length: 11)
                 .Map(x => x.Birthday, 12, 10)
                 .Map(x => x.Money, 23, 7)
                 .Build();
 
             var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
 
-            result.Should().BeEquivalentTo((Name: "foo bar baz ",
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 123.45M));
         }

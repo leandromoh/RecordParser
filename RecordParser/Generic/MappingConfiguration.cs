@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Generic
 {
-    public readonly struct MappingConfiguration
+    internal readonly struct MappingConfiguration
     {
         public MemberExpression prop { get; }
         public int start { get; }

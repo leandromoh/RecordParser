@@ -6,19 +6,19 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
-    public interface ICSVIndexedBuilder<T>
+    public interface IVariableLengthReaderBuilder<T>
     {
-        ICSVReader<T> Build(string separator = ";");
-        ICSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
-        ICSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
+        IVariableLengthReader<T> Build(string separator);
+        IVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
+        IVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
     }
 
-    public class CSVIndexedBuilder<T> : ICSVIndexedBuilder<T>
+    public class VariableLengthReaderBuilder<T> : IVariableLengthReaderBuilder<T>
     {
         private readonly Dictionary<int, MappingConfiguration> list = new Dictionary<int, MappingConfiguration>();
         private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
 
-        public ICSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum,
+        public IVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum,
             Expression<Func<string, R>> convert = null,
             Expression<Func<string, bool>> skipRecordWhen = null)
         {
@@ -28,18 +28,18 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public ICSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
+        public IVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
         {
             dic.Add(typeof(R), ex);
             return this;
         }
 
-        public ICSVReader<T> Build(string separator)
+        public IVariableLengthReader<T> Build(string separator)
         {
             var map = GenericRecordParser.Merge(list.Select(x => x.Value), dic);
             var func = StringExpressionParser.RecordParser<T>(map).Compile();
 
-            return new CSVReader<T>(map, func, separator);
+            return new VariableLengthReader<T>(map, func, separator);
         }
     }
 }

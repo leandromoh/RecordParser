@@ -2,7 +2,7 @@
 
 namespace RecordParser.Generic
 {
-    public static class TextFindHelper
+    internal static class TextFindHelper
     {
         public static void SetStartLengthPositions(ReadOnlySpan<char> span, ReadOnlySpan<char> delimiter, int[] config, int size, in Span<(int start, int length)> csv)
         {

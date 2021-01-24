@@ -13,6 +13,10 @@ Currently there are parsers for 2 record formats:
 2. Variable length, common in delimited files, e.g. CSV, TSV files, etc
 
 ## Fixed length
+There are 2 flavors for mapping: indexed or sequential.  
+
+Indexed is useful when you want to map columns by its position: start/length. 
+
 ```csharp
 [Fact]
 public void Given_value_using_standard_format_should_parse_without_extra_configuration()
@@ -30,20 +34,43 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
                                     Money: 123.45M));
 }
 ```
-## Variable length
-This one have 2 flavors for mapping: indexed or sequential.  
+Sequential is useful when you want to map columns by its order, so you just need specify the lengths.
 
-Indexed is useful when you want to specify the columns that should be mapped by its indexes. 
 ```csharp
 [Fact]
 public void Given_value_using_standard_format_should_parse_without_extra_configuration()
 {
-    var reader = new CSVIndexedBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+    var reader = new FixedLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money)>()
+        .Map(x => x.Name, length: 11)
+        .Skip(1)
+        .Map(x => x.Birthday, 10)
+        .Skip(1)
+        .Map(x => x.Money, 7)
+        .Build();
+
+    var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
+
+    result.Should().BeEquivalentTo((Name: "foo bar baz",
+                                    Birthday: new DateTime(2020, 05, 23),
+                                    Money: 123.45M));
+}
+```
+
+## Variable length
+There are 2 flavors for mapping: indexed or sequential.  
+
+Indexed is useful when you want to map columns by its indexes. 
+
+```csharp
+[Fact]
+public void Given_value_using_standard_format_should_parse_without_extra_configuration()
+{
+    var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
         .Map(x => x.Name, indexColum: 0)
         .Map(x => x.Birthday, 1)
         .Map(x => x.Money, 2)
         .Map(x => x.Color, 3)
-        .Build();
+        .Build(";");
 
     var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue");
 
@@ -54,19 +81,19 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 }
 ```
 
-Sequential is useful when you want to specify the columns that should be mapped by its order. 
+Sequential is useful when you want to map columns by its order. 
 
 ```csharp
 [Fact]
 public void Given_columns_to_ignore_and_value_using_standard_format_should_parse_without_extra_configuration()
 {
-    var reader = new CSVSequentialBuilder<(string Name, DateTime Birthday, decimal Money)>()
+    var reader = new VariableLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money)>()
         .Map(x => x.Name)
         .Skip(1)
         .Map(x => x.Birthday)
         .Skip(2)
         .Map(x => x.Money)
-        .Build();
+        .Build(";");
 
     var result = reader.Parse("foo bar baz ; IGNORE; 2020.05.23 ; IGNORE ; IGNORE ; 0123.45");
 

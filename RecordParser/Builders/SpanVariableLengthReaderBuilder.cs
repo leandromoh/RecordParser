@@ -6,20 +6,20 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
-    public interface ISpanCSVIndexedBuilder<T>
+    public interface ISpanVariableLengthReaderBuilder<T>
     {
-        ISpanCSVReader<T> Build(string separator = ";");
-        ISpanCSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex);
-        ISpanCSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum, Expression<Func<ReadOnlySpanChar, R>> convert = null, Expression<Func<ReadOnlySpanChar, bool>> skipRecordWhen = null);
+        ISpanVariableLengthReader<T> Build(string separator);
+        ISpanVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex);
+        ISpanVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum, Expression<Func<ReadOnlySpanChar, R>> convert = null, Expression<Func<ReadOnlySpanChar, bool>> skipRecordWhen = null);
     }
 
-    public class SpanCSVIndexedBuilder<T> : ISpanCSVIndexedBuilder<T>
+    public class SpanVariableLengthReaderBuilder<T> : ISpanVariableLengthReaderBuilder<T>
     {
         private readonly Dictionary<int, MappingConfiguration> list = new Dictionary<int, MappingConfiguration>();
         private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
         private readonly ReadOnlySpanVisitor visitor = new ReadOnlySpanVisitor();
 
-        public ISpanCSVIndexedBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum,
+        public ISpanVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColum,
             Expression<Func<ReadOnlySpanChar, R>> convert = null,
             Expression<Func<ReadOnlySpanChar, bool>> skipRecordWhen = null)
         {
@@ -30,19 +30,19 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public ISpanCSVIndexedBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex)
+        public ISpanVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex)
         {
             dic.Add(typeof(R), visitor.Modify(ex));
             
             return this;
         }
 
-        public ISpanCSVReader<T> Build(string separator)
+        public ISpanVariableLengthReader<T> Build(string separator)
         {
             var map = GenericRecordParser.Merge(list.Select(x => x.Value), dic);
             var func = SpanExpressionParser.RecordParserSpan<T>(map).Compile();
 
-            return new SpanCSVReader<T>(map, func, separator);
+            return new SpanVariableLengthReader<T>(map, func, separator);
         }
     }
 }
