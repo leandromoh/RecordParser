@@ -102,3 +102,51 @@ public void Given_columns_to_ignore_and_value_using_standard_format_should_parse
                                     Money: 123.45M));
 }
 ```
+### Default Type Convert
+
+You can define default converters for some type if you has a custom format.  
+Follown example defines that all decimals values will be divided by 100 before the assign, also, all dates will be parsed in the `ddMMyyyy` format.  
+This feature is avaible for both fixed and variable length.
+
+```csharp
+[Fact]
+public void Given_types_with_custom_format_should_allow_define_default_parser_for_type()
+{
+    var reader = new FixedLengthReaderBuilder<(decimal Debit, decimal Balance, DateTime Date)>()
+        .Map(x => x.Balance, 0, 12)
+        .Map(x => x.Date, 13, 8)
+        .Map(x => x.Debit, 22, 6)
+        .DefaultTypeConvert(value => decimal.Parse(value) / 100)
+        .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
+        .Build();
+
+    var result = reader.Parse("012345678901 23052020 012345");
+
+    result.Should().BeEquivalentTo((Debit: 0123.45M,
+                                    Balance: 0123456789.01M,
+                                    Date: new DateTime(2020, 05, 23)));
+}
+```
+### Custom Field/Property Convert
+
+You can define a custom converter for field/property.  
+Custom converters have priority case a default type convert is defined.  
+This feature is avaible for both fixed and variable length.  
+
+```csharp
+[Fact]
+public void Given_specified_custom_parser_for_member_should_have_priority_over_custom_parser_for_type()
+{
+    var reader = new VariableLengthReaderBuilder<(int Age, int MotherAge, int FatherAge)>()
+        .Map(x => x.Age, 0)
+        .Map(x => x.MotherAge, 1, value => int.Parse(value) + 3)
+        .Map(x => x.FatherAge, 2)
+        .Build(";");
+
+    var result = reader.Parse(" 15 ; 40 ; 50 ");
+
+    result.Should().BeEquivalentTo((Age: 15,
+                                    MotherAge: 43,
+                                    FatherAge: 50));
+}
+```
