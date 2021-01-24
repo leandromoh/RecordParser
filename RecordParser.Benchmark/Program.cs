@@ -1,8 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
-using MoreLinq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace RecordParser.Benchmark
 {
