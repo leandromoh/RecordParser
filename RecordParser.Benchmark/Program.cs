@@ -7,12 +7,6 @@ namespace RecordParser.Benchmark
     {
         static void Main(string[] args)
         {
-#if DEBUG
-            var runner = new TestRunner();
-
-            runner.SpanCSVIndexedRaw().GetAwaiter().GetResult();
-#endif
-
             BenchmarkRunner.Run<TestRunner>();
 
             Console.Out.Write("Hit <enter> to exit...");
