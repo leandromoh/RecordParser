@@ -71,6 +71,8 @@ namespace RecordParser.Generic
                         Expression.Field(arrayIndex, "Item1"),
                         Expression.Field(arrayIndex, "Item2"));
 
+                textValue = Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, textValue);
+
                 Expression valueToBeSetExpression = GetValueToBeSetExpression(
                                                         propertyUnderlyingType,
                                                         textValue,

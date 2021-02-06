@@ -2,7 +2,6 @@ using FluentAssertions;
 using RecordParser.Parsers;
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using Xunit;
 
 namespace RecordParser.Test
@@ -60,7 +59,7 @@ namespace RecordParser.Test
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
 
-            result.Should().BeEquivalentTo((Name: "FOO BAR BAZ ",
+            result.Should().BeEquivalentTo((Name: "FOO BAR BAZ",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 12345M,
                                             Nickname: "n.e"));
@@ -81,6 +80,22 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo((Age: 30,
                                             MotherAge: 42,
                                             FatherAge: 52));
+        }
+
+        [Fact]
+        public void Given_trim_is_enabled_should_remove_whitespace_from_both_sides_of_string()
+        {
+            var reader = new FixedLengthReaderSequentialBuilder<(string Foo, string Bar, string Baz)>()
+                .Map(x => x.Foo, 4)
+                .Map(x => x.Bar, 4)
+                .Map(x => x.Baz, 4)
+                .Build();
+
+            var result = reader.Parse(" foo bar baz ");
+
+            result.Should().BeEquivalentTo((Foo: "foo",
+                                            Bar: "bar",
+                                            Baz: "baz"));
         }
     }
 }

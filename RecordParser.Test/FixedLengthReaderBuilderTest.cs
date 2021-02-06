@@ -55,7 +55,7 @@ namespace RecordParser.Test
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
 
-            result.Should().BeEquivalentTo((Name: "FOO BAR BAZ ",
+            result.Should().BeEquivalentTo((Name: "FOO BAR BAZ",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 12345M,
                                             Nickname: "n.e"));
@@ -93,6 +93,22 @@ namespace RecordParser.Test
                                             Balance: 012345678.901M,
                                             Date: new DateTime(2020, 05, 23)));
         }
+
+        [Fact]
+        public void Given_trim_is_enabled_should_remove_whitespace_from_both_sides_of_string()
+        {
+            var reader = new FixedLengthReaderBuilder<(string Foo, string Bar, string Baz)>()
+                .Map(x => x.Foo, 0, 5)
+                .Map(x => x.Bar, 4, 5)
+                .Map(x => x.Baz, 8, 5)
+                .Build();
+
+            var result = reader.Parse(" foo bar baz ");
+
+            result.Should().BeEquivalentTo((Foo: "foo",
+                                            Bar: "bar",
+                                            Baz: "baz"));
+        }
     }
 
     public static class FixedLengthCustomExtensions
@@ -115,7 +131,7 @@ namespace RecordParser.Test
 
         public static IFixedLengthReader<T> MyBuild<T>(this IFixedLengthReaderBuilder<T> source)
         {
-            return source.DefaultTypeConvert(value => value.Trim().ToLower())
+            return source.DefaultTypeConvert(value => value.ToLower())
                          .Build();
         }
     }

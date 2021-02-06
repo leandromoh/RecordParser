@@ -21,7 +21,7 @@ namespace RecordParser.Test
 
             var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue ");
 
-            result.Should().BeEquivalentTo((Name: "foo bar baz ",
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 123.45M,
                                             Color: Color.LightBlue));
@@ -57,10 +57,10 @@ namespace RecordParser.Test
 
             var result = reader.Parse("foo bar baz ; 23052020 ; 012345 ; nickname");
 
-            result.Should().BeEquivalentTo((Name: "foo bar baz ",
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 12345M,
-                                            Nickname: " nickname"));
+                                            Nickname: "nickname"));
         }
 
         [Fact]
@@ -91,7 +91,7 @@ namespace RecordParser.Test
 
             var result = reader.Parse("012345678.901 ; 23052020 ; FOOBAR ");
 
-            result.Should().BeEquivalentTo((Name: " FOOBAR ",
+            result.Should().BeEquivalentTo((Name: "FOOBAR",
                                             Balance: 012345678.901M,
                                             Date: new DateTime(2020, 05, 23)));
         }

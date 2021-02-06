@@ -23,10 +23,11 @@ namespace RecordParser.Parsers
 
         public T Parse(string line)
         {
+            var span = line.AsSpan();
             var csv = new string[config.Length];
 
             for (var i = 0; i < config.Length; i++)
-                csv[i] = line.Substring(config[i].start, config[i].length);
+                csv[i] = new string(span.Slice(config[i].start, config[i].length).Trim());
 
             return parser(csv);
         }

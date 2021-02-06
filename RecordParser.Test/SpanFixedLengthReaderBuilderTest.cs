@@ -20,7 +20,7 @@ namespace RecordParser.Test
 
             var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
 
-            result.Should().BeEquivalentTo((Name: "foo bar baz ",
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 123.45M));
         }
@@ -48,14 +48,14 @@ namespace RecordParser.Test
         {
             var reader = new SpanFixedLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, string Nickname)>()
                 .Map(x => x.Name, 0, 12, value => new string(value))
-                .Map(x => x.Birthday, 12, 8, value => DateTime.ParseExact(value, new[] { "ddMMyyyy" }, null, DateTimeStyles.None))
+                .Map(x => x.Birthday, 12, 8, value => DateTime.ParseExact(value, "ddMMyyyy", null, DateTimeStyles.None))
                 .Map(x => x.Money, 21, 7)
                 .Map(x => x.Nickname, 28, 8)
                 .Build();
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
 
-            result.Should().BeEquivalentTo((Name: "foo bar baz ",
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 12345M,
                                             Nickname: "nickname"));
@@ -88,9 +88,25 @@ namespace RecordParser.Test
 
             var result = reader.Parse("012345678901 23052020 FOOBAR ");
 
-            result.Should().BeEquivalentTo((Name: "FOOBAR ",
+            result.Should().BeEquivalentTo((Name: "FOOBAR",
                                             Balance: 012345678.901M,
                                             Date: new DateTime(2020, 05, 23)));
+        }
+
+        [Fact]
+        public void Given_trim_is_enabled_should_remove_whitespace_from_both_sides_of_string()
+        {
+            var reader = new SpanFixedLengthReaderBuilder<(string Foo, string Bar, string Baz)>()
+                .Map(x => x.Foo, 0, 5)
+                .Map(x => x.Bar, 4, 5)
+                .Map(x => x.Baz, 8, 5)
+                .Build();
+
+            var result = reader.Parse(" foo bar baz ");
+
+            result.Should().BeEquivalentTo((Foo: "foo",
+                                            Bar: "bar",
+                                            Baz: "baz"));
         }
     }
 
