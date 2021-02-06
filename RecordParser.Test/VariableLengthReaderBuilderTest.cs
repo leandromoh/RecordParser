@@ -13,7 +13,7 @@ namespace RecordParser.Test
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
         {
             var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, indexColum: 0)
+                .Map(x => x.Name, indexColumn: 0)
                 .Map(x => x.Birthday, 1)
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
@@ -105,7 +105,7 @@ namespace RecordParser.Test
                 .Map(x => x.Mother.Name, 3)
                 .Build(";");
 
-            var result = reader.Parse("2020.05.23 ; son name ; 1980.01.15; mother name");
+            var result = reader.Parse("2020.05.23 ; son name ; 1980.01.15 ; mother name");
 
             result.Should().BeEquivalentTo(new Person
             {
@@ -137,7 +137,7 @@ namespace RecordParser.Test
         public void Given_valid_record_called_with_try_parse_should_set_out_parameter_with_result()
         {
             var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, indexColum: 0)
+                .Map(x => x.Name, indexColumn: 0)
                 .Map(x => x.Birthday, 1)
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)

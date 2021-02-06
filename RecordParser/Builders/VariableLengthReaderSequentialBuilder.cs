@@ -8,7 +8,7 @@ namespace RecordParser.Parsers
         IVariableLengthReader<T> Build(string separator);
         IVariableLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
         IVariableLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
-        IVariableLengthReaderSequentialBuilder<T> Skip(int collumCount);
+        IVariableLengthReaderSequentialBuilder<T> Skip(int columnCount);
     }
 
     public class VariableLengthReaderSequentialBuilder<T> : IVariableLengthReaderSequentialBuilder<T>
@@ -25,9 +25,9 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public IVariableLengthReaderSequentialBuilder<T> Skip(int collumCount)
+        public IVariableLengthReaderSequentialBuilder<T> Skip(int columnCount)
         {
-            currentIndex += collumCount;
+            currentIndex += columnCount;
             return this;
         }
 
