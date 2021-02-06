@@ -3,10 +3,12 @@
 RecordParser is a expression tree based parser that helps you to write maintainable, fast and simple parsers.  
 It makes easier for developers to do parsing by automating non-relevant code, allowing the developer to focus on the essentials of mapping.
 
-1. It is fast because the non-relevant code is generated with expression tree, which once compiled is almost fast as handwriting code  
-2. It is even faster because you can do parsing using the [`Span`](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a new .NET type designed to have high-performance and reduce memory allocations
-3. It is composable: developer can add custom maps that will just be embedded within the expression tree  
-4. It is not intrusive: all the mapping configuration is done outside of the mapped type. It keep your POCO classes with minimised complexity and dependencies  
+1. It is fast because the non-relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is almost fast as handwriting code  
+2. It is even faster because you can parse using the [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a new .NET type designed to have high-performance and reduce memory allocations
+3. It is extensible: developers can easily create wrapper methods with [custom maps](https://github.com/leandromoh/RecordParser/blob/master/RecordParser.Test/FixedLengthReaderBuilderTest.cs#L82)
+4. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your POCO classes with minimised dependencies and low coupling  
+5. It provides simple API: reader object provides 2 familiar methods `Parse` and `TryParse`
+6. It supports to parse classes and structs types (i.e., reference and value types)
 
 Currently there are parsers for 2 record formats: 
 1. Fixed length, common in positional files, e.g. mainframe use, COBOL, etc
@@ -71,9 +73,9 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
         .Map(x => x.Money, 2)
         .Map(x => x.Color, 3)
         .Build(";");
-
+  
     var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue");
-
+  
     result.Should().BeEquivalentTo((Name: "foo bar baz",
                                     Birthday: new DateTime(2020, 05, 23),
                                     Money: 123.45M,
@@ -85,7 +87,7 @@ Sequential is useful when you want to map columns by its order.
 
 ```csharp
 [Fact]
-public void Given_columns_to_ignore_and_value_using_standard_format_should_parse_without_extra_configuration()
+public void Given_ignored_columns_and_value_using_standard_format_should_parse_without_extra_configuration()
 {
     var reader = new VariableLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money)>()
         .Map(x => x.Name)
@@ -94,9 +96,9 @@ public void Given_columns_to_ignore_and_value_using_standard_format_should_parse
         .Skip(2)
         .Map(x => x.Money)
         .Build(";");
-
+  
     var result = reader.Parse("foo bar baz ; IGNORE; 2020.05.23 ; IGNORE ; IGNORE ; 0123.45");
-
+  
     result.Should().BeEquivalentTo((Name: "foo bar baz",
                                     Birthday: new DateTime(2020, 05, 23),
                                     Money: 123.45M));
@@ -105,7 +107,7 @@ public void Given_columns_to_ignore_and_value_using_standard_format_should_parse
 ### Default Type Convert
 
 You can define default converters for some type if you has a custom format.  
-Follown example defines that all decimals values will be divided by 100 before the assign, also, all dates will be parsed in the `ddMMyyyy` format.  
+Follow example defines that all decimals values will be divided by 100 before the assign, also, all dates will be parsed in the `ddMMyyyy` format.  
 This feature is avaible for both fixed and variable length.
 
 ```csharp
