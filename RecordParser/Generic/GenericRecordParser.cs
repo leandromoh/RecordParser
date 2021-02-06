@@ -42,7 +42,7 @@ namespace RecordParser.Generic
             [(typeof(string), typeof(int))] = (_, ex) => GetExpressionExp(text => int.Parse(text), ex),
             [(typeof(ReadOnlySpan<char>), typeof(int))] = GetExpressionExpChar(span => int.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture)),
 
-            [(typeof(string), typeof(DateTime))] = (_, ex) => GetExpressionExp(text => DateTime.Parse(text, CultureInfo.InvariantCulture), ex),
+            [(typeof(string), typeof(DateTime))] = (_, ex) => GetExpressionExp(text => DateTime.Parse(text, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces), ex),
             [(typeof(ReadOnlySpan<char>), typeof(DateTime))] = GetExpressionExpChar(span => DateTime.Parse(span, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces)),
             
             [(typeof(string), typeof(decimal))] = (_, ex) => GetExpressionExp(text => decimal.Parse(text, CultureInfo.InvariantCulture), ex),
