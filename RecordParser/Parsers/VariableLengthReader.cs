@@ -10,6 +10,7 @@ namespace RecordParser.Parsers
     public interface IVariableLengthReader<T>
     {
         T Parse(string line);
+        bool TryParse(string line, out T result);
     }
 
     internal class VariableLengthReader<T> : IVariableLengthReader<T>
@@ -42,6 +43,20 @@ namespace RecordParser.Parsers
 
             T result = parser(csv);
             return result;
+        }
+
+        public bool TryParse(string line, out T result)
+        {
+            try
+            {
+                result = Parse(line);
+                return true;
+            }
+            catch
+            {
+                result = default;
+                return false;
+            }
         }
     }
 }

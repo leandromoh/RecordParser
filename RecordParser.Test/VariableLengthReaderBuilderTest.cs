@@ -94,6 +94,39 @@ namespace RecordParser.Test
                                             Balance: 012345678.901M,
                                             Date: new DateTime(2020, 05, 23)));
         }
+
+        [Fact]
+        public void Given_invalid_record_called_with_try_parse_should_not_throw()
+        {
+            var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday)>()
+                .Map(x => x.Name, 0)
+                .Map(x => x.Birthday, 1)
+                .Build(";");
+
+            var parsed = reader.TryParse(" foo ; datehere", out var result);
+
+            parsed.Should().BeFalse();
+            result.Should().Be(default);
+        }
+
+        [Fact]
+        public void Given_valid_record_called_with_try_parse_should_set_out_parameter_with_result()
+        {
+            var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, indexColum: 0)
+                .Map(x => x.Birthday, 1)
+                .Map(x => x.Money, 2)
+                .Map(x => x.Color, 3)
+                .Build(";");
+
+            var parsed = reader.TryParse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue", out var result);
+
+            parsed.Should().BeTrue();
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
+                                            Birthday: new DateTime(2020, 05, 23),
+                                            Money: 123.45M,
+                                            Color: Color.LightBlue));
+        }
     }
 
     public static class VariableLengthReaderCustomExtensions

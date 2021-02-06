@@ -8,6 +8,7 @@ namespace RecordParser.Parsers
     public interface ISpanFixedLengthReader<T>
     {
         T Parse(ReadOnlySpan<char> line);
+        bool TryParse(ReadOnlySpan<char> line, out T result);
     }
 
     internal class SpanFixedLengthReader<T> : ISpanFixedLengthReader<T>
@@ -24,6 +25,20 @@ namespace RecordParser.Parsers
         public T Parse(ReadOnlySpan<char> line)
         {
             return parser(line, config.Span);
+        }
+
+        public bool TryParse(ReadOnlySpan<char> line, out T result)
+        {
+            try
+            {
+                result = Parse(line);
+                return true;
+            }
+            catch
+            {
+                result = default;
+                return false;
+            }
         }
     }
 }

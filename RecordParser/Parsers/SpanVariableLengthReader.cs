@@ -10,6 +10,7 @@ namespace RecordParser.Parsers
     public interface ISpanVariableLengthReader<T>
     {
         T Parse(ReadOnlySpan<char> line);
+        bool TryParse(ReadOnlySpan<char> line, out T result);
     }
 
     internal class SpanVariableLengthReader<T> : ISpanVariableLengthReader<T>
@@ -36,6 +37,20 @@ namespace RecordParser.Parsers
             TextFindHelper.SetStartLengthPositions(line, delimiter, config, maxColumnIndex, in csv);
             T result = parser(line, csv);
             return result;
+        }
+
+        public bool TryParse(ReadOnlySpan<char> line, out T result)
+        {
+            try
+            {
+                result = Parse(line);
+                return true;
+            }
+            catch
+            {
+                result = default;
+                return false;
+            }
         }
     }
 }

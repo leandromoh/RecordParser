@@ -8,6 +8,7 @@ namespace RecordParser.Parsers
     public interface IFixedLengthReader<T>
     {
         T Parse(string line);
+        bool TryParse(string line, out T result);
     }
 
     internal class FixedLengthReader<T> : IFixedLengthReader<T>
@@ -30,6 +31,20 @@ namespace RecordParser.Parsers
                 csv[i] = new string(span.Slice(config[i].start, config[i].length).Trim());
 
             return parser(csv);
+        }
+
+        public bool TryParse(string line, out T result)
+        {
+            try
+            {
+                result = Parse(line);
+                return true;
+            }
+            catch
+            {
+                result = default;
+                return false;
+            }
         }
     }
 }

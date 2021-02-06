@@ -108,6 +108,37 @@ namespace RecordParser.Test
                                             Bar: "bar",
                                             Baz: "baz"));
         }
+
+        [Fact]
+        public void Given_invalid_record_called_with_try_parse_should_not_throw()
+        {
+            var reader = new SpanFixedLengthReaderBuilder<(string Name, DateTime Birthday)>()
+                .Map(x => x.Name, 0, 5)
+                .Map(x => x.Birthday, 5, 10)
+                .Build();
+
+            var parsed = reader.TryParse(" foo datehere", out var result);
+
+            parsed.Should().BeFalse();
+            result.Should().Be(default);
+        }
+
+        [Fact]
+        public void Given_valid_record_called_with_try_parse_should_set_out_parameter_with_result()
+        {
+            var reader = new SpanFixedLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money)>()
+                .Map(x => x.Name, 0, 12)
+                .Map(x => x.Birthday, 12, 10)
+                .Map(x => x.Money, 23, 7)
+                .Build();
+
+            var parsed = reader.TryParse("foo bar baz 2020.05.23 0123.45", out var result);
+
+            parsed.Should().BeTrue();
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
+                                            Birthday: new DateTime(2020, 05, 23),
+                                            Money: 123.45M));
+        }
     }
 
     public static class SpanFixedLengthCustomExtensions
