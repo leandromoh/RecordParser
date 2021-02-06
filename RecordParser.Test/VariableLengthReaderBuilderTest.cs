@@ -96,6 +96,30 @@ namespace RecordParser.Test
         }
 
         [Fact]
+        public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
+        {
+            var reader = new VariableLengthReaderBuilder<Person>()
+                .Map(x => x.BirthDay, 0)
+                .Map(x => x.Name, 1)
+                .Map(x => x.Mother.BirthDay, 2)
+                .Map(x => x.Mother.Name, 3)
+                .Build(";");
+
+            var result = reader.Parse("2020.05.23 ; son name ; 1980.01.15; mother name");
+
+            result.Should().BeEquivalentTo(new Person
+            {
+                BirthDay = new DateTime(2020, 05, 23),
+                Name = "son name",
+                Mother = new Person
+                {
+                    BirthDay = new DateTime(1980, 01, 15),
+                    Name = "mother name",
+                }
+            });
+        }
+
+        [Fact]
         public void Given_invalid_record_called_with_try_parse_should_not_throw()
         {
             var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday)>()

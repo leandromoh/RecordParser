@@ -141,6 +141,30 @@ namespace RecordParser.Test
                                             Money: 123.45M));
         }
 
+
+        [Fact]
+        public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
+        {
+            var reader = new FixedLengthReaderBuilder<Person>()
+                .Map(x => x.BirthDay, 0, 10)
+                .Map(x => x.Name, 10, 10)
+                .Map(x => x.Mother.BirthDay, 20, 10)
+                .Map(x => x.Mother.Name, 30, 12)
+                .Build();
+
+            var result = reader.Parse("2020.05.23 son name 1980.01.15 mother name");
+
+            result.Should().BeEquivalentTo(new Person
+            {
+                BirthDay = new DateTime(2020, 05, 23),
+                Name = "son name",
+                Mother = new Person
+                {
+                    BirthDay = new DateTime(1980, 01, 15),
+                    Name = "mother name",
+                }
+            });
+        }
     }
 
     public static class FixedLengthCustomExtensions
