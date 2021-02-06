@@ -68,7 +68,7 @@ Indexed is useful when you want to map columns by its indexes.
 public void Given_value_using_standard_format_should_parse_without_extra_configuration()
 {
     var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-        .Map(x => x.Name, indexColum: 0)
+        .Map(x => x.Name, indexColumn: 0)
         .Map(x => x.Birthday, 1)
         .Map(x => x.Money, 2)
         .Map(x => x.Color, 3)
@@ -129,7 +129,7 @@ public void Given_types_with_custom_format_should_allow_define_default_parser_fo
                                     Date: new DateTime(2020, 05, 23)));
 }
 ```
-### Custom Field/Property Convert
+### Custom Property Convert
 
 You can define a custom converter for field/property.  
 Custom converters have priority case a default type convert is defined.  
@@ -150,5 +150,36 @@ public void Given_specified_custom_parser_for_member_should_have_priority_over_c
     result.Should().BeEquivalentTo((Age: 15,
                                     MotherAge: 43,
                                     FatherAge: 50));
+}
+```
+### Nested Properties Mapping
+
+Just like a normal property, you can configure nested properties mapping.  
+The nested objects are created only if it was mapped, what avoids stack overflow problems.  
+This feature is avaible for both fixed and variable length.  
+
+```csharp
+[Fact]
+public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
+{
+    var reader = new VariableLengthReaderBuilder<Person>()
+        .Map(x => x.BirthDay, 0)
+        .Map(x => x.Name, 1)
+        .Map(x => x.Mother.BirthDay, 2)
+        .Map(x => x.Mother.Name, 3)
+        .Build(";");
+
+    var result = reader.Parse("2020.05.23 ; son name ; 1980.01.15 ; mother name");
+
+    result.Should().BeEquivalentTo(new Person
+    {
+        BirthDay = new DateTime(2020, 05, 23),
+        Name = "son name",
+        Mother = new Person
+        {
+            BirthDay = new DateTime(1980, 01, 15),
+            Name = "mother name",
+        }
+    });
 }
 ```
