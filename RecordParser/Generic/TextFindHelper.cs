@@ -4,12 +4,12 @@ namespace RecordParser.Generic
 {
     internal static class TextFindHelper
     {
-        public static void SetStartLengthPositions(ReadOnlySpan<char> span, ReadOnlySpan<char> delimiter, int[] config, int size, in Span<(int start, int length)> csv)
+        public static void SetStartLengthPositions(ReadOnlySpan<char> span, ReadOnlySpan<char> delimiter, int[] config, int maxColumnIndex, in Span<(int start, int length)> csv)
         {
             var scanned = -delimiter.Length;
             var position = 0;
 
-            for (int i = 0, j = 0; i < size && j < config.Length; i++)
+            for (int i = 0, j = 0; i <= maxColumnIndex && j < config.Length; i++)
             {
                 var range = ParseChunk(in span, ref scanned, ref position, in delimiter);
 

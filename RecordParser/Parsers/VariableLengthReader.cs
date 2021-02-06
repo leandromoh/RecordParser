@@ -16,13 +16,13 @@ namespace RecordParser.Parsers
     {
         private readonly Func<string[], T> parser;
         private readonly int[] config;
-        private readonly int nth;
+        private readonly int maxColumnIndex;
         private readonly string delimiter;
 
         internal VariableLengthReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser, string separator)
         {
             config = list.Select(x => x.start).ToArray();
-            nth = config.Max();
+            maxColumnIndex = config.Max();
             this.parser = parser;
             delimiter = separator;
         }
@@ -34,7 +34,7 @@ namespace RecordParser.Parsers
         {
             var span = line.AsSpan();
             Span<(int start, int length)> indices = stackalloc (int, int)[config.Length];
-            TextFindHelper.SetStartLengthPositions(span, delimiter, config, nth + 1, in indices);
+            TextFindHelper.SetStartLengthPositions(span, delimiter, config, maxColumnIndex, in indices);
 
             var csv = new string[config.Length];
             for (var i = 0; i < config.Length; i++)
