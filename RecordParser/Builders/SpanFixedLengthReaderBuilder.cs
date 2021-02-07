@@ -9,7 +9,7 @@ namespace RecordParser.Parsers
     {
         ISpanFixedLengthReader<T> Build();
         ISpanFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex);
-        ISpanFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, Expression<Func<ReadOnlySpanChar, R>> convert = null, Expression<Func<ReadOnlySpanChar, bool>> skipRecordWhen = null);
+        ISpanFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, Expression<Func<ReadOnlySpanChar, R>> convert = null);
     }
 
     public class SpanFixedLengthReaderBuilder<T> : ISpanFixedLengthReaderBuilder<T>
@@ -20,11 +20,10 @@ namespace RecordParser.Parsers
 
         public ISpanFixedLengthReaderBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int startIndex, int length,
-            Expression<Func<ReadOnlySpanChar, R>> convert = null,
-            Expression<Func<ReadOnlySpanChar, bool>> skipRecordWhen = null)
+            Expression<Func<ReadOnlySpanChar, R>> convert = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), visitor.Modify(convert), visitor.Modify(skipRecordWhen)));
+            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), visitor.Modify(convert)));
             return this;
         }
 

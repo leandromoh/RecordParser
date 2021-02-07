@@ -9,7 +9,7 @@ namespace RecordParser.Parsers
     {
         IFixedLengthReader<T> Build();
         IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
-        IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
+        IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, Expression<Func<string, R>> convert = null);
     }
 
     public class FixedLengthReaderBuilder<T> : IFixedLengthReaderBuilder<T>
@@ -19,11 +19,10 @@ namespace RecordParser.Parsers
 
         public IFixedLengthReaderBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int startIndex, int length,
-            Expression<Func<string, R>> convert = null,
-            Expression<Func<string, bool>> skipRecordWhen = null)
+            Expression<Func<string, R>> convert = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), convert, skipRecordWhen));
+            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), convert));
             return this;
         }
 

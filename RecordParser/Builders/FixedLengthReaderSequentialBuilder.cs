@@ -8,7 +8,7 @@ namespace RecordParser.Parsers
         IFixedLengthReader<T> Build();
         IFixedLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
         IFixedLengthReaderSequentialBuilder<T> Skip(int length);
-        IFixedLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, int length, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
+        IFixedLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, int length, Expression<Func<string, R>> convert = null);
     }
 
     public class FixedLengthReaderSequentialBuilder<T> : IFixedLengthReaderSequentialBuilder<T>
@@ -18,10 +18,9 @@ namespace RecordParser.Parsers
 
         public IFixedLengthReaderSequentialBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int length,
-            Expression<Func<string, R>> convert = null,
-            Expression<Func<string, bool>> skipRecordWhen = null)
+            Expression<Func<string, R>> convert = null)
         {
-            indexed.Map(ex, currentPosition, length, convert, skipRecordWhen);
+            indexed.Map(ex, currentPosition, length, convert);
             currentPosition += length;
             return this;
         }

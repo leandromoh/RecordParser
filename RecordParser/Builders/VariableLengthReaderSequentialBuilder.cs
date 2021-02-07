@@ -7,7 +7,7 @@ namespace RecordParser.Parsers
     {
         IVariableLengthReader<T> Build(string separator);
         IVariableLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
-        IVariableLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, Expression<Func<string, R>> convert = null, Expression<Func<string, bool>> skipRecordWhen = null);
+        IVariableLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, Expression<Func<string, R>> convert = null);
         IVariableLengthReaderSequentialBuilder<T> Skip(int columnCount);
     }
 
@@ -18,10 +18,9 @@ namespace RecordParser.Parsers
 
         public IVariableLengthReaderSequentialBuilder<T> Map<R>(
             Expression<Func<T, R>> ex,
-            Expression<Func<string, R>> convert = null,
-            Expression<Func<string, bool>> skipRecordWhen = null)
+            Expression<Func<string, R>> convert = null)
         {
-            indexed.Map(ex, ++currentIndex, convert, skipRecordWhen);
+            indexed.Map(ex, ++currentIndex, convert);
             return this;
         }
 

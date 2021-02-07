@@ -110,14 +110,14 @@ namespace RecordParser.Generic
             IEnumerable<MappingConfiguration> list,
             IReadOnlyDictionary<Type, Expression> dic)
         {
-            var result = dic?.Any() != true
+            var result = dic.Any() != true
                     ? list
                     : list.Select(i =>
                       {
                           if (i.fmask != null || !dic.TryGetValue(i.type, out var fmask))
                               return i;
 
-                          return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask, i.skipWhen);
+                          return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask);
                       });
 
             result = result

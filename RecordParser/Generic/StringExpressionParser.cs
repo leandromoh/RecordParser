@@ -12,7 +12,6 @@ namespace RecordParser.Generic
         {
             var funcThatSetProperties = GetFuncThatSetProperties<T>(mappedColumns);
             var getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop));
-            var shouldSkip = GetShouldSkip(mappedColumns);
 
             var instanceParameter = funcThatSetProperties.Parameters[0];
             var valueParameter = funcThatSetProperties.Parameters[1];
@@ -27,14 +26,6 @@ namespace RecordParser.Generic
                 expressions: body is BlockExpression block
                      ? block.Expressions.Prepend(assign)
                      : new[] { assign, body });
-
-            if (shouldSkip is { })
-            {
-                set = Expression.Condition(
-                            test: Expression.Invoke(shouldSkip, valueParameter),
-                            ifTrue: Expression.Default(typeof(T)),
-                            ifFalse: set);
-            }
 
             var result = Expression.Lambda<Func<string[], T>>(set, valueParameter);
 
@@ -98,29 +89,6 @@ namespace RecordParser.Generic
         {
             Func<string, bool> func = string.IsNullOrWhiteSpace;
             return GetExpressionFunc(func, valueText);
-        }
-
-        private static Expression<Func<string[], bool>> GetShouldSkip(IEnumerable<MappingConfiguration> columns)
-        {
-            ParameterExpression valueParameter = Expression.Variable(typeof(string[]), "values");
-            var constitions = new List<Expression>();
-            var i = -1;
-
-            foreach (var map in columns)
-            {
-                i++;
-                if (map.skipWhen == null) continue;
-                var valueText = Expression.ArrayIndex(valueParameter, Expression.Constant(i));
-                var validation = Expression.Invoke(map.skipWhen, valueText);
-                constitions.Add(validation);
-            }
-
-            if (constitions.Count == 0)
-                return null;
-
-            var validations = constitions.Aggregate((acc, x) => Expression.OrElse(acc, x));
-
-            return Expression.Lambda<Func<string[], bool>>(validations, valueParameter);
         }
     }
 }

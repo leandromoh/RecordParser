@@ -10,7 +10,7 @@ namespace RecordParser.Parsers
     {
         ISpanVariableLengthReader<T> Build(string separator);
         ISpanVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex);
-        ISpanVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, Expression<Func<ReadOnlySpanChar, R>> convert = null, Expression<Func<ReadOnlySpanChar, bool>> skipRecordWhen = null);
+        ISpanVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, Expression<Func<ReadOnlySpanChar, R>> convert = null);
     }
 
     public class SpanVariableLengthReaderBuilder<T> : ISpanVariableLengthReaderBuilder<T>
@@ -20,11 +20,10 @@ namespace RecordParser.Parsers
         private readonly ReadOnlySpanVisitor visitor = new ReadOnlySpanVisitor();
 
         public ISpanVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn,
-            Expression<Func<ReadOnlySpanChar, R>> convert = null,
-            Expression<Func<ReadOnlySpanChar, bool>> skipRecordWhen = null)
+            Expression<Func<ReadOnlySpanChar, R>> convert = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            var config = new MappingConfiguration(member, indexColumn, null, typeof(R), visitor.Modify(convert), visitor.Modify(skipRecordWhen));
+            var config = new MappingConfiguration(member, indexColumn, null, typeof(R), visitor.Modify(convert));
             list.Add(indexColumn, config);
             
             return this;
