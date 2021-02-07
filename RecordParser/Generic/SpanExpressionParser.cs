@@ -37,34 +37,24 @@ namespace RecordParser.Generic
             return result;
         }
 
-        public static Expression<FuncTSpanArrayT<T>> GetFuncThatSetPropertiesSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
+        private static Expression<FuncTSpanArrayT<T>> GetFuncThatSetPropertiesSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
         {
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "a");
-            ParameterExpression valueParameter = Expression.Variable(typeof(ReadOnlySpan<char>), "span");
+            ParameterExpression span = Expression.Variable(typeof(ReadOnlySpan<char>), "span");
             ParameterExpression configParameter = Expression.Variable(typeof(ReadOnlySpan<(int start, int length)>), "config");
-
-            var span = valueParameter;
 
             var replacer = new ParameterReplacer(objectParameter);
             var assignsExpressions = new List<Expression>();
-
             var i = -1;
 
             foreach (var x in mappedColumns)
             {
                 i++;
-                var (propertyName, func) = (x.prop, x.fmask);
 
-                if (propertyName is null)
+                if (x.prop is null)
                     continue;
 
-
                 var arrayIndex = ReadOnlySpanIndex<(int, int)>(configParameter, Expression.Constant(i));
-
-                var propertyType = propertyName.Type;
-                var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
-                var isPropertyNullable = nullableUnderlyingType != null;
-                var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
 
                 Expression textValue =
                         Expression.Call(span, nameof(ReadOnlySpan<char>.Slice), Type.EmptyTypes,
@@ -73,10 +63,15 @@ namespace RecordParser.Generic
 
                 textValue = Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, textValue);
 
+                var propertyType = x.prop.Type;
+                var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
+                var isPropertyNullable = nullableUnderlyingType != null;
+                var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
+
                 Expression valueToBeSetExpression = GetValueToBeSetExpression(
                                                         propertyUnderlyingType,
                                                         textValue,
-                                                        func);
+                                                        x.fmask);
 
                 if (valueToBeSetExpression.Type != propertyType)
                 {
@@ -91,7 +86,7 @@ namespace RecordParser.Generic
                         ifFalse: valueToBeSetExpression);
                 }
 
-                var assign = Expression.Assign(replacer.Visit(propertyName), valueToBeSetExpression);
+                var assign = Expression.Assign(replacer.Visit(x.prop), valueToBeSetExpression);
 
                 assignsExpressions.Add(assign);
             }
@@ -100,7 +95,7 @@ namespace RecordParser.Generic
 
             var blockExpr = Expression.Block(assignsExpressions);
 
-            return Expression.Lambda<FuncTSpanArrayT<T>>(blockExpr, new[] { objectParameter, valueParameter, configParameter });
+            return Expression.Lambda<FuncTSpanArrayT<T>>(blockExpr, new[] { objectParameter, span, configParameter });
         }
 
         private static Expression GetIsWhiteSpaceExpression(Expression valueText)
