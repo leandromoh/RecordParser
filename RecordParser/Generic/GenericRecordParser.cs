@@ -9,6 +9,60 @@ namespace RecordParser.Generic
 {
     internal static class GenericRecordParser
     {
+        public static BlockExpression MountSetProperties(
+            ParameterExpression objectParameter, 
+            IEnumerable<MappingConfiguration> mappedColumns, 
+            Func<int, Expression> getTextValue,
+            Func<Expression, Expression> getIsNullOrWhiteSpace)
+        {
+            var replacer = new ParameterReplacer(objectParameter);
+            var assignsExpressions = new List<Expression>();
+            var i = -1;
+
+            foreach (var x in mappedColumns)
+            {
+                i++;
+
+                if (x.prop is null)
+                    continue;
+
+                Expression textValue = getTextValue(i);
+
+                var propertyType = x.prop.Type;
+                var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
+                var isPropertyNullable = nullableUnderlyingType != null;
+                var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
+
+                Expression valueToBeSetExpression = GetValueToBeSetExpression(
+                                                        propertyUnderlyingType,
+                                                        textValue,
+                                                        x.fmask);
+
+                if (valueToBeSetExpression.Type != propertyType)
+                {
+                    valueToBeSetExpression = Expression.Convert(valueToBeSetExpression, propertyType);
+                }
+
+                if (isPropertyNullable)
+                {
+                    valueToBeSetExpression = Expression.Condition(
+                        test: getIsNullOrWhiteSpace(textValue),
+                        ifTrue: Expression.Constant(null, propertyType),
+                        ifFalse: valueToBeSetExpression);
+                }
+
+                var assign = Expression.Assign(replacer.Visit(x.prop), valueToBeSetExpression);
+
+                assignsExpressions.Add(assign);
+            }
+
+            assignsExpressions.Add(objectParameter);
+
+            var blockExpr = Expression.Block(assignsExpressions);
+
+            return blockExpr;
+        }
+
         public static Expression GetValueToBeSetExpression(Type propertyType, Expression valueText, Expression func)
         {
             if (func != null)

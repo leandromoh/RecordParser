@@ -43,57 +43,18 @@ namespace RecordParser.Generic
             ParameterExpression span = Expression.Variable(typeof(ReadOnlySpan<char>), "span");
             ParameterExpression configParameter = Expression.Variable(typeof(ReadOnlySpan<(int start, int length)>), "config");
 
-            var replacer = new ParameterReplacer(objectParameter);
-            var assignsExpressions = new List<Expression>();
-            var i = -1;
-
-            foreach (var x in mappedColumns)
+            var blockExpr = MountSetProperties(objectParameter, mappedColumns, i =>
             {
-                i++;
-
-                if (x.prop is null)
-                    continue;
-
                 var arrayIndex = ReadOnlySpanIndex<(int, int)>(configParameter, Expression.Constant(i));
 
-                Expression textValue =
-                        Expression.Call(span, nameof(ReadOnlySpan<char>.Slice), Type.EmptyTypes,
-                        Expression.Field(arrayIndex, "Item1"),
-                        Expression.Field(arrayIndex, "Item2"));
+                var textValue =
+                    Expression.Call(span, nameof(ReadOnlySpan<char>.Slice), Type.EmptyTypes,
+                    Expression.Field(arrayIndex, "Item1"),
+                    Expression.Field(arrayIndex, "Item2"));
 
-                textValue = Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, textValue);
-
-                var propertyType = x.prop.Type;
-                var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
-                var isPropertyNullable = nullableUnderlyingType != null;
-                var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
-
-                Expression valueToBeSetExpression = GetValueToBeSetExpression(
-                                                        propertyUnderlyingType,
-                                                        textValue,
-                                                        x.fmask);
-
-                if (valueToBeSetExpression.Type != propertyType)
-                {
-                    valueToBeSetExpression = Expression.Convert(valueToBeSetExpression, propertyType);
-                }
-
-                if (isPropertyNullable)
-                {
-                    valueToBeSetExpression = Expression.Condition(
-                        test: GetIsWhiteSpaceExpression(textValue),
-                        ifTrue: Expression.Constant(null, propertyType),
-                        ifFalse: valueToBeSetExpression);
-                }
-
-                var assign = Expression.Assign(replacer.Visit(x.prop), valueToBeSetExpression);
-
-                assignsExpressions.Add(assign);
-            }
-
-            assignsExpressions.Add(objectParameter);
-
-            var blockExpr = Expression.Block(assignsExpressions);
+                return Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, textValue);
+            },
+            GetIsWhiteSpaceExpression);
 
             return Expression.Lambda<FuncTSpanArrayT<T>>(blockExpr, new[] { objectParameter, span, configParameter });
         }
