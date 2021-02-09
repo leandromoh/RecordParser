@@ -107,8 +107,8 @@ public void Given_ignored_columns_and_value_using_standard_format_should_parse_w
 ### Default Type Convert
 
 You can define default converters for some type if you has a custom format.  
-Follow example defines that all decimals values will be divided by 100 before the assign, also, all dates will be parsed in the `ddMMyyyy` format.  
-This feature is avaible for both fixed and variable length.
+The following example defines all decimals values will be divided by 100 before assigning, furthermore all dates being parsed on `ddMMyyyy` format.  
+This feature is avaible for both fixed and variable length.  
 
 ```csharp
 [Fact]
@@ -154,10 +154,10 @@ public void Given_specified_custom_parser_for_member_should_have_priority_over_c
 ```
 ### Nested Properties Mapping
 
-Just like a normal property, you can configure nested properties mapping.  
-The nested objects are created only if it was mapped, what avoids stack overflow problems.  
+Just like a regular property, you can also configure nested properties mapping.  
+The nested objects are created only if it was mapped, which avoids stack overflow problems.  
 This feature is avaible for both fixed and variable length.  
-
+ 
 ```csharp
 [Fact]
 public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
