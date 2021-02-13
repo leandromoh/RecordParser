@@ -97,6 +97,22 @@ namespace RecordParser.Test
         }
 
         [Fact]
+        public void Given_trim_is_enabled_should_remove_whitespace_from_both_sides_of_string()
+        {
+            var reader = new VariableLengthReaderBuilder<(string Foo, string Bar, string Baz)>()
+                .Map(x => x.Foo, 0)
+                .Map(x => x.Bar, 1)
+                .Map(x => x.Baz, 2)
+                .Build(";");
+
+            var result = reader.Parse(" foo ; bar ; baz ");
+
+            result.Should().BeEquivalentTo((Foo: "foo",
+                                            Bar: "bar",
+                                            Baz: "baz"));
+        }
+
+        [Fact]
         public void Given_invalid_record_called_with_try_parse_should_not_throw()
         {
             var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday)>()
