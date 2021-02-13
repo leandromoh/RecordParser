@@ -54,7 +54,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 8, value => DateTime.ParseExact(value, "ddMMyyyy", null))
                 .Skip(1)
                 .Map(x => x.Money, 7)
-                .Map(x => x.Nickname, 8, value => value.First() + "." + value.Last())
+                .Map(x => x.Nickname, 8, value => value.Slice(0, 4).ToString())
                 .Build();
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
@@ -62,7 +62,7 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo((Name: "FOO BAR BAZ",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 12345M,
-                                            Nickname: "n.e"));
+                                            Nickname: "nick"));
         }
 
         [Fact]

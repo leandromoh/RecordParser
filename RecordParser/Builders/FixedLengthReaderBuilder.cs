@@ -8,8 +8,8 @@ namespace RecordParser.Parsers
     public interface IFixedLengthReaderBuilder<T>
     {
         IFixedLengthReader<T> Build();
-        IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
-        IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, Expression<Func<string, R>> convert = null);
+        IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
+        IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanT<R> convert = null);
     }
 
     public class FixedLengthReaderBuilder<T> : IFixedLengthReaderBuilder<T>
@@ -19,23 +19,23 @@ namespace RecordParser.Parsers
 
         public IFixedLengthReaderBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int startIndex, int length,
-            Expression<Func<string, R>> convert = null)
+            FuncSpanT<R> convert = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), convert));
+            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), convert?.WrapInLambdaExpression()));
             return this;
         }
 
-        public IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
+        public IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex)
         {
-            dic.Add(typeof(R), ex);
+            dic.Add(typeof(R), ex?.WrapInLambdaExpression());
             return this;
         }
 
-        public IFixedLengthReader<T> Build()
+        public IFixedLengthReader<T> Build() 
         {
             var map = GenericRecordParser.Merge(list, dic);
-            var func = StringExpressionParser.RecordParser<T>(map).Compile();
+            var func = SpanExpressionParser.RecordParserSpan<T>(map).Compile();
 
             return new FixedLengthReader<T>(map, func);
         }
