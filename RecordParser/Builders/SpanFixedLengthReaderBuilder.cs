@@ -8,28 +8,27 @@ namespace RecordParser.Parsers
     public interface ISpanFixedLengthReaderBuilder<T>
     {
         ISpanFixedLengthReader<T> Build();
-        ISpanFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex);
-        ISpanFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, Expression<Func<ReadOnlySpanChar, R>> convert = null);
+        ISpanFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
+        ISpanFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanT<R> convert = null);
     }
 
     public class SpanFixedLengthReaderBuilder<T> : ISpanFixedLengthReaderBuilder<T>
     {
         private readonly List<MappingConfiguration> list = new List<MappingConfiguration>();
         private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
-        private readonly ReadOnlySpanVisitor visitor = new ReadOnlySpanVisitor();
 
         public ISpanFixedLengthReaderBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int startIndex, int length,
-            Expression<Func<ReadOnlySpanChar, R>> convert = null)
+            FuncSpanT<R> convert = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), visitor.Modify(convert)));
+            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), convert?.WrapInLambdaExpression()));
             return this;
         }
 
-        public ISpanFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex)
+        public ISpanFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex)
         {
-            dic.Add(typeof(R), visitor.Modify(ex));
+            dic.Add(typeof(R), ex?.WrapInLambdaExpression());
             return this;
         }
 
