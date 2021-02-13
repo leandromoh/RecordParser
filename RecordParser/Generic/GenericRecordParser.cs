@@ -15,7 +15,7 @@ namespace RecordParser.Generic
             Func<int, Expression> getTextValue,
             Func<Expression, Expression> getIsNullOrWhiteSpace)
         {
-            var replacer = new ParameterReplacer(objectParameter);
+            var replacer = new ParameterReplacerVisitor(objectParameter);
             var assignsExpressions = new List<Expression>();
             var i = -1;
 
@@ -67,7 +67,7 @@ namespace RecordParser.Generic
         {
             if (func != null)
                 if (func is LambdaExpression lamb)
-                    return new ParameterReplacer(valueText).Visit(lamb.Body);
+                    return new ParameterReplacerVisitor(valueText).Visit(lamb.Body);
                 else
                     return Expression.Invoke(func, valueText);
 
@@ -127,7 +127,7 @@ namespace RecordParser.Generic
         {
             var intTao = new ReadOnlySpanVisitor().Modify(ex);
 
-            return (Type _, Expression valueText) => new ParameterReplacer(valueText).Visit(intTao.Body);
+            return (Type _, Expression valueText) => new ParameterReplacerVisitor(valueText).Visit(intTao.Body);
         }
 
         public static Expression GetExpressionFunc(Delegate f, params Expression[] args)

@@ -24,7 +24,7 @@ namespace RecordParser.Generic
 
             var instanceVariable = Expression.Variable(typeof(T), "inst");
             var assign = Expression.Assign(instanceVariable, getNewInstance.Body);
-            var body = new ParameterReplacer(instanceVariable, instanceParameter).Visit(funcThatSetProperties.Body);
+            var body = new ParameterReplacerVisitor(instanceVariable, instanceParameter).Visit(funcThatSetProperties.Body);
             var block = body as BlockExpression;
 
             Expression set = Expression.Block(
