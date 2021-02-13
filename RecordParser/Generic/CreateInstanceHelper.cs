@@ -112,7 +112,7 @@ namespace RecordParser.Generic
         }
     }
 
-    public static class MemberExtensions
+    internal static class MemberExtensions
     {
         public static IEnumerable<MemberExpression> GetNested(this MemberExpression ex)
         {

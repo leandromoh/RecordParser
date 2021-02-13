@@ -50,7 +50,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, 0, 12, value => value.ToUpper())
                 .Map(x => x.Birthday, 12, 8, value => DateTime.ParseExact(value, "ddMMyyyy", null))
                 .Map(x => x.Money, 21, 7)
-                .Map(x => x.Nickname, 28, 8, value => value.First() + "." + value.Last())
+                .Map(x => x.Nickname, 28, 8, value => value.Slice(0, 4).ToString())
                 .Build();
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
@@ -58,7 +58,7 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo((Name: "FOO BAR BAZ",
                                             Birthday: new DateTime(2020, 05, 23),
                                             Money: 12345M,
-                                            Nickname: "n.e"));
+                                            Nickname: "nick"));
         }
 
         [Fact]
@@ -183,6 +183,20 @@ namespace RecordParser.Test
             int decimalPlaces)
         {
             return source.Map(ex, startIndex, length, value => decimal.Parse(value) / (decimal)Math.Pow(10, decimalPlaces));
+        }
+
+        public static string ToUpper(this ReadOnlySpan<char> value)
+        {
+            Span<char> temp = stackalloc char[value.Length];
+            value.ToUpperInvariant(temp);
+            return temp.ToString();
+        }
+
+        public static string ToLower(this ReadOnlySpan<char> value)
+        {
+            Span<char> temp = stackalloc char[value.Length];
+            value.ToLowerInvariant(temp);
+            return temp.ToString();
         }
 
         public static IFixedLengthReader<T> MyBuild<T>(this IFixedLengthReaderBuilder<T> source)

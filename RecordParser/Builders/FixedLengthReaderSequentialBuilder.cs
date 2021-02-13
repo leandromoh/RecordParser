@@ -6,9 +6,9 @@ namespace RecordParser.Parsers
     public interface IFixedLengthReaderSequentialBuilder<T>
     {
         IFixedLengthReader<T> Build();
-        IFixedLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex);
+        IFixedLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
         IFixedLengthReaderSequentialBuilder<T> Skip(int length);
-        IFixedLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, int length, Expression<Func<string, R>> convert = null);
+        IFixedLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, int length, FuncSpanT<R> convert = null);
     }
 
     public class FixedLengthReaderSequentialBuilder<T> : IFixedLengthReaderSequentialBuilder<T>
@@ -18,7 +18,7 @@ namespace RecordParser.Parsers
 
         public IFixedLengthReaderSequentialBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int length,
-            Expression<Func<string, R>> convert = null)
+            FuncSpanT<R> convert = null)
         {
             indexed.Map(ex, currentPosition, length, convert);
             currentPosition += length;
@@ -31,7 +31,7 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public IFixedLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(Expression<Func<string, R>> ex)
+        public IFixedLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex)
         {
             indexed.DefaultTypeConvert(ex);
             return this;

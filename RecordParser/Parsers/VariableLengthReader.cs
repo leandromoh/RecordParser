@@ -9,18 +9,18 @@ namespace RecordParser.Parsers
 {
     public interface IVariableLengthReader<T>
     {
-        T Parse(string line);
-        bool TryParse(string line, out T result);
+        T Parse(ReadOnlySpan<char> line);
+        bool TryParse(ReadOnlySpan<char> line, out T result);
     }
 
     internal class VariableLengthReader<T> : IVariableLengthReader<T>
     {
-        private readonly Func<string[], T> parser;
+        private readonly FuncSpanArrayT<T> parser;
         private readonly int[] config;
         private readonly int maxColumnIndex;
         private readonly string delimiter;
 
-        internal VariableLengthReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser, string separator)
+        internal VariableLengthReader(IEnumerable<MappingConfiguration> list, FuncSpanArrayT<T> parser, string separator)
         {
             config = list.Select(x => x.start).ToArray();
             maxColumnIndex = config.Max();
@@ -31,21 +31,15 @@ namespace RecordParser.Parsers
 #if NET5_0
         [SkipLocalsInit]
 #endif
-        public T Parse(string line)
+        public T Parse(ReadOnlySpan<char> line)
         {
-            var span = line.AsSpan();
-            Span<(int start, int length)> indices = stackalloc (int, int)[config.Length];
-            TextFindHelper.SetStartLengthPositions(span, delimiter, config, maxColumnIndex, in indices);
-
-            var csv = new string[config.Length];
-            for (var i = 0; i < config.Length; i++)
-                csv[i] = new string(span.Slice(indices[i].start, indices[i].length).Trim());
-
-            T result = parser(csv);
+            Span<(int start, int length)> csv = stackalloc (int, int)[config.Length];
+            TextFindHelper.SetStartLengthPositions(line, delimiter, config, maxColumnIndex, in csv);
+            T result = parser(line, csv);
             return result;
         }
 
-        public bool TryParse(string line, out T result)
+        public bool TryParse(ReadOnlySpan<char> line, out T result)
         {
             try
             {

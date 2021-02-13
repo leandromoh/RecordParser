@@ -20,36 +20,7 @@ namespace RecordParser.Benchmark
         public int LimitRecord { get; set; }
         
         [Benchmark]
-        public async Task VariableLengthReaderBuilder()
-        {
-            var reader = new VariableLengthReaderBuilder<Person>()
-                .Map(x => x.id, 0)
-                .Map(x => x.name, 1)
-                .Map(x => x.age, 2)
-                .Map(x => x.birthday, 3)
-                .Map(x => x.gender, 4)
-                .Map(x => x.email, 5)
-                .Map(x => x.children, 7)
-                .Build(",");
-
-            const int BufferSize = 128;
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
-            string line;
-            var i = 0;
-
-            using var fileStream = File.OpenRead(path);
-            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
-
-            while ((line = await streamReader.ReadLineAsync()) != null)
-            {
-                if (i++ == LimitRecord) return;
-
-                var person = reader.Parse(line);
-            }
-        }
-
-        [Benchmark]
-        public async Task VariableLengthReaderRaw()
+        public async Task VariableLength_String_Raw()
         {
             const int BufferSize = 128;
             var path = Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
@@ -78,9 +49,9 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
-        public async Task SpanVariableLengthReaderBuilder()
+        public async Task VariableLength_Span_Builder()
         {
-            var parser = new SpanVariableLengthReaderBuilder<Person>()
+            var parser = new VariableLengthReaderBuilder<Person>()
                 .Map(x => x.id, 0)
                 .Map(x => x.name, 1)
                 .Map(x => x.age, 2)
@@ -128,7 +99,7 @@ namespace RecordParser.Benchmark
                 return true;
             }
 
-            static Person ProcessSequence(ReadOnlySequence<byte> sequence, ISpanVariableLengthReader<Person> parser)
+            static Person ProcessSequence(ReadOnlySequence<byte> sequence, IVariableLengthReader<Person> parser)
             {
                 const int LengthLimit = 256;
 
@@ -149,7 +120,7 @@ namespace RecordParser.Benchmark
                 return Parse(span, parser);
             }
 
-            static Person Parse(ReadOnlySpan<byte> bytes, ISpanVariableLengthReader<Person> parser)
+            static Person Parse(ReadOnlySpan<byte> bytes, IVariableLengthReader<Person> parser)
             {
                 Span<char> chars = stackalloc char[bytes.Length];
                 Encoding.UTF8.GetChars(bytes, chars);
@@ -158,8 +129,9 @@ namespace RecordParser.Benchmark
             }
         }
 
+
         [Benchmark]
-        public async Task SpanVariableLengthReaderRaw()
+        public async Task VariableLength_Span_Raw()
         {
             var path = Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
             var i = 0;

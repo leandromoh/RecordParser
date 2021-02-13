@@ -7,33 +7,27 @@ namespace RecordParser.Parsers
 {
     public interface IFixedLengthReader<T>
     {
-        T Parse(string line);
-        bool TryParse(string line, out T result);
+        T Parse(ReadOnlySpan<char> line);
+        bool TryParse(ReadOnlySpan<char> line, out T result);
     }
 
     internal class FixedLengthReader<T> : IFixedLengthReader<T>
     {
-        private readonly Func<string[], T> parser;
-        private readonly (int start, int length)[] config;
+        private readonly FuncSpanArrayT<T> parser;
+        private readonly ReadOnlyMemory<(int start, int length)> config;
 
-        internal FixedLengthReader(IEnumerable<MappingConfiguration> list, Func<string[], T> parser)
+        internal FixedLengthReader(IEnumerable<MappingConfiguration> list, FuncSpanArrayT<T> parser)
         {
             config = list.Select(x => (x.start, x.length.Value)).ToArray();
             this.parser = parser;
         }
 
-        public T Parse(string line)
+        public T Parse(ReadOnlySpan<char> line)
         {
-            var span = line.AsSpan();
-            var csv = new string[config.Length];
-
-            for (var i = 0; i < config.Length; i++)
-                csv[i] = new string(span.Slice(config[i].start, config[i].length).Trim());
-
-            return parser(csv);
+            return parser(line, config.Span);
         }
 
-        public bool TryParse(string line, out T result)
+        public bool TryParse(ReadOnlySpan<char> line, out T result)
         {
             try
             {
