@@ -9,29 +9,28 @@ namespace RecordParser.Parsers
     public interface ISpanVariableLengthReaderBuilder<T>
     {
         ISpanVariableLengthReader<T> Build(string separator);
-        ISpanVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex);
-        ISpanVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, Expression<Func<ReadOnlySpanChar, R>> convert = null);
+        ISpanVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
+        ISpanVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanT<R> convert = null);
     }
 
     public class SpanVariableLengthReaderBuilder<T> : ISpanVariableLengthReaderBuilder<T>
     {
         private readonly Dictionary<int, MappingConfiguration> list = new Dictionary<int, MappingConfiguration>();
         private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
-        private readonly ReadOnlySpanVisitor visitor = new ReadOnlySpanVisitor();
 
         public ISpanVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn,
-            Expression<Func<ReadOnlySpanChar, R>> convert = null)
+            FuncSpanT<R> convert = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            var config = new MappingConfiguration(member, indexColumn, null, typeof(R), visitor.Modify(convert));
+            var config = new MappingConfiguration(member, indexColumn, null, typeof(R), convert?.WrapInLambdaExpression());
             list.Add(indexColumn, config);
             
             return this;
         }
 
-        public ISpanVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(Expression<Func<ReadOnlySpanChar, R>> ex)
+        public ISpanVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex)
         {
-            dic.Add(typeof(R), visitor.Modify(ex));
+            dic.Add(typeof(R), ex?.WrapInLambdaExpression());
             
             return this;
         }

@@ -160,6 +160,15 @@ namespace RecordParser.Generic
             return Expression.Call(f.Target is null ? null : Expression.Constant(f.Target), f.Method, args);
         }
 
+        public static Expression<FuncSpanT<T>> WrapInLambdaExpression<T>(this FuncSpanT<T> convert)
+        {
+            var arg = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
+            var call = GetExpressionFunc(convert, arg);
+            var lambda = Expression.Lambda<FuncSpanT<T>>(call, arg);
+
+            return lambda;
+        }
+
         public static IEnumerable<MappingConfiguration> Merge(
             IEnumerable<MappingConfiguration> list,
             IReadOnlyDictionary<Type, Expression> dic)
