@@ -81,25 +81,18 @@ namespace RecordParser.Generic
 
         private static readonly IDictionary<(Type, Type), Func<Type, Expression, Expression>> dic = new Dictionary<(Type, Type), Func<Type, Expression, Expression>>
         {
-            [(typeof(string), typeof(string))] = (_, ex) => ex,
             [(typeof(ReadOnlySpan<char>), typeof(string))] = GetExpressionExpChar(span => new string(span)),
 
-            [(typeof(string), typeof(Guid))] = (_, ex) => GetExpressionExp(text => Guid.Parse(text), ex),
             [(typeof(ReadOnlySpan<char>), typeof(Guid))] = GetExpressionExpChar(span => Guid.Parse(span)),
 
-            [(typeof(string), typeof(Enum))] = GetEnumFromStringParseExpression,
             [(typeof(ReadOnlySpan<char>), typeof(Enum))] = GetEnumFromSpanParseExpression,
 
-            [(typeof(string), typeof(bool))] = (_, ex) => GetExpressionExp(text => bool.Parse(text), ex),
             [(typeof(ReadOnlySpan<char>), typeof(bool))] = GetExpressionExpChar(span => bool.Parse(span)),
 
-            [(typeof(string), typeof(int))] = (_, ex) => GetExpressionExp(text => int.Parse(text), ex),
             [(typeof(ReadOnlySpan<char>), typeof(int))] = GetExpressionExpChar(span => int.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture)),
 
-            [(typeof(string), typeof(DateTime))] = (_, ex) => GetExpressionExp(text => DateTime.Parse(text, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces), ex),
             [(typeof(ReadOnlySpan<char>), typeof(DateTime))] = GetExpressionExpChar(span => DateTime.Parse(span, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces)),
             
-            [(typeof(string), typeof(decimal))] = (_, ex) => GetExpressionExp(text => decimal.Parse(text, CultureInfo.InvariantCulture), ex),
             [(typeof(ReadOnlySpan<char>), typeof(decimal))] = GetExpressionExpChar(span => decimal.Parse(span, NumberStyles.Number, CultureInfo.InvariantCulture))
         };
 
@@ -112,24 +105,6 @@ namespace RecordParser.Generic
                     valueText,
                     Expression.Constant(type, typeof(Type)),
                     Expression.Constant(CultureInfo.InvariantCulture)
-                });
-        }
-
-        private static Expression GetExpressionExp<R>(Expression<Func<string, R>> f, Expression valueText)
-        {
-            return new ParameterReplacer(valueText).Visit(f.Body);
-        }
-
-        private static Expression GetEnumFromStringParseExpression(Type type, Expression valueText)
-        {
-            Debug.Assert(valueText.Type == typeof(string));
-
-            return Expression.Call(
-                typeof(Enum), nameof(Enum.Parse), new[] { type },
-                arguments: new Expression[]
-                {
-                        valueText,
-                        Expression.Constant(true)
                 });
         }
 
