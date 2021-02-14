@@ -5,7 +5,7 @@ It makes easier for developers to do parsing by automating non-relevant code, al
 
 1. It is fast because the non-relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is almost fast as handwriting code  
 2. It is even faster because it uses [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a new .NET type designed to have high-performance and reduce memory allocations
-3. It is extensible: developers can easily create wrapper methods with [custom maps](https://github.com/leandromoh/RecordParser/blob/master/RecordParser.Test/FixedLengthReaderBuilderTest.cs#L82)
+3. It is extensible: developers can easily create wrapper methods with [custom maps](/RecordParser.Test/FixedLengthReaderBuilderTest.cs#L82)
 4. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your POCO classes with minimised dependencies and low coupling  
 5. It provides simple API: reader object provides 2 familiar methods `Parse` and `TryParse`
 6. It supports to parse classes and structs types (i.e., reference and value types)
@@ -183,3 +183,6 @@ public void Given_nested_mapped_property_should_create_nested_instance_to_parse(
     });
 }
 ```
+### Benchmark
+
+Check some benchmark of the library [here](/Benchmark.md)
