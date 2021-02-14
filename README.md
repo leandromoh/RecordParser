@@ -137,7 +137,7 @@ This feature is avaible for both fixed and variable length.
 
 ```csharp
 [Fact]
-public void Given_specified_custom_parser_for_member_should_have_priority_over_custom_parser_for_type()
+public void Given_members_with_custom_format_should_use_custom_parser()
 {
     var reader = new VariableLengthReaderBuilder<(int Age, int MotherAge, int FatherAge)>()
         .Map(x => x.Age, 0)

@@ -47,7 +47,7 @@ namespace RecordParser.Test
         }
 
         [Fact]
-        public void Given_some_values_with_custom_format_should_allow_define_custom_parser_for_member()
+        public void Given_members_with_custom_format_should_use_custom_parser()
         {
             var reader = new FixedLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money, string Nickname)>()
                 .Map(x => x.Name, 12, value => value.ToUpper())
