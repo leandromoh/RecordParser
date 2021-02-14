@@ -12,7 +12,7 @@ namespace RecordParser.Generic
         public static BlockExpression MountSetProperties(
             ParameterExpression objectParameter, 
             IEnumerable<MappingConfiguration> mappedColumns, 
-            Func<int, Expression> getTextValue,
+            Func<int, MappingConfiguration, Expression> getTextValue,
             Func<Expression, Expression> getIsNullOrWhiteSpace)
         {
             var replacer = new ParameterReplacerVisitor(objectParameter);
@@ -26,7 +26,7 @@ namespace RecordParser.Generic
                 if (x.prop is null)
                     continue;
 
-                Expression textValue = getTextValue(i);
+                Expression textValue = getTextValue(i, x);
 
                 var propertyType = x.prop.Type;
                 var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);

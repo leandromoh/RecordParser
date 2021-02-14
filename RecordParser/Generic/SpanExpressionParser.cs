@@ -43,7 +43,7 @@ namespace RecordParser.Generic
             ParameterExpression span = Expression.Variable(typeof(ReadOnlySpan<char>), "span");
             ParameterExpression configParameter = Expression.Variable(typeof(ReadOnlySpan<(int start, int length)>), "config");
 
-            var blockExpr = MountSetProperties(objectParameter, mappedColumns, i =>
+            var blockExpr = MountSetProperties(objectParameter, mappedColumns, (i, mapConfig) =>
             {
                 var arrayIndex = ReadOnlySpanIndex<(int, int)>(configParameter, Expression.Constant(i));
 
@@ -52,7 +52,13 @@ namespace RecordParser.Generic
                     Expression.Field(arrayIndex, "Item1"),
                     Expression.Field(arrayIndex, "Item2"));
 
-                return Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, textValue);
+                var shouldTrim = mapConfig.prop.Type == typeof(string)
+                              || mapConfig.prop.Type == typeof(char)
+                              || mapConfig.prop.Type == typeof(DateTime);
+                
+                return shouldTrim
+                    ? Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, textValue)
+                    : textValue;
             },
             GetIsWhiteSpaceExpression);
 
