@@ -16,7 +16,7 @@ namespace RecordParser.Benchmark
     [SimpleJob(RuntimeMoniker.NetCoreApp50)]
     public class TestRunner
     {
-        [Params(10_000, 100_000)]
+        [Params(100_000, 500_000)]
         public int LimitRecord { get; set; }
         
         [Benchmark]
