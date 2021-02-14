@@ -17,4 +17,31 @@ namespace RecordParser.Test
 
         public Person Mother { get; set; }
     }
+
+    internal class AllType
+    {
+        public string Str;
+        public char Char;
+
+        public byte Byte;
+        public sbyte SByte;
+
+        public double Double;
+        public float Float;
+
+        public int Int;
+        public uint UInt;
+
+        public long Long;
+        public ulong ULong;
+
+        public short Short;
+        public ushort UShort;
+
+        public Guid Guid;
+        public DateTime Date;
+
+        public bool Bool;
+        public decimal Decimal;
+    }
 }
