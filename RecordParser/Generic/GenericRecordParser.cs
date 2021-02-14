@@ -79,22 +79,49 @@ namespace RecordParser.Generic
             return GetParseExpression(propertyType, valueText);
         }
 
-        private static readonly IDictionary<(Type, Type), Func<Type, Expression, Expression>> dic = new Dictionary<(Type, Type), Func<Type, Expression, Expression>>
+        private static readonly IReadOnlyDictionary<(Type, Type), Func<Type, Expression, Expression>> dic;
+
+        static GenericRecordParser()
         {
-            [(typeof(ReadOnlySpan<char>), typeof(string))] = GetExpressionExpChar(span => new string(span)),
+            var mapping = new Dictionary<(Type, Type), Func<Type, Expression, Expression>>();
 
-            [(typeof(ReadOnlySpan<char>), typeof(Guid))] = GetExpressionExpChar(span => Guid.Parse(span)),
+            mapping.AddMapForReadOnlySpan(span => new string(span));
+            mapping.AddMapForReadOnlySpan(span => ToChar(span));
 
-            [(typeof(ReadOnlySpan<char>), typeof(Enum))] = GetEnumFromSpanParseExpression,
+            mapping.AddMapForReadOnlySpan(span => byte.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => sbyte.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
 
-            [(typeof(ReadOnlySpan<char>), typeof(bool))] = GetExpressionExpChar(span => bool.Parse(span)),
+            mapping.AddMapForReadOnlySpan(span => double.Parse(span, NumberStyles.AllowThousands | NumberStyles.Float, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => float.Parse(span, NumberStyles.AllowThousands | NumberStyles.Float, CultureInfo.InvariantCulture));
 
-            [(typeof(ReadOnlySpan<char>), typeof(int))] = GetExpressionExpChar(span => int.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture)),
+            mapping.AddMapForReadOnlySpan(span => int.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => uint.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
 
-            [(typeof(ReadOnlySpan<char>), typeof(DateTime))] = GetExpressionExpChar(span => DateTime.Parse(span, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces)),
-            
-            [(typeof(ReadOnlySpan<char>), typeof(decimal))] = GetExpressionExpChar(span => decimal.Parse(span, NumberStyles.Number, CultureInfo.InvariantCulture))
-        };
+            mapping.AddMapForReadOnlySpan(span => long.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => ulong.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+
+            mapping.AddMapForReadOnlySpan(span => short.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => ushort.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+
+            mapping.AddMapForReadOnlySpan(span => Guid.Parse(span));
+            mapping.AddMapForReadOnlySpan(span => DateTime.Parse(span, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces));
+
+            mapping.AddMapForReadOnlySpan(span => bool.Parse(span));
+            mapping.AddMapForReadOnlySpan(span => decimal.Parse(span, NumberStyles.Number, CultureInfo.InvariantCulture));
+
+            mapping[(typeof(ReadOnlySpan<char>), typeof(Enum))] = GetEnumFromSpanParseExpression;
+
+            dic = mapping;
+        }
+
+        private static char ToChar(ReadOnlySpan<char> span) => span[0];
+
+        private static void AddMapForReadOnlySpan<T>(
+            this IDictionary<(Type, Type), Func<Type, Expression, Expression>>  dic, 
+            Expression<Func<ReadOnlySpanChar, T>> ex)
+        {
+            dic.Add((typeof(ReadOnlySpan<char>), typeof(T)), GetExpressionExpChar(ex));
+        }
 
         private static Expression GetParseExpression(Type type, Expression valueText)
         {
