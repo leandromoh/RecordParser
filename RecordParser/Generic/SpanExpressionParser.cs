@@ -54,8 +54,8 @@ namespace RecordParser.Generic
 
                 var shouldTrim = mapConfig.prop.Type == typeof(string)
                               || mapConfig.prop.Type == typeof(char)
-                              || mapConfig.prop.Type == typeof(DateTime);
-                
+                              || (mapConfig.prop.Type == typeof(DateTime) && mapConfig.fmask != null);
+
                 return shouldTrim
                     ? Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, textValue)
                     : textValue;
