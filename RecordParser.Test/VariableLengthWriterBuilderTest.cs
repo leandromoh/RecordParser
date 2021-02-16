@@ -11,7 +11,7 @@ namespace RecordParser.Test
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
         {
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)> ()
-                .Map(x => x.Name, indexColumn: 0)
+                .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
@@ -30,7 +30,7 @@ namespace RecordParser.Test
         public void Given_skip_column_using_standard_format_should_parse_without_extra_configuration()
         {
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, indexColumn: 0)
+                .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Color, 4)
                 .Build(" ; ");
@@ -48,7 +48,7 @@ namespace RecordParser.Test
         public void Given_skip_first_column_using_standard_format_should_parse_without_extra_configuration()
         {
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, indexColumn: 1)
+                .Map(x => x.Name, 1)
                 .Map(x => x.Birthday, 2, "yyyy.MM.dd")
                 .Map(x => x.Money, 3)
                 .Map(x => x.Color, 4)
@@ -97,7 +97,8 @@ namespace RecordParser.Test
             var charsWritten = writer.Parse(instance, destination);
             var result = destination.Slice(charsWritten).ToString();
 
-            result.Should().Be(new string(default, result.Length));
+            var expected = new string(default, result.Length);
+            result.Should().Be(expected);
         }
     }
 }

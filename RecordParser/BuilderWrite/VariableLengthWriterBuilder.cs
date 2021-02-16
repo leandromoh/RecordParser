@@ -121,10 +121,12 @@ namespace RecordParser.BuilderWrite
 
                 commands.Add(
                     Expression.AddAssign(position, Expression.Add(offset, delimiterLength)));
-
             }
 
-            commands.Add(Expression.Subtract(position, delimiterLength));
+            //remove the last 2 commands (copy delimiter and add delimiterLength to position)
+            commands.RemoveRange(commands.Count - 2, 2);
+
+            commands.Add(Expression.Add(position, offset));
 
             var blockExpr = Expression.Block(variables, commands);
 
@@ -132,7 +134,7 @@ namespace RecordParser.BuilderWrite
 
             return lambda;
 
-            Expression StringAsSpan(Expression str) => Expression.Call(typeof(MemoryExtensions), nameof(MemoryExtensions.AsSpan), Type.EmptyTypes, str);
+            Expression StringAsSpan(Expression str) => Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);
         }
     }
 }
