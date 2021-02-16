@@ -72,16 +72,24 @@ namespace RecordParser.BuilderWrite
             var i = -1;
             foreach (var map in mappedColumns)
             {
+                reloop:
+                
+                commands.Add(
+                    Expression.Assign(spanTemp, Expression.Call(span, "Slice", Type.EmptyTypes, position)));
+
                 if (++i != map.start)
                 {
-                    continue;
+                    commands.Add(
+                        Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, spanTemp));
+
+                    commands.Add(
+                        Expression.AddAssign(position, delimiterLength));
+
+                    goto reloop;
                 }
 
                 var prop = replacer.Visit(map.prop);
 
-                commands.Add(
-                    Expression.Assign(spanTemp, Expression.Call(span, "Slice", Type.EmptyTypes, position)));
-                
                 if (prop.Type.IsEnum)
                 {
                     prop = Expression.Call(prop, "ToString", Type.EmptyTypes);
