@@ -16,7 +16,6 @@ namespace RecordParser.BuilderWrite
     public class VariableLengthWriterBuilder<T> : IVariableLengthWriterBuilder<T>
     {
         private readonly Dictionary<int, MappingWriteConfiguration> list = new Dictionary<int, MappingWriteConfiguration>();
-        private FuncSpanSpanIntT<T> func;
 
         public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format = null, IFormatProvider formatProvider = null)
         {
