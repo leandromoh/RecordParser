@@ -47,10 +47,13 @@ namespace RecordParser.BuilderWrite
             ParameterExpression offset = Expression.Variable(typeof(int), "offset");
             ParameterExpression position = Expression.Variable(typeof(int), "position");
             ParameterExpression delimiterLength = Expression.Variable(typeof(int), "delimiterLength");
+            ParameterExpression spanTemp = Expression.Variable(typeof(Span<char>), "spanTemp");
+
             List<ParameterExpression> variables = new List<ParameterExpression>();
             variables.Add(offset);
             variables.Add(position);
             variables.Add(delimiterLength);
+            variables.Add(spanTemp);
 
             // commands
             List<Expression> commands = new List<Expression>();
@@ -75,9 +78,6 @@ namespace RecordParser.BuilderWrite
                 }
 
                 var prop = replacer.Visit(map.prop);
-
-                ParameterExpression spanTemp = Expression.Variable(typeof(Span<char>), $"span{i}");
-                variables.Add(spanTemp);
 
                 commands.Add(
                     Expression.Assign(spanTemp, Expression.Call(span, "Slice", Type.EmptyTypes, position)));
