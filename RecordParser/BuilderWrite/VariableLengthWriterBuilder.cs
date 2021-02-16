@@ -1,4 +1,5 @@
 ﻿using RecordParser.Generic;
+using RecordParser.Parsers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,46 +7,41 @@ using System.Linq.Expressions;
 
 namespace RecordParser.BuilderWrite
 {
-    public class CSVWriteBuilder<T>
+    public interface IVariableLengthWriterBuilder<T>
+    {
+        IVariableLengthWriter<T> Build(string separator);
+        IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format = null, IFormatProvider formatProvider = null);
+    }
+
+    public class VariableLengthWriterBuilder<T> : IVariableLengthWriterBuilder<T>
     {
         private readonly Dictionary<int, MappingWriteConfiguration> list = new Dictionary<int, MappingWriteConfiguration>();
         private FuncSpanSpanIntT<T> func;
 
-        public CSVWriteBuilder<T> Map<R>(Expression<Func<T, R>> ex, int collumn, string format = null, IFormatProvider formatProvider = null)
+        public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format = null, IFormatProvider formatProvider = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            var config = new MappingWriteConfiguration(member, collumn, format, typeof(R), formatProvider);
-            list.Add(collumn, config);
+            var config = new MappingWriteConfiguration(member, indexColumn, format, typeof(R), formatProvider);
+            list.Add(indexColumn, config);
             return this;
         }
 
-        public CSVWriteBuilder<T> Build()
+        public IVariableLengthWriter<T> Build(string separator)
         {
-            var maps = list.Select(x => x.Value);
-            var expression = GetFuncThatSetProperties<T>(maps);
-            func = expression.Compile();
-            return this;
+            var maps = list.Select(x => x.Value).OrderBy(x => x.start);
+            var expression = GetFuncThatSetProperties(maps);
+            
+            return new VariableLengthWriter<T>(expression.Compile(), separator);
         }
 
-        public ReadOnlySpan<char> Parse(T bla)
-        {
-            Span<char> span = stackalloc char[100];
-            var lineLength = func(span, " ; ", bla);
-            Span<char> line = new char[lineLength];
-            span.Slice(0, lineLength).CopyTo(line);
-            return line;
-        }
-
-        delegate int FuncSpanSpanIntT<X>(Span<char> span, ReadOnlySpan<char> delimiter, X inst);
-
-        private static Expression<FuncSpanSpanIntT<X>> GetFuncThatSetProperties<X>(IEnumerable<MappingWriteConfiguration> mappedColumns)
+        private static Expression<FuncSpanSpanIntT<T>> GetFuncThatSetProperties(IEnumerable<MappingWriteConfiguration> mappedColumns)
         {
             // parameters
             ParameterExpression span = Expression.Variable(typeof(Span<char>), "span");
             ParameterExpression delimiter = Expression.Variable(typeof(ReadOnlySpan<char>), "delimiter");
-            ParameterExpression inst = Expression.Variable(typeof(X), "inst");
+            ParameterExpression inst = Expression.Variable(typeof(T), "inst");
 
-            var replacer = new ParameterReplacer(inst);
+            var replacer = new ParameterReplacerVisitor(inst);
 
             // variables
             ParameterExpression offset = Expression.Variable(typeof(int), "offset");
@@ -70,17 +66,26 @@ namespace RecordParser.BuilderWrite
 
             commands.Add(Expression.Assign(position, Expression.Constant(0)));
 
-            var i = 0;
+            var i = -1;
             foreach (var map in mappedColumns)
             {
+                if (++i != map.start)
+                {
+                    continue;
+                }
+
                 var prop = replacer.Visit(map.prop);
 
-                ParameterExpression spanTemp = Expression.Variable(typeof(Span<char>), $"span{++i}");
+                ParameterExpression spanTemp = Expression.Variable(typeof(Span<char>), $"span{i}");
                 variables.Add(spanTemp);
 
                 commands.Add(
                     Expression.Assign(spanTemp, Expression.Call(span, "Slice", Type.EmptyTypes, position)));
-
+                
+                if (prop.Type.IsEnum)
+                {
+                    prop = Expression.Call(prop, "ToString", Type.EmptyTypes);
+                }
 
                 if (prop.Type == typeof(string))
                 {
@@ -99,7 +104,7 @@ namespace RecordParser.BuilderWrite
                         : StringAsSpan(Expression.Constant(map.format));
 
                     commands.Add(
-                        Expression.Call(prop, "TryFormat", Type.EmptyTypes, 
+                        Expression.Call(prop, "TryFormat", Type.EmptyTypes,
                         spanTemp, offset, format, Expression.Constant(map.formatProvider, typeof(IFormatProvider))));
                 }
 
@@ -115,29 +120,11 @@ namespace RecordParser.BuilderWrite
 
             var blockExpr = Expression.Block(variables, commands);
 
-            var lambda = Expression.Lambda<FuncSpanSpanIntT<X>>(blockExpr, new[] { span, delimiter, inst });
+            var lambda = Expression.Lambda<FuncSpanSpanIntT<T>>(blockExpr, new[] { span, delimiter, inst });
 
             return lambda;
 
             Expression StringAsSpan(Expression str) => Expression.Call(typeof(MemoryExtensions), nameof(MemoryExtensions.AsSpan), Type.EmptyTypes, str);
-        }
-    }
-
-    public readonly struct MappingWriteConfiguration
-    {
-        public MemberExpression prop { get; }
-        public int start { get; }
-        public string format { get; }
-        public IFormatProvider formatProvider { get; }
-        public Type type { get; }
-
-        public MappingWriteConfiguration(MemberExpression prop, int start, string format, Type type, IFormatProvider formatProvider)
-        {
-            this.prop = prop;
-            this.start = start;
-            this.format = format;
-            this.type = type;
-            this.formatProvider = formatProvider;
         }
     }
 }
