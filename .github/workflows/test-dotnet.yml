@@ -8,8 +8,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        operating-system: [ubuntu-latest, windows-latest, macOS-latest]
-        dotnet-version: ['2.1', '2.2', '3.0', '3.1', '5.0']
+        operating-system: [ubuntu-latest ]
+        dotnet-version: ['5.0']
     name: Dotnet ${{ matrix.dotnet }} sample
     steps:
       - uses: actions/checkout@v2
