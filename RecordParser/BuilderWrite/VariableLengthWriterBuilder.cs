@@ -10,17 +10,17 @@ namespace RecordParser.BuilderWrite
     public interface IVariableLengthWriterBuilder<T>
     {
         IVariableLengthWriter<T> Build(string separator);
-        IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format = null, IFormatProvider formatProvider = null);
+        IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format = null);
     }
 
     public class VariableLengthWriterBuilder<T> : IVariableLengthWriterBuilder<T>
     {
         private readonly Dictionary<int, MappingWriteConfiguration> list = new Dictionary<int, MappingWriteConfiguration>();
 
-        public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format = null, IFormatProvider formatProvider = null)
+        public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            var config = new MappingWriteConfiguration(member, indexColumn, format, typeof(R), formatProvider);
+            var config = new MappingWriteConfiguration(member, indexColumn, null, format, default, default, typeof(R), null);
             list.Add(indexColumn, config);
             return this;
         }
@@ -33,7 +33,7 @@ namespace RecordParser.BuilderWrite
             return new VariableLengthWriter<T>(expression.Compile(), separator);
         }
 
-        private static Expression<FuncSpanSpanIntT<T>> GetFuncThatSetProperties(IEnumerable<MappingWriteConfiguration> mappedColumns)
+        private static Expression<FuncSpanSpanTInt<T>> GetFuncThatSetProperties(IEnumerable<MappingWriteConfiguration> mappedColumns)
         {
             // parameters
             ParameterExpression span = Expression.Variable(typeof(Span<char>), "span");
@@ -129,7 +129,7 @@ namespace RecordParser.BuilderWrite
 
             var blockExpr = Expression.Block(variables, commands);
 
-            var lambda = Expression.Lambda<FuncSpanSpanIntT<T>>(blockExpr, new[] { span, delimiter, inst });
+            var lambda = Expression.Lambda<FuncSpanSpanTInt<T>>(blockExpr, new[] { span, delimiter, inst });
 
             return lambda;
 
