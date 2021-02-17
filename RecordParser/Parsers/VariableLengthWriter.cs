@@ -7,14 +7,14 @@ namespace RecordParser.Parsers
         int Parse(T instance, Span<char> destination);
     }
 
-    internal delegate int FuncSpanSpanIntT<T>(Span<char> span, ReadOnlySpan<char> delimiter, T inst);
+    internal delegate int FuncSpanSpanTInt<T>(Span<char> span, ReadOnlySpan<char> delimiter, T inst);
 
     internal class VariableLengthWriter<T> : IVariableLengthWriter<T>
     {
-        private readonly FuncSpanSpanIntT<T> parse;
+        private readonly FuncSpanSpanTInt<T> parse;
         private readonly string separator;
 
-        public VariableLengthWriter(FuncSpanSpanIntT<T> parse, string separator)
+        public VariableLengthWriter(FuncSpanSpanTInt<T> parse, string separator)
         {
             this.parse = parse;
             this.separator = separator;
