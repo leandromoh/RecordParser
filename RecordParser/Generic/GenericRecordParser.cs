@@ -10,8 +10,8 @@ namespace RecordParser.Generic
     internal static class GenericRecordParser
     {
         public static BlockExpression MountSetProperties(
-            ParameterExpression objectParameter, 
-            IEnumerable<MappingConfiguration> mappedColumns, 
+            ParameterExpression objectParameter,
+            IEnumerable<MappingConfiguration> mappedColumns,
             Func<int, MappingConfiguration, Expression> getTextValue,
             Func<Expression, Expression> getIsNullOrWhiteSpace)
         {
@@ -117,7 +117,7 @@ namespace RecordParser.Generic
         private static char ToChar(ReadOnlySpan<char> span) => span[0];
 
         private static void AddMapForReadOnlySpan<T>(
-            this IDictionary<(Type, Type), Func<Type, Expression, Expression>>  dic, 
+            this IDictionary<(Type, Type), Func<Type, Expression, Expression>> dic,
             Expression<Func<ReadOnlySpanChar, T>> ex)
         {
             dic.Add((typeof(ReadOnlySpan<char>), typeof(T)), GetExpressionExpChar(ex));
@@ -135,19 +135,62 @@ namespace RecordParser.Generic
                 });
         }
 
-        private static Expression GetEnumFromSpanParseExpression(Type type, Expression valueText)
+        public static Expression StringAsSpan(Expression str) =>
+            Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);
+
+        public static Expression Trim(Expression str) =>
+            Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, str);
+
+        private static Expression GetEnumFromSpanParseExpression(Type type, Expression span)
         {
-            Debug.Assert(valueText.Type == typeof(ReadOnlySpan<char>));
+            Debug.Assert(type.IsEnum);
+            Debug.Assert(span.Type == typeof(ReadOnlySpan<char>));
 
-            var stringConstructor = typeof(string).GetConstructor(new[] { typeof(ReadOnlySpan<char>) });
+            var under = Enum.GetUnderlyingType(type);
+            var trim = Expression.Variable(typeof(ReadOnlySpan<char>), "trim");
+            var number = Expression.Variable(under, "number");
 
-            return Expression.Call(
-                typeof(Enum), nameof(Enum.Parse), new[] { type },
-                arguments: new Expression[]
+            var body = Enum.GetValues(type)
+                .Cast<object>()
+                .Select(color =>
                 {
-                    Expression.New(stringConstructor, valueText),
-                    Expression.Constant(true)
-                });
+                    var text = Expression.Call(typeof(MemoryExtensions), "CompareTo", Type.EmptyTypes,
+                        StringAsSpan(Expression.Constant(color.ToString())),
+                        trim,
+                        Expression.Constant(StringComparison.OrdinalIgnoreCase));
+
+                    var textCompare = Expression.Equal(text, Expression.Constant(0));
+
+                    return (value: color, condition: textCompare);
+                })
+                .Reverse()
+                .Aggregate((Expression)Expression.Condition(
+                        Expression.Call(under, "TryParse", Type.EmptyTypes, trim, number),
+                        Expression.Convert(number, type),
+                        Expression.Throw(
+                            Expression.New(
+                                typeof(ArgumentException).GetConstructor(new[] { typeof(string) }),
+                                Expression.Call(typeof(string), "Format", Type.EmptyTypes,
+                                    Expression.Constant($"value {{0}} not present in enum {type.Name}"),
+                                    Expression.Call(trim, "ToString", Type.EmptyTypes)
+
+                            )), type)),
+
+                            (acc, item) =>
+                                Expression.Condition(
+                                    item.condition,
+                                    Expression.Constant(item.value, type),
+                                    acc));
+
+            var blockExpr = Expression.Block(
+                                variables: new[] { trim, number },
+                                expressions: new[]
+                                {
+                                    Expression.Assign(trim, Trim(span)),
+                                    body
+                                });
+
+            return blockExpr;
         }
 
         private static Func<Type, Expression, Expression> GetExpressionExpChar<T>(Expression<Func<ReadOnlySpanChar, T>> ex)
