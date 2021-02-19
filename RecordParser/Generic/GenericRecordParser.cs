@@ -161,7 +161,11 @@ namespace RecordParser.Generic
 
                     var textCompare = Expression.Equal(text, Expression.Constant(0));
 
-                    return (value: color, condition: textCompare);
+                    var length = Expression.Equal(
+                        Expression.PropertyOrField(trim, "Length"),
+                        Expression.Constant(color.ToString().Length));
+
+                    return (value: color, condition: Expression.AndAlso(length, textCompare));
                 })
                 .Reverse()
                 .Aggregate((Expression)Expression.Condition(
