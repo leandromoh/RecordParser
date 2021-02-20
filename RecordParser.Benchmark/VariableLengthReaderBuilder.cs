@@ -14,17 +14,17 @@ namespace RecordParser.Benchmark
     [MemoryDiagnoser]
     [SimpleJob(RuntimeMoniker.NetCoreApp31)]
     [SimpleJob(RuntimeMoniker.NetCoreApp50)]
-    public class TestRunner
+    public partial class TestRunner
     {
         [Params(100_000, 500_000)]
         public int LimitRecord { get; set; }
         
-        public string PathSampleData => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
+        public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
 
         [Benchmark]
         public async Task VariableLength_String_Raw()
         {
-            using var fileStream = File.OpenRead(PathSampleData);
+            using var fileStream = File.OpenRead(PathSampleDataCSV);
             using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
 
             string line;
@@ -61,13 +61,13 @@ namespace RecordParser.Benchmark
                 .Map(x => x.children, 7)
                 .Build(",");
 
-            await ProcessFile(parser.Parse);
+            await ProcessCSVFile(parser.Parse);
         }
 
         [Benchmark]
         public async Task VariableLength_Span_Raw()
         {
-            await ProcessFile((ReadOnlySpan<char> line) =>
+            await ProcessCSVFile((ReadOnlySpan<char> line) =>
             {
                 var scanned = -1;
                 var position = 0;
@@ -94,9 +94,19 @@ namespace RecordParser.Benchmark
             });
         }
 
-        public async Task ProcessFile(FuncSpanT<Person> parser)
+        public async Task ProcessFlatFile(FuncSpanT<Person> parser)
         {
-            using var stream = File.OpenRead(PathSampleData);
+            await ProcessFile(parser, PathSampleDataTXT);
+        }
+
+        public async Task ProcessCSVFile(FuncSpanT<Person> parser)
+        {
+            await ProcessFile(parser, PathSampleDataCSV);
+        }
+
+        public async Task ProcessFile(FuncSpanT<Person> parser, string filePath)
+        {
+            using var stream = File.OpenRead(filePath);
             PipeReader reader = PipeReader.Create(stream);
             
             var i = 0;
