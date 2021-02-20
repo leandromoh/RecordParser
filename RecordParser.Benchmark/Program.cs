@@ -1,14 +1,18 @@
 ﻿using BenchmarkDotNet.Running;
 using System;
+using System.Threading.Tasks;
 
 namespace RecordParser.Benchmark
 {
     public class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
+#if DEBUG
+            await new TestRunner().FixedLength_Span_Builder();
+#else
             BenchmarkRunner.Run<TestRunner>();
-
+#endif
             Console.Out.Write("Hit <enter> to exit...");
             Console.In.ReadLine();
         }
@@ -22,7 +26,8 @@ namespace RecordParser.Benchmark
 
     public struct Person
     {
-        public Guid id;
+        public char alfa;
+        public Guid? id;
         public string name;
         public int age;
         public DateTime birthday;
