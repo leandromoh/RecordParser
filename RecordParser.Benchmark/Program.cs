@@ -11,7 +11,7 @@ namespace RecordParser.Benchmark
 #if DEBUG
             await new TestRunner().FixedLength_Span_Builder();
 #else
-            BenchmarkRunner.Run<VariableLengthReaderBuilder>();
+            BenchmarkRunner.Run<TestRunner>();
 #endif
             Console.Out.Write("Hit <enter> to exit...");
             Console.In.ReadLine();
