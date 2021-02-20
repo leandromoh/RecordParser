@@ -60,13 +60,6 @@ namespace RecordParser.BuilderWrite
             commands.Add(
                 Expression.Assign(delimiterLength, Expression.PropertyOrField(delimiter, "Length")));
 
-            commands.Add(
-                Expression.Assign(
-                    offset,
-                    Expression.Subtract(
-                        Expression.Constant(0),
-                        delimiterLength)));
-
             commands.Add(Expression.Assign(position, Expression.Constant(0)));
 
             var i = -1;
@@ -109,8 +102,6 @@ namespace RecordParser.BuilderWrite
             var lambda = Expression.Lambda<FuncSpanSpanTInt<T>>(blockExpr, new[] { span, delimiter, inst });
 
             return lambda;
-
-            Expression StringAsSpan(Expression str) => Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);
         }
     }
 }
