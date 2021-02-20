@@ -261,6 +261,34 @@ namespace RecordParser.Test
 
             result.Should().BeEquivalentTo(expected);
         }
+
+        [Fact]
+        public void Parse_enum_same_way_framework()
+        {
+            var reader = new VariableLengthReaderBuilder<(Color color, bool _)>()
+                .Map(x => x.color, 0)
+                .Build(";");
+
+            // text as is
+            reader.Parse("Black").color.Should().Be(Color.Black);
+
+            // text uppercase
+            reader.Parse("WHITE").color.Should().Be(Color.White);
+
+            // text lowercase
+            reader.Parse("yellow").color.Should().Be(Color.Yellow);
+
+            // numeric value present in enum
+            reader.Parse("3").color.Should().Be(Color.LightBlue);
+
+            // numeric value NOT present in enum
+            reader.Parse("777").color.Should().Be((Color)777);
+
+            // text NOT present in enum
+            Action act = () => reader.Parse("foo");
+
+            act.Should().Throw<ArgumentException>().WithMessage("value foo not present in enum Color");
+        }
     }
 
     public static class VariableLengthReaderCustomExtensions
