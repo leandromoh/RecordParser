@@ -3,7 +3,7 @@
 RecordParser is a expression tree based parser that helps you to write maintainable, fast and simple parsers.  
 It makes easier for developers to do parsing by automating non-relevant code, allowing the developer to focus on the essentials of mapping.
 
-1. It is fast because the relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is almost fast as handwriting code [(see benchmark)](/Benchmark.md)
+1. It is fast because the relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is almost fast as handwriting code [(sometimes faster, see benchmark)](/Benchmark.md)
 2. It is even faster because it does intense use of [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a new .NET type designed to have high-performance and reduce memory allocations
 3. It is extensible: developers can easily create wrapper methods with [custom maps](/RecordParser.Test/FixedLengthReaderBuilderTest.cs#L85)
 4. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your POCO classes with minimised dependencies and low coupling  
