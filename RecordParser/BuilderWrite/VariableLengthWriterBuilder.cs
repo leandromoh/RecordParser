@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using static RecordParser.BuilderWrite.SpanExpressionHelper;
 
 namespace RecordParser.BuilderWrite
 {
@@ -89,31 +90,7 @@ namespace RecordParser.BuilderWrite
 
                 var prop = replacer.Visit(map.prop);
 
-                if (prop.Type.IsEnum)
-                {
-                    prop = Expression.Call(prop, "ToString", Type.EmptyTypes);
-                }
-
-                if (prop.Type == typeof(string))
-                {
-                    var strSpan = StringAsSpan(prop);
-
-                    commands.Add(
-                        Expression.Call(strSpan, "CopyTo", Type.EmptyTypes, spanTemp));
-
-                    commands.Add(
-                        Expression.Assign(offset, Expression.PropertyOrField(prop, "Length")));
-                }
-                else
-                {
-                    var format = map.format is null
-                        ? Expression.Default(typeof(ReadOnlySpan<char>))
-                        : StringAsSpan(Expression.Constant(map.format));
-
-                    commands.Add(
-                        Expression.Call(prop, "TryFormat", Type.EmptyTypes,
-                        spanTemp, offset, format, Expression.Constant(map.formatProvider, typeof(IFormatProvider))));
-                }
+                DAs(prop, map, commands, spanTemp, offset);
 
                 commands.Add(
                     Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, Expression.Call(spanTemp, "Slice", Type.EmptyTypes, offset)));

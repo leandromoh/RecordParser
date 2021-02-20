@@ -51,7 +51,7 @@ namespace RecordParser.BuilderWrite
             // commands
             List<Expression> commands = new List<Expression>();
 
-            var i = -1;
+        //  var i = -1;
             foreach (var map in mappedColumns)
             {
                 commands.Add(
@@ -59,31 +59,7 @@ namespace RecordParser.BuilderWrite
 
                 var prop = replacer.Visit(map.prop);
 
-                if (prop.Type.IsEnum)
-                {
-                    prop = Expression.Call(prop, "ToString", Type.EmptyTypes);
-                }
-
-                if (prop.Type == typeof(string))
-                {
-                    var strSpan = StringAsSpan(prop);
-
-                    commands.Add(
-                        Expression.Call(strSpan, "CopyTo", Type.EmptyTypes, temp));
-
-                    commands.Add(
-                        Expression.Assign(charsWritten, Expression.PropertyOrField(prop, "Length")));
-                }
-                else
-                {
-                    var format = map.format is null
-                        ? Expression.Default(typeof(ReadOnlySpan<char>))
-                        : StringAsSpan(Expression.Constant(map.format));
-
-                    commands.Add(
-                        Expression.Call(prop, "TryFormat", Type.EmptyTypes,
-                        temp, charsWritten, format, Expression.Constant(map.formatProvider, typeof(IFormatProvider))));
-                }
+                DAs(prop, map, commands, temp, charsWritten);
 
                 CallPad(map);
             }
@@ -113,6 +89,36 @@ namespace RecordParser.BuilderWrite
 
     internal static class SpanExpressionHelper
     {
+
+        public static void DAs(Expression prop, MappingWriteConfiguration map, List<Expression> commands, ParameterExpression temp, ParameterExpression charsWritten)
+        {
+            if (prop.Type.IsEnum)
+            {
+                prop = Expression.Call(prop, "ToString", Type.EmptyTypes);
+            }
+
+            if (prop.Type == typeof(string))
+            {
+                var strSpan = StringAsSpan(prop);
+
+                commands.Add(
+                    Expression.Call(strSpan, "CopyTo", Type.EmptyTypes, temp));
+
+                commands.Add(
+                    Expression.Assign(charsWritten, Expression.PropertyOrField(prop, "Length")));
+            }
+            else
+            {
+                var format = map.format is null
+                    ? Expression.Default(typeof(ReadOnlySpan<char>))
+                    : StringAsSpan(Expression.Constant(map.format));
+
+                commands.Add(
+                    Expression.Call(prop, "TryFormat", Type.EmptyTypes,
+                    temp, charsWritten, format, Expression.Constant(map.formatProvider, typeof(IFormatProvider))));
+            }
+        }
+
         public static Expression StringAsSpan(Expression str) =>
             Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);
 
