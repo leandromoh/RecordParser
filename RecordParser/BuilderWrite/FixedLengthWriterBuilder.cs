@@ -54,15 +54,17 @@ namespace RecordParser.BuilderWrite
             LabelTarget returnTarget = Expression.Label(typeof(int));
             GotoExpression gotoReturn = Expression.Return(returnTarget, Expression.Constant(0));
 
+            var necessarySpace = Expression.Constant(mappedColumns.Max(x => x.start + x.length.Value));
+
+            var toLarge = Expression.LessThan(
+                                Expression.PropertyOrField(span, "Length"),
+                                necessarySpace);
+
+            commands.Add(Expression.IfThen(toLarge, gotoReturn));
+
             //  var i = -1;
             foreach (var map in mappedColumns)
             {
-                var toLarge = Expression.LessThan(
-                    Expression.PropertyOrField(span, "Length"),
-                    Expression.Constant(map.start + map.length.Value));
-
-                commands.Add(Expression.IfThen(toLarge, gotoReturn));
-
                 commands.Add(
                     Expression.Assign(temp, Slice(span, map.start, map.length.Value)));
 
@@ -73,7 +75,7 @@ namespace RecordParser.BuilderWrite
                 CallPad(map);
             }
 
-            commands.Add(Expression.Return(returnTarget, Expression.Constant(mappedColumns.Max(x => x.start + x.length.Value))));
+            commands.Add(Expression.Return(returnTarget, necessarySpace));
 
             commands.Add(Expression.Label(returnTarget, Expression.Constant(0)));
 
