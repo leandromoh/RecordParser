@@ -11,17 +11,26 @@ namespace RecordParser.BuilderWrite
     public interface IVariableLengthWriterBuilder<T>
     {
         IVariableLengthWriter<T> Build(string separator);
-        IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format = null);
+        IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format);
+        IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null);
     }
 
     public class VariableLengthWriterBuilder<T> : IVariableLengthWriterBuilder<T>
     {
         private readonly Dictionary<int, MappingWriteConfiguration> list = new Dictionary<int, MappingWriteConfiguration>();
 
-        public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format = null)
+        public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            var config = new MappingWriteConfiguration(member, indexColumn, null, format, default, default, typeof(R), null);
+            var config = new MappingWriteConfiguration(member, indexColumn, null, converter.WrapInLambdaExpression(), null, default, default, typeof(R), null);
+            list.Add(indexColumn, config);
+            return this;
+        }
+
+        public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format)
+        {
+            var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
+            var config = new MappingWriteConfiguration(member, indexColumn, null, null, format, default, default, typeof(R), null);
             list.Add(indexColumn, config);
             return this;
         }

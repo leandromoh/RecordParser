@@ -8,6 +8,7 @@ namespace RecordParser.Parsers
     }
 
     internal delegate int FuncSpanTInt<T>(Span<char> span, T inst);
+    public delegate (bool, int) FuncSpanTIntBool<T>(Span<char> span, T inst);
 
     internal class FixedLengthWriter<T> : IFixedLengthWriter<T>
     {

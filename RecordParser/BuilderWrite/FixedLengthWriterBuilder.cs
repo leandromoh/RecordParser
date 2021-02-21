@@ -11,17 +11,25 @@ namespace RecordParser.BuilderWrite
     public interface IFixedLengthWriterBuilder<T>
     {
         IFixedLengthWriter<T> Build();
-        IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, string format = null, Padding padding = Padding.Right, char paddingChar = ' ');
+        IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, string format, Padding padding = Padding.Right, char paddingChar = ' ');
+        IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanTIntBool<R> converter = null, Padding padding = Padding.Right, char paddingChar = ' ');
     }
 
     public class FixedLengthWriterBuilder<T> : IFixedLengthWriterBuilder<T>
     {
         private readonly List<MappingWriteConfiguration> list = new List<MappingWriteConfiguration>();
 
-        public IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, string format = null, Padding padding = Padding.Right, char paddingChar = ' ')
+        public IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanTIntBool<R> converter = null, Padding padding = Padding.Right, char paddingChar = ' ')
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingWriteConfiguration(member, startIndex, length, format, padding, paddingChar, typeof(R), null));
+            list.Add(new MappingWriteConfiguration(member, startIndex, length, converter.WrapInLambdaExpression(), null, padding, paddingChar, typeof(R), null));
+            return this;
+
+        }
+        public IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, string format, Padding padding = Padding.Right, char paddingChar = ' ')
+        {
+            var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
+            list.Add(new MappingWriteConfiguration(member, startIndex, length, null, format, padding, paddingChar, typeof(R), null));
             return this;
         }
 
@@ -106,6 +114,13 @@ namespace RecordParser.BuilderWrite
 
         public static void DAs(Expression prop, MappingWriteConfiguration map, List<Expression> commands, ParameterExpression temp, ParameterExpression charsWritten, GotoExpression gotoReturn)
         {
+            if (map.converter != null)
+            {
+                var toLarge = map.converter(temp, prop, charsWritten);
+                commands.Add(Expression.IfThen(toLarge, gotoReturn));
+                return;
+            }
+
             if (prop.Type.IsEnum)
             {
                 prop = Expression.Call(prop, "ToString", Type.EmptyTypes);
