@@ -62,40 +62,97 @@ namespace RecordParser.BuilderWrite
 
             commands.Add(Expression.Assign(position, Expression.Constant(0)));
 
+            var blocks = new List<BlockExpression>(mappedColumns.Count());
             var i = -1;
             foreach (var map in mappedColumns)
             {
-                reloop:
-                
-                commands.Add(
+            reloop:
+
+                var blockCommands = new List<Expression>();
+
+                blockCommands.Add(
                     Expression.Assign(spanTemp, Expression.Call(span, "Slice", Type.EmptyTypes, position)));
 
                 if (++i != map.start)
                 {
-                    commands.Add(
-                        Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, spanTemp));
+                    var condition = Expression.LessThanOrEqual(
+                        delimiterLength,
+                        Expression.PropertyOrField(spanTemp, "Length"));
 
-                    commands.Add(
-                        Expression.AddAssign(position, delimiterLength));
+                    var ifTrue = Expression.Block(
+                        Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, spanTemp),
+                        Expression.AddAssign(position, delimiterLength),
+                        Expression.Constant(true));
+
+                    blockCommands.Add(Expression.Condition(condition, ifTrue, Expression.Constant(false)));
+
+                    blocks.Add(Expression.Block(blockCommands));
 
                     goto reloop;
                 }
 
                 var prop = replacer.Visit(map.prop);
 
-                DAs(prop, map, commands, spanTemp, offset);
+                if (prop.Type.IsEnum)
+                {
+                    prop = Expression.Call(prop, "ToString", Type.EmptyTypes);
+                }
 
-                commands.Add(
-                    Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, Expression.Call(spanTemp, "Slice", Type.EmptyTypes, offset)));
+                if (prop.Type == typeof(string))
+                {
+                    var strSpan = StringAsSpan(prop);
 
-                commands.Add(
-                    Expression.AddAssign(position, Expression.Add(offset, delimiterLength)));
+                    var condition = Expression.LessThanOrEqual(
+                        Expression.PropertyOrField(prop, "Length"),
+                        Expression.PropertyOrField(spanTemp, "Length"));
+
+                    var ifTrue = Expression.Block(
+                        Expression.Call(strSpan, "CopyTo", Type.EmptyTypes, spanTemp),
+                        Expression.Assign(offset, Expression.PropertyOrField(prop, "Length")),
+                        Expression.Constant(true));
+
+                    blockCommands.Add(Expression.Condition(condition, ifTrue, Expression.Constant(false)));
+                }
+                else
+                {
+                    var format = map.format is null
+                        ? Expression.Default(typeof(ReadOnlySpan<char>))
+                        : StringAsSpan(Expression.Constant(map.format));
+
+                    var condition =
+                        Expression.Call(prop, "TryFormat", Type.EmptyTypes,
+                        spanTemp, offset, format, Expression.Constant(map.formatProvider, typeof(IFormatProvider)));
+
+                    blockCommands.Add(condition);
+                }
+
+                blocks.Add(Expression.Block(blockCommands));
+
+                blocks.Add(Expression.Block(new Expression[]
+                {
+                    Expression.Assign(spanTemp, Expression.Call(spanTemp, "Slice", Type.EmptyTypes, offset)),
+
+                    Expression.Condition(
+                        test: Expression.LessThanOrEqual(
+                              delimiterLength,
+                              Expression.PropertyOrField(spanTemp, "Length")),
+
+                    ifTrue: Expression.Block(
+                            Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, spanTemp),
+                            Expression.AddAssign(position, Expression.Add(offset, delimiterLength)),
+                            Expression.Constant(true)),
+
+                    ifFalse: Expression.Constant(false))
+                }));
             }
 
-            //remove the last 2 commands (copy delimiter and add delimiterLength to position)
-            commands.RemoveRange(commands.Count - 2, 2);
+            //remove the last block (contains copy delimiter and add delimiterLength to position)
+            blocks.RemoveAt(blocks.Count - 1);
 
-            commands.Add(Expression.Add(position, offset));
+            var testAnds = blocks.Aggregate<Expression>((acc, item) => Expression.AndAlso(acc, item));
+            commands.Add(Expression.Condition(testAnds,
+                         Expression.Add(position, offset),
+                         Expression.Constant(0)));
 
             var blockExpr = Expression.Block(variables, commands);
 

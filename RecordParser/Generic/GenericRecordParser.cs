@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RecordParser.Parsers;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -216,6 +217,11 @@ namespace RecordParser.Generic
             var lambda = Expression.Lambda<FuncSpanT<T>>(call, arg);
 
             return lambda;
+        }
+
+        public static Func<Expression, Expression, Expression> WrapInLambdaExpression<T>(this FuncSpanTIntBool<T> convert)
+        {
+            return (span, inst) => GetExpressionFunc(convert, span, inst);
         }
 
         public static IEnumerable<MappingConfiguration> Merge(
