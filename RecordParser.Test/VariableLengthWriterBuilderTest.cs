@@ -100,5 +100,26 @@ namespace RecordParser.Test
             var expected = new string(default, result.Length);
             result.Should().Be(expected);
         }
+
+        [Fact]
+        public void Given_tooLargeObjetc()
+        {
+            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, indexColumn: 1)
+                .Map(x => x.Birthday, 2, "yyyy.MM.dd")
+                .Map(x => x.Money, 4)
+                .Map(x => x.Color, 5)
+                .Build(" ; ");
+
+            var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
+
+            Span<char> destination = stackalloc char[20];
+            var charsWritten = writer.Parse(instance, destination);
+
+            var result = destination.Slice(0, charsWritten).ToString();
+            
+            charsWritten.Should().Be(0);
+            result.Should().Be("");
+        }
     }
 }

@@ -30,7 +30,7 @@ namespace RecordParser.BuilderWrite
         {
             var maps = list.Select(x => x.Value).OrderBy(x => x.start);
             var expression = GetFuncThatSetProperties(maps);
-            
+
             return new VariableLengthWriter<T>(expression.Compile(), separator);
         }
 
@@ -62,16 +62,25 @@ namespace RecordParser.BuilderWrite
 
             commands.Add(Expression.Assign(position, Expression.Constant(0)));
 
+            LabelTarget returnTarget = Expression.Label(typeof(int));
+            GotoExpression gotoReturn = Expression.Return(returnTarget, Expression.Constant(0));
+
             var i = -1;
             foreach (var map in mappedColumns)
             {
                 reloop:
-                
+
                 commands.Add(
                     Expression.Assign(spanTemp, Expression.Call(span, "Slice", Type.EmptyTypes, position)));
 
                 if (++i != map.start)
                 {
+                    var toLarge2 = Expression.GreaterThan(
+                        delimiterLength,
+                        Expression.PropertyOrField(spanTemp, "Length"));
+
+                    commands.Add(Expression.IfThen(toLarge2, gotoReturn));
+
                     commands.Add(
                         Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, spanTemp));
 
@@ -83,19 +92,31 @@ namespace RecordParser.BuilderWrite
 
                 var prop = replacer.Visit(map.prop);
 
-                DAs(prop, map, commands, spanTemp, offset);
+                DAs(prop, map, commands, spanTemp, offset, gotoReturn);
+
+                var bla = Expression.Call(spanTemp, "Slice", Type.EmptyTypes, offset);
+
+                var toLarge = Expression.GreaterThan(
+                    delimiterLength,
+                    Expression.PropertyOrField(bla, "Length"));
+
+                commands.Add(Expression.IfThen(toLarge, gotoReturn));
 
                 commands.Add(
-                    Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, Expression.Call(spanTemp, "Slice", Type.EmptyTypes, offset)));
+                    Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, bla));
 
                 commands.Add(
                     Expression.AddAssign(position, Expression.Add(offset, delimiterLength)));
             }
 
-            //remove the last 2 commands (copy delimiter and add delimiterLength to position)
-            commands.RemoveRange(commands.Count - 2, 2);
+            //remove the last 3 commands (if toLarge, copy delimiter and add delimiterLength to position)
+            commands.RemoveRange(commands.Count - 3, 3);
 
-            commands.Add(Expression.Add(position, offset));
+            commands.Add(Expression.AddAssign(position, offset));
+            commands.Add(Expression.Return(returnTarget, position));
+
+
+            commands.Add(Expression.Label(returnTarget, Expression.Constant(0)));
 
             var blockExpr = Expression.Block(variables, commands);
 

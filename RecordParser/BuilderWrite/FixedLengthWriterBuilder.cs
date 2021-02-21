@@ -51,20 +51,32 @@ namespace RecordParser.BuilderWrite
             // commands
             List<Expression> commands = new List<Expression>();
 
-        //  var i = -1;
+            LabelTarget returnTarget = Expression.Label(typeof(int));
+            GotoExpression gotoReturn = Expression.Return(returnTarget, Expression.Constant(0));
+
+            //  var i = -1;
             foreach (var map in mappedColumns)
             {
+                var toLarge = Expression.LessThan(
+                    Expression.PropertyOrField(span, "Length"),
+                    Expression.Constant(map.start + map.length.Value));
+
+                commands.Add(Expression.IfThen(toLarge, gotoReturn));
+
                 commands.Add(
                     Expression.Assign(temp, Slice(span, map.start, map.length.Value)));
 
                 var prop = replacer.Visit(map.prop);
 
-                DAs(prop, map, commands, temp, charsWritten);
+                DAs(prop, map, commands, temp, charsWritten, gotoReturn);
 
                 CallPad(map);
             }
 
-            commands.Add(Expression.Constant(mappedColumns.Max(x => x.start + x.length.Value)));
+            commands.Add(Expression.Return(returnTarget, Expression.Constant(mappedColumns.Max(x => x.start + x.length.Value))));
+
+            commands.Add(Expression.Label(returnTarget, Expression.Constant(0)));
+
 
             var blockExpr = Expression.Block(variables, commands);
 
@@ -90,7 +102,7 @@ namespace RecordParser.BuilderWrite
     internal static class SpanExpressionHelper
     {
 
-        public static void DAs(Expression prop, MappingWriteConfiguration map, List<Expression> commands, ParameterExpression temp, ParameterExpression charsWritten)
+        public static void DAs(Expression prop, MappingWriteConfiguration map, List<Expression> commands, ParameterExpression temp, ParameterExpression charsWritten, GotoExpression gotoReturn)
         {
             if (prop.Type.IsEnum)
             {
@@ -100,6 +112,12 @@ namespace RecordParser.BuilderWrite
             if (prop.Type == typeof(string))
             {
                 var strSpan = StringAsSpan(prop);
+
+                var toLarge = Expression.GreaterThan(
+                        Expression.PropertyOrField(prop, "Length"),
+                        Expression.PropertyOrField(temp, "Length"));
+
+                commands.Add(Expression.IfThen(toLarge, gotoReturn));
 
                 commands.Add(
                     Expression.Call(strSpan, "CopyTo", Type.EmptyTypes, temp));
@@ -113,9 +131,11 @@ namespace RecordParser.BuilderWrite
                     ? Expression.Default(typeof(ReadOnlySpan<char>))
                     : StringAsSpan(Expression.Constant(map.format));
 
-                commands.Add(
+                var tryFormat =
                     Expression.Call(prop, "TryFormat", Type.EmptyTypes,
-                    temp, charsWritten, format, Expression.Constant(map.formatProvider, typeof(IFormatProvider))));
+                    temp, charsWritten, format, Expression.Constant(map.formatProvider, typeof(IFormatProvider)));
+
+                commands.Add(Expression.IfThen(Expression.Not(tryFormat), gotoReturn));
             }
         }
 
