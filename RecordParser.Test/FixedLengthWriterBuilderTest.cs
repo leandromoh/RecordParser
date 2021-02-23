@@ -30,8 +30,13 @@ namespace RecordParser.Test
             var charsWritten = writer.Parse(instance, destination);
             var result = destination.Slice(0, charsWritten).ToString();
 
-            var empty = '\0';
-            var expected = $"{instance.Name.PadRight(15, ' ')}{empty}{instance.Birthday:yyyy.MM.dd}{empty}{((int)(instance.Money * 100)).ToString().PadRight(7, ' ')}{empty}{instance.Color.ToString().PadLeft(15, '-')}";
+            var expected = string.Join('\0', new []
+            {
+                instance.Name.PadRight(15, ' '),
+                instance.Birthday.ToString("yyyy.MM.dd"),
+                ((int)(instance.Money * 100)).ToString().PadRight(7, ' '),
+                instance.Color.ToString().PadLeft(15, '-'),
+            });
 
             result.Should().Be(expected);
         }
@@ -66,10 +71,9 @@ namespace RecordParser.Test
     {
         public static IFixedLengthWriterBuilder<T> Map<T>(this IFixedLengthWriterBuilder<T> builder, Expression<Func<T, decimal>> ex, int startIndex, int length, int precision, string format = null, Padding padding = Padding.Right, char paddingChar = ' ')
         {
-            return builder.Map(ex, startIndex, length, (span, value) => 
-                (((int)(value * (decimal)Math.Pow(10, precision))).TryFormat(span, out var written, format), written), 
+            return builder.Map(ex, startIndex, length,
+                (span, value) => (((int)(value * (decimal)Math.Pow(10, precision))).TryFormat(span, out var written, format), written),
                 padding, paddingChar);
         }
-
     }
 }
