@@ -3,10 +3,9 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
-    public interface IVariableLengthReaderSequentialBuilder<T>
+    public interface IVariableLengthReaderSequentialBuilder<T> : Bla<IVariableLengthReaderSequentialBuilder<T>>
     {
         IVariableLengthReader<T> Build(string separator);
-        IVariableLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
         IVariableLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, FuncSpanT<R> convert = null);
         IVariableLengthReaderSequentialBuilder<T> Skip(int columnCount);
     }

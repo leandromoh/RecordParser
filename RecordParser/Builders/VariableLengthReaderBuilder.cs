@@ -6,11 +6,15 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
-    public interface IVariableLengthReaderBuilder<T>
+    public interface IVariableLengthReaderBuilder<T> : Bla<IVariableLengthReaderBuilder<T>>
     {
         IVariableLengthReader<T> Build(string separator);
-        IVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
         IVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanT<R> convert = null);
+    }
+
+    public interface Bla<T>
+    {
+        T DefaultTypeConvert<R>(FuncSpanT<R> ex);
     }
 
     public class VariableLengthReaderBuilder<T> : IVariableLengthReaderBuilder<T>

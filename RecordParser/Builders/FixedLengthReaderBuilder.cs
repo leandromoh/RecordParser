@@ -5,10 +5,9 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
-    public interface IFixedLengthReaderBuilder<T>
+    public interface IFixedLengthReaderBuilder<T> : Bla<IFixedLengthReaderBuilder<T>>
     {
         IFixedLengthReader<T> Build();
-        IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
         IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanT<R> convert = null);
     }
 

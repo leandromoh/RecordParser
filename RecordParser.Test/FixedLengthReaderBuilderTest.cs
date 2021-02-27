@@ -32,8 +32,8 @@ namespace RecordParser.Test
                 .Map(x => x.Balance, 0, 12)
                 .Map(x => x.Date, 13, 8)
                 .Map(x => x.Debit, 22, 6)
-                .DefaultTypeConvert(value => decimal.Parse(value) / 100)
                 .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
+                .FloatingNumbersPrecision(2)
                 .Build();
 
             var result = reader.Parse("012345678901 23052020 012345");
@@ -169,6 +169,18 @@ namespace RecordParser.Test
 
     public static class FixedLengthCustomExtensions
     {
+
+        public static T FloatingNumbersPrecision<T>(this T source, int decimalPlaces) 
+            where T : Bla<T>
+        {
+            var divide = Math.Pow(10, decimalPlaces);
+
+            return source
+                .DefaultTypeConvert(value => double.Parse(value) / divide)
+                .DefaultTypeConvert(value => float.Parse(value) / divide)
+                .DefaultTypeConvert(value => decimal.Parse(value) / (decimal)divide);
+        }
+
         public static IFixedLengthReaderBuilder<T> MyMap<T>(
             this IFixedLengthReaderBuilder<T> source,
             Expression<Func<T, DateTime>> ex, int startIndex, int length,
