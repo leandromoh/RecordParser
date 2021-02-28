@@ -17,7 +17,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 10)
                 .Skip(1)
                 .Map(x => x.Money, 7)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
 
@@ -37,7 +37,7 @@ namespace RecordParser.Test
                 .Map(x => x.Debit, 5)
                 .DefaultTypeConvert(value => decimal.Parse(value) / 100)
                 .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("012345678901 23052020 12345");
 
@@ -55,7 +55,7 @@ namespace RecordParser.Test
                 .Skip(1)
                 .Map(x => x.Money, 7)
                 .Map(x => x.Nickname, 8, value => value.Slice(0, 4).ToString())
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
 
@@ -73,7 +73,7 @@ namespace RecordParser.Test
                 .Map(x => x.MotherAge, 4)
                 .Map(x => x.FatherAge, 4)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse(" 15  40  50 ");
 
@@ -89,7 +89,7 @@ namespace RecordParser.Test
                 .Map(x => x.Foo, 4)
                 .Map(x => x.Bar, 4)
                 .Map(x => x.Baz, 4)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse(" foo bar baz ");
 
