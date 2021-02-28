@@ -1,13 +1,15 @@
 ﻿using RecordParser.Generic;
+using RecordParser.Visitors;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
     public interface IFixedLengthReaderBuilder<T>
     {
-        IFixedLengthReader<T> Build();
+        IFixedLengthReader<T> Build(CultureInfo cultureInfo = null);
         IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
         IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanT<R> convert = null);
     }
@@ -32,12 +34,14 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public IFixedLengthReader<T> Build() 
+        public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null) 
         {
             var map = GenericRecordParser.Merge(list, dic);
-            var func = SpanExpressionParser.RecordParserSpan<T>(map).Compile();
+            var func = SpanExpressionParser.RecordParserSpan<T>(map);
 
-            return new FixedLengthReader<T>(map, func);
+            func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
+
+            return new FixedLengthReader<T>(map, func.Compile());
         }
     }
 }

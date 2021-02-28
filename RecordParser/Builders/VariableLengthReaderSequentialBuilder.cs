@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
     public interface IVariableLengthReaderSequentialBuilder<T>
     {
-        IVariableLengthReader<T> Build(string separator);
+        IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null);
         IVariableLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
         IVariableLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, FuncSpanT<R> convert = null);
         IVariableLengthReaderSequentialBuilder<T> Skip(int columnCount);
@@ -36,6 +37,7 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public IVariableLengthReader<T> Build(string separator) => indexed.Build(separator);
+        public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null) 
+            => indexed.Build(separator, cultureInfo);
     }
 }
