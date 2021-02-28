@@ -10,7 +10,7 @@ namespace RecordParser.Visitors
 
         public CultureInfoVisitor(CultureInfo cultureInfo)
         {
-            cultureExpression = Expression.Constant(cultureInfo);
+            cultureExpression = Expression.Constant(cultureInfo, typeof(CultureInfo));
         }
 
         public static T ReplaceCulture<T>(T expression, CultureInfo cultureInfo)
