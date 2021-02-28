@@ -176,6 +176,43 @@ namespace RecordParser.Test
         [InlineData("fr-FR")]
         [InlineData("ru-RU")]
         [InlineData("es-ES")]
+        public void Builder_should_use_passed_cultureinfo_to_parse_record(string cultureName)
+        {
+            var culture = new CultureInfo(cultureName);
+
+            var expected = (Name: "foo bar baz",
+                            Birthday: new DateTime(2020, 05, 23),
+                            Money: 123.45M,
+                            Color: Color.LightBlue);
+
+            var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                 .Map(x => x.Name, 0)
+                 .Map(x => x.Birthday, 1)
+                 .Map(x => x.Money, 2)
+                 .Map(x => x.Color, 3)
+                 .Build(";", culture);
+
+            var values = new[]
+            {
+                expected.Name.ToString(culture),
+                expected.Birthday.ToString(culture),
+                expected.Money.ToString(culture),
+                expected.Color.ToString(),
+            };
+
+            var line = string.Join(';', values.Select(x => $"  {x}  "));
+
+            var result = reader.Parse(line);
+
+            result.Should().BeEquivalentTo(expected);
+        }
+
+        [Theory]
+        [InlineData("pt-BR")]
+        [InlineData("en-US")]
+        [InlineData("fr-FR")]
+        [InlineData("ru-RU")]
+        [InlineData("es-ES")]
         public void Registered_primitives_types_should_have_default_converters_which_uses_current_cultureinfo(string cultureName)
         {
             var expected = new AllType

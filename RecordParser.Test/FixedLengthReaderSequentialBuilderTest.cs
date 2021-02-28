@@ -1,6 +1,7 @@
 using FluentAssertions;
 using RecordParser.Parsers;
 using System;
+using System.Globalization;
 using System.Linq;
 using Xunit;
 
@@ -96,6 +97,46 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo((Foo: "foo",
                                             Bar: "bar",
                                             Baz: "baz"));
+        }
+
+        [Theory]
+        [InlineData("pt-BR")]
+        [InlineData("en-US")]
+        [InlineData("fr-FR")]
+        [InlineData("ru-RU")]
+        [InlineData("es-ES")]
+        public void Builder_should_use_passed_cultureinfo_to_parse_record(string cultureName)
+        {
+            var culture = new CultureInfo(cultureName);
+
+            var expected = (Name: "foo bar baz",
+                            Birthday: new DateTime(2020, 05, 23),
+                            Money: 123.45M,
+                            Color: Color.LightBlue);
+
+            const int length = 25;
+
+            var reader = new FixedLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                 .Map(x => x.Name, length)
+                 .Map(x => x.Birthday, length)
+                 .Map(x => x.Money, length)
+                 .Map(x => x.Color, length)
+                 .Build(culture);
+
+            var values = new[]
+            {
+                expected.Name.ToString(culture).PadRight(length),
+                expected.Birthday.ToString(culture).PadRight(length),
+                expected.Money.ToString(culture).PadRight(length),
+                expected.Color.ToString().PadRight(length),
+            };
+
+
+            var line = string.Join(string.Empty, values);
+
+            var result = reader.Parse(line);
+
+            result.Should().BeEquivalentTo(expected);
         }
     }
 }
