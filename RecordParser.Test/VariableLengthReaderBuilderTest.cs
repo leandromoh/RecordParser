@@ -18,7 +18,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 1)
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue");
 
@@ -37,7 +37,7 @@ namespace RecordParser.Test
                 .Map(x => x.Debit, 2)
                 .DefaultTypeConvert(value => decimal.Parse(value) / 100)
                 .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse("012345678901 ; 23052020 ; 012345");
 
@@ -54,7 +54,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 1, value => DateTime.ParseExact(value, "ddMMyyyy", null))
                 .Map(x => x.Money, 2)
                 .Map(x => x.Nickname, 3, value => value.Slice(0, 4).ToString())
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz ; 23052020 ; 012345 ; nickname");
 
@@ -72,7 +72,7 @@ namespace RecordParser.Test
                 .Map(x => x.MotherAge, 1)
                 .Map(x => x.FatherAge, 2)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse(" 15 ; 40 ; 50 ");
 
@@ -104,7 +104,7 @@ namespace RecordParser.Test
                 .Map(x => x.Foo, 0)
                 .Map(x => x.Bar, 1)
                 .Map(x => x.Baz, 2)
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse(" foo ; bar ; baz ");
 
@@ -119,7 +119,7 @@ namespace RecordParser.Test
             var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday)>()
                 .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1)
-                .Build(";");
+                .BuildForUnitTest();
 
             var parsed = reader.TryParse(" foo ; datehere", out var result);
 
@@ -135,7 +135,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 1)
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
-                .Build(";");
+                .BuildForUnitTest();
 
             var parsed = reader.TryParse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue", out var result);
 
@@ -154,7 +154,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, 1)
                 .Map(x => x.Mother.BirthDay, 2)
                 .Map(x => x.Mother.Name, 3)
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse("2020.05.23 ; son name ; 1980.01.15 ; mother name");
 
@@ -170,8 +170,50 @@ namespace RecordParser.Test
             });
         }
 
-        [Fact]
-        public void Registered_primitives_types_should_have_default_converters()
+        [Theory]
+        [InlineData("pt-BR")]
+        [InlineData("en-US")]
+        [InlineData("fr-FR")]
+        [InlineData("ru-RU")]
+        [InlineData("es-ES")]
+        public void Builder_should_use_passed_cultureinfo_to_parse_record(string cultureName)
+        {
+            var culture = new CultureInfo(cultureName);
+
+            var expected = (Name: "foo bar baz",
+                            Birthday: new DateTime(2020, 05, 23),
+                            Money: 123.45M,
+                            Color: Color.LightBlue);
+
+            var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                 .Map(x => x.Name, 0)
+                 .Map(x => x.Birthday, 1)
+                 .Map(x => x.Money, 2)
+                 .Map(x => x.Color, 3)
+                 .Build(";", culture);
+
+            var values = new[]
+            {
+                expected.Name.ToString(culture),
+                expected.Birthday.ToString(culture),
+                expected.Money.ToString(culture),
+                expected.Color.ToString(),
+            };
+
+            var line = string.Join(';', values.Select(x => $"  {x}  "));
+
+            var result = reader.Parse(line);
+
+            result.Should().BeEquivalentTo(expected);
+        }
+
+        [Theory]
+        [InlineData("pt-BR")]
+        [InlineData("en-US")]
+        [InlineData("fr-FR")]
+        [InlineData("ru-RU")]
+        [InlineData("es-ES")]
+        public void Registered_primitives_types_should_have_default_converters_which_uses_current_cultureinfo(string cultureName)
         {
             var expected = new AllType
             {
@@ -194,7 +236,7 @@ namespace RecordParser.Test
                 UShort = 8,
 
                 Guid = new Guid("e808927a-48f9-4402-ab2b-400bf1658169"),
-                Date = DateTime.Today,
+                Date = DateTime.Parse(DateTime.Now.ToString()),
 
                 Bool = true,
                 Decimal = -1.99M,
@@ -254,7 +296,7 @@ namespace RecordParser.Test
                 expected.Decimal,
             };
 
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+            CultureInfo.CurrentCulture = new CultureInfo(cultureName);
             var line = string.Join(';', values.Select(x => $"  {x}  "));
 
             var result = reader.Parse(line);
@@ -272,7 +314,7 @@ namespace RecordParser.Test
         {
             var reader = new VariableLengthReaderBuilder<(Color color, bool _)>()
                 .Map(x => x.color, 0)
-                .Build(";");
+                .BuildForUnitTest();
 
             // text as is
             reader.Parse("Black").color.Should().Be(Color.Black);
@@ -301,6 +343,12 @@ namespace RecordParser.Test
 
     public static class VariableLengthReaderCustomExtensions
     {
+        public static IVariableLengthReader<T> BuildForUnitTest<T>(this IVariableLengthReaderBuilder<T> source)
+            => source.Build(";", CultureInfo.InvariantCulture);
+
+        public static IVariableLengthReader<T> BuildForUnitTest<T>(this IVariableLengthReaderSequentialBuilder<T> source)
+            => source.Build(";", CultureInfo.InvariantCulture);
+
         public static IVariableLengthReaderBuilder<T> MyMap<T>(
             this IVariableLengthReaderBuilder<T> source,
             Expression<Func<T, DateTime>> ex, int startIndex,
@@ -312,7 +360,7 @@ namespace RecordParser.Test
         public static IVariableLengthReader<T> MyBuild<T>(this IVariableLengthReaderBuilder<T> source)
         {
             return source.DefaultTypeConvert(value => value.ToLower())
-                         .Build(";");
+                         .BuildForUnitTest();
         }
     }
 }

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using RecordParser.Parsers;
 using System;
+using System.Globalization;
 using System.Linq;
 using Xunit;
 
@@ -17,7 +18,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 10)
                 .Skip(1)
                 .Map(x => x.Money, 7)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
 
@@ -37,7 +38,7 @@ namespace RecordParser.Test
                 .Map(x => x.Debit, 5)
                 .DefaultTypeConvert(value => decimal.Parse(value) / 100)
                 .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("012345678901 23052020 12345");
 
@@ -55,7 +56,7 @@ namespace RecordParser.Test
                 .Skip(1)
                 .Map(x => x.Money, 7)
                 .Map(x => x.Nickname, 8, value => value.Slice(0, 4).ToString())
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
 
@@ -73,7 +74,7 @@ namespace RecordParser.Test
                 .Map(x => x.MotherAge, 4)
                 .Map(x => x.FatherAge, 4)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse(" 15  40  50 ");
 
@@ -89,13 +90,53 @@ namespace RecordParser.Test
                 .Map(x => x.Foo, 4)
                 .Map(x => x.Bar, 4)
                 .Map(x => x.Baz, 4)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse(" foo bar baz ");
 
             result.Should().BeEquivalentTo((Foo: "foo",
                                             Bar: "bar",
                                             Baz: "baz"));
+        }
+
+        [Theory]
+        [InlineData("pt-BR")]
+        [InlineData("en-US")]
+        [InlineData("fr-FR")]
+        [InlineData("ru-RU")]
+        [InlineData("es-ES")]
+        public void Builder_should_use_passed_cultureinfo_to_parse_record(string cultureName)
+        {
+            var culture = new CultureInfo(cultureName);
+
+            var expected = (Name: "foo bar baz",
+                            Birthday: new DateTime(2020, 05, 23),
+                            Money: 123.45M,
+                            Color: Color.LightBlue);
+
+            const int length = 25;
+
+            var reader = new FixedLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                 .Map(x => x.Name, length)
+                 .Map(x => x.Birthday, length)
+                 .Map(x => x.Money, length)
+                 .Map(x => x.Color, length)
+                 .Build(culture);
+
+            var values = new[]
+            {
+                expected.Name.ToString(culture).PadRight(length),
+                expected.Birthday.ToString(culture).PadRight(length),
+                expected.Money.ToString(culture).PadRight(length),
+                expected.Color.ToString().PadRight(length),
+            };
+
+
+            var line = string.Join(string.Empty, values);
+
+            var result = reader.Parse(line);
+
+            result.Should().BeEquivalentTo(expected);
         }
     }
 }

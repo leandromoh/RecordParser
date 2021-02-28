@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq.Expressions;
 
 namespace RecordParser.Parsers
 {
     public interface IFixedLengthReaderSequentialBuilder<T>
     {
-        IFixedLengthReader<T> Build();
+        IFixedLengthReader<T> Build(CultureInfo cultureInfo = null);
         IFixedLengthReaderSequentialBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
         IFixedLengthReaderSequentialBuilder<T> Skip(int length);
         IFixedLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, int length, FuncSpanT<R> convert = null);
@@ -37,6 +38,7 @@ namespace RecordParser.Parsers
             return this;
         }
 
-        public IFixedLengthReader<T> Build() =>  indexed.Build();
+        public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null) 
+            => indexed.Build(cultureInfo);
     }
 }

@@ -88,26 +88,26 @@ namespace RecordParser.Generic
             mapping.AddMapForReadOnlySpan(span => new string(span));
             mapping.AddMapForReadOnlySpan(span => ToChar(span));
 
-            mapping.AddMapForReadOnlySpan(span => byte.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
-            mapping.AddMapForReadOnlySpan(span => sbyte.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => byte.Parse(span, NumberStyles.Integer, null));
+            mapping.AddMapForReadOnlySpan(span => sbyte.Parse(span, NumberStyles.Integer, null));
 
-            mapping.AddMapForReadOnlySpan(span => double.Parse(span, NumberStyles.AllowThousands | NumberStyles.Float, CultureInfo.InvariantCulture));
-            mapping.AddMapForReadOnlySpan(span => float.Parse(span, NumberStyles.AllowThousands | NumberStyles.Float, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => double.Parse(span, NumberStyles.AllowThousands | NumberStyles.Float, null));
+            mapping.AddMapForReadOnlySpan(span => float.Parse(span, NumberStyles.AllowThousands | NumberStyles.Float, null));
 
-            mapping.AddMapForReadOnlySpan(span => int.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
-            mapping.AddMapForReadOnlySpan(span => uint.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => int.Parse(span, NumberStyles.Integer, null));
+            mapping.AddMapForReadOnlySpan(span => uint.Parse(span, NumberStyles.Integer, null));
 
-            mapping.AddMapForReadOnlySpan(span => long.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
-            mapping.AddMapForReadOnlySpan(span => ulong.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => long.Parse(span, NumberStyles.Integer, null));
+            mapping.AddMapForReadOnlySpan(span => ulong.Parse(span, NumberStyles.Integer, null));
 
-            mapping.AddMapForReadOnlySpan(span => short.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
-            mapping.AddMapForReadOnlySpan(span => ushort.Parse(span, NumberStyles.Integer, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => short.Parse(span, NumberStyles.Integer, null));
+            mapping.AddMapForReadOnlySpan(span => ushort.Parse(span, NumberStyles.Integer, null));
 
             mapping.AddMapForReadOnlySpan(span => Guid.Parse(span));
-            mapping.AddMapForReadOnlySpan(span => DateTime.Parse(span, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces));
+            mapping.AddMapForReadOnlySpan(span => DateTime.Parse(span, null, DateTimeStyles.AllowWhiteSpaces));
 
             mapping.AddMapForReadOnlySpan(span => bool.Parse(span));
-            mapping.AddMapForReadOnlySpan(span => decimal.Parse(span, NumberStyles.Number, CultureInfo.InvariantCulture));
+            mapping.AddMapForReadOnlySpan(span => decimal.Parse(span, NumberStyles.Number, null));
 
             mapping[(typeof(ReadOnlySpan<char>), typeof(Enum))] = GetEnumFromSpanParseExpression;
 

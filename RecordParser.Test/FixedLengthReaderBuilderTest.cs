@@ -1,6 +1,7 @@
 using FluentAssertions;
 using RecordParser.Parsers;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using Xunit;
@@ -16,7 +17,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, startIndex: 0, length: 11)
                 .Map(x => x.Birthday, 12, 10)
                 .Map(x => x.Money, 23, 7)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
 
@@ -34,7 +35,7 @@ namespace RecordParser.Test
                 .Map(x => x.Debit, 22, 6)
                 .DefaultTypeConvert(value => decimal.Parse(value) / 100)
                 .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("012345678901 23052020 012345");
 
@@ -51,7 +52,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 12, 8, value => DateTime.ParseExact(value, "ddMMyyyy", null))
                 .Map(x => x.Money, 21, 7)
                 .Map(x => x.Nickname, 28, 8, value => value.Slice(0, 4).ToString())
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
 
@@ -69,7 +70,7 @@ namespace RecordParser.Test
                 .Map(x => x.MotherAge, 4, 4)
                 .Map(x => x.FatherAge, 8, 4)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse(" 15  40  50 ");
 
@@ -101,7 +102,7 @@ namespace RecordParser.Test
                 .Map(x => x.Foo, 0, 5)
                 .Map(x => x.Bar, 4, 5)
                 .Map(x => x.Baz, 8, 5)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse(" foo bar baz ");
 
@@ -116,7 +117,7 @@ namespace RecordParser.Test
             var reader = new FixedLengthReaderBuilder<(string Name, DateTime Birthday)>()
                 .Map(x => x.Name, 0, 5)
                 .Map(x => x.Birthday, 5, 10)
-                .Build();
+                .BuildForUnitTest();
 
             var parsed = reader.TryParse(" foo datehere", out var result);
 
@@ -131,7 +132,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, startIndex: 0, length: 11)
                 .Map(x => x.Birthday, 12, 10)
                 .Map(x => x.Money, 23, 7)
-                .Build();
+                .BuildForUnitTest();
 
             var parsed = reader.TryParse("foo bar baz 2020.05.23 0123.45", out var result);
 
@@ -150,7 +151,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, 10, 10)
                 .Map(x => x.Mother.BirthDay, 20, 10)
                 .Map(x => x.Mother.Name, 30, 12)
-                .Build();
+                .BuildForUnitTest();
 
             var result = reader.Parse("2020.05.23 son name 1980.01.15 mother name");
 
@@ -165,10 +166,55 @@ namespace RecordParser.Test
                 }
             });
         }
+
+        [Theory]
+        [InlineData("pt-BR")]
+        [InlineData("en-US")]
+        [InlineData("fr-FR")]
+        [InlineData("ru-RU")]
+        [InlineData("es-ES")]
+        public void Builder_should_use_passed_cultureinfo_to_parse_record(string cultureName)
+        {
+            var culture = new CultureInfo(cultureName);
+
+            var expected = (Name: "foo bar baz",
+                            Birthday: new DateTime(2020, 05, 23),
+                            Money: 123.45M,
+                            Color: Color.LightBlue);
+
+            const int length = 25;
+
+            var reader = new FixedLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                 .Map(x => x.Name, 0, length)
+                 .Map(x => x.Birthday, 25, length)
+                 .Map(x => x.Money, 50, length)
+                 .Map(x => x.Color, 75, length)
+                 .Build(culture);
+
+            var values = new[]
+            {
+                expected.Name.ToString(culture).PadRight(length),
+                expected.Birthday.ToString(culture).PadRight(length),
+                expected.Money.ToString(culture).PadRight(length),
+                expected.Color.ToString().PadRight(length),
+            };
+
+            var line = string.Join(string.Empty, values);
+
+            var result = reader.Parse(line);
+
+            result.Should().BeEquivalentTo(expected);
+        }
     }
 
     public static class FixedLengthCustomExtensions
     {
+        public static IFixedLengthReader<T> BuildForUnitTest<T>(this IFixedLengthReaderBuilder<T> source)
+            => source.Build(CultureInfo.InvariantCulture);
+
+        public static IFixedLengthReader<T> BuildForUnitTest<T>(this IFixedLengthReaderSequentialBuilder<T> source)
+            => source.Build(CultureInfo.InvariantCulture);
+
         public static IFixedLengthReaderBuilder<T> MyMap<T>(
             this IFixedLengthReaderBuilder<T> source,
             Expression<Func<T, DateTime>> ex, int startIndex, int length,
@@ -202,7 +248,7 @@ namespace RecordParser.Test
         public static IFixedLengthReader<T> MyBuild<T>(this IFixedLengthReaderBuilder<T> source)
         {
             return source.DefaultTypeConvert(value => value.ToLower())
-                         .Build();
+                         .BuildForUnitTest();
         }
     }
 }

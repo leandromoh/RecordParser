@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using RecordParser.Parsers;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using Xunit;
@@ -16,7 +17,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name)
                 .Map(x => x.Birthday)
                 .Map(x => x.Money)
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45");
 
@@ -34,7 +35,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday)
                 .Skip(2)
                 .Map(x => x.Money)
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz ; IGNORE; 2020.05.23 ; IGNORE ; IGNORE ; 0123.45");
 
@@ -52,7 +53,7 @@ namespace RecordParser.Test
                 .Map(x => x.Debit)
                 .DefaultTypeConvert(value => decimal.Parse(value) / 100)
                 .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse("012345678901 ; 23052020 ; 012345");
 
@@ -69,7 +70,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, value => DateTime.ParseExact(value, "ddMMyyyy", null))
                 .Map(x => x.Money)
                 .Map(x => x.Nickname, value => value.Slice(0, 4).ToString())
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse("foo bar baz ; 23052020 ; 012345 ; nickname");
 
@@ -87,7 +88,7 @@ namespace RecordParser.Test
                 .Map(x => x.Age, value => int.Parse(value) * 2)
                 .Map(x => x.FatherAge)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse(" 40 ; 15 ; 50 ");
 
@@ -106,7 +107,7 @@ namespace RecordParser.Test
                 .Map(x => x.Age, value => int.Parse(value) * 2)
                 .Map(x => x.FatherAge)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
-                .Build(";");
+                .BuildForUnitTest();
 
             var result = reader.Parse(" XX ; XX ; 40 ; XX ; 15 ; 50 ; XX");
 
@@ -130,6 +131,43 @@ namespace RecordParser.Test
                                             Balance: 012345678.901M,
                                             Date: new DateTime(2020, 05, 23)));
         }
+
+        [Theory]
+        [InlineData("pt-BR")]
+        [InlineData("en-US")]
+        [InlineData("fr-FR")]
+        [InlineData("ru-RU")]
+        [InlineData("es-ES")]
+        public void Builder_should_use_passed_cultureinfo_to_parse_record(string cultureName)
+        {
+            var culture = new CultureInfo(cultureName);
+
+            var expected = (Name: "foo bar baz",
+                            Birthday: new DateTime(2020, 05, 23),
+                            Money: 123.45M,
+                            Color: Color.LightBlue);
+
+            var reader = new VariableLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                 .Map(x => x.Name)
+                 .Map(x => x.Birthday)
+                 .Map(x => x.Money)
+                 .Map(x => x.Color)
+                 .Build(";", culture);
+
+            var values = new[]
+            {
+                expected.Name.ToString(culture),
+                expected.Birthday.ToString(culture),
+                expected.Money.ToString(culture),
+                expected.Color.ToString(),
+            };
+
+            var line = string.Join(';', values.Select(x => $"  {x}  "));
+
+            var result = reader.Parse(line);
+
+            result.Should().BeEquivalentTo(expected);
+        }
     }
 
     public static class CSVSequentialBuilderExtensions
@@ -145,7 +183,7 @@ namespace RecordParser.Test
         public static IVariableLengthReader<T> MyBuild<T>(this IVariableLengthReaderSequentialBuilder<T> source)
         {
             return source.DefaultTypeConvert(value => value.ToLower())
-                         .Build(";");
+                         .BuildForUnitTest();
         }
     }
 }
