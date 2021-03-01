@@ -15,7 +15,7 @@ It makes easier for developers to do parsing by automating non-relevant code, al
 1. Fixed length, common in positional files, e.g. mainframe use, COBOL, etc
 2. Variable length, common in delimited files, e.g. CSV, TSV files, etc
 
-## Fixed length
+## Fixed Length Reader
 There are 2 flavors for mapping: indexed or sequential.  
 
 Indexed is useful when you want to map columns by its position: start/length. 
@@ -59,7 +59,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 }
 ```
 
-## Variable length
+## Variable Length Reader
 There are 2 flavors for mapping: indexed or sequential.  
 
 Indexed is useful when you want to map columns by its indexes. 
