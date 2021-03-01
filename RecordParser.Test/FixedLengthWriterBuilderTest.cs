@@ -1,10 +1,10 @@
 ﻿using FluentAssertions;
 using RecordParser.BuilderWrite;
 using RecordParser.Generic;
+using RecordParser.Parsers;
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq.Expressions;
-using System.Text;
 using Xunit;
 
 namespace RecordParser.Test
@@ -19,7 +19,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 16, 10, "yyyy.MM.dd")
                 .Map(x => x.Money, 27, 7, precision: 2)
                 .Map(x => x.Color, 35, 15, padding: Padding.Left, paddingChar: '-')
-                .Build();
+                .BuildForUnitTest();
 
             var instance = (Name: "foo bar baz",
                             Birthday: new DateTime(2020, 05, 23),
@@ -30,7 +30,7 @@ namespace RecordParser.Test
             var charsWritten = writer.Parse(instance, destination);
             var result = destination.Slice(0, charsWritten).ToString();
 
-            var expected = string.Join('\0', new []
+            var expected = string.Join('\0', new[]
             {
                 instance.Name.PadRight(15, ' '),
                 instance.Birthday.ToString("yyyy.MM.dd"),
@@ -50,7 +50,7 @@ namespace RecordParser.Test
                .Map(x => x.Birthday, 16, 10, "yyyy.MM.dd")
                //  .Map(x => x.Money, 2)
                .Map(x => x.Color, 27, 15, padding: Padding.Left, paddingChar: '-')
-               .Build();
+               .BuildForUnitTest();
 
             var instance = (Name: "foo bar baz",
                             Birthday: new DateTime(2020, 05, 23),
@@ -69,6 +69,12 @@ namespace RecordParser.Test
 
     public static class FixedLengthWriterHelpers
     {
+        public static IFixedLengthWriter<T> BuildForUnitTest<T>(this IFixedLengthWriterBuilder<T> source)
+            => source.Build(CultureInfo.InvariantCulture);
+
+        public static IVariableLengthWriter<T> BuildForUnitTest<T>(this IVariableLengthWriterBuilder<T> source, string separator)
+            => source.Build(separator, CultureInfo.InvariantCulture);
+
         public static IFixedLengthWriterBuilder<T> Map<T>(this IFixedLengthWriterBuilder<T> builder, Expression<Func<T, decimal>> ex, int startIndex, int length, int precision, string format = null, Padding padding = Padding.Right, char paddingChar = ' ')
         {
             return builder.Map(ex, startIndex, length,

@@ -15,7 +15,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
-                .Build(" ; ");
+                .BuildForUnitTest(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
@@ -23,7 +23,7 @@ namespace RecordParser.Test
             var charsWritten = writer.Parse(instance, destination);
             var result = destination.Slice(0, charsWritten).ToString();
 
-            result.Should().Be("foo bar baz ; 2020.05.23 ; 123,45 ; LightBlue");
+            result.Should().Be("foo bar baz ; 2020.05.23 ; 123.45 ; LightBlue");
         }
 
         [Fact]
@@ -33,7 +33,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Color, 4)
-                .Build(" ; ");
+                .BuildForUnitTest(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
@@ -52,7 +52,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 2, "yyyy.MM.dd")
                 .Map(x => x.Money, 3)
                 .Map(x => x.Color, 4)
-                .Build(" ; ");
+                .BuildForUnitTest(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
@@ -60,7 +60,7 @@ namespace RecordParser.Test
             var charsWritten = writer.Parse(instance, destination);
             var result = destination.Slice(0, charsWritten).ToString();
 
-            result.Should().Be(" ; foo bar baz ; 2020.05.23 ; 123,45 ; LightBlue");
+            result.Should().Be(" ; foo bar baz ; 2020.05.23 ; 123.45 ; LightBlue");
         }
 
         [Fact]
@@ -71,7 +71,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 2, "yyyy.MM.dd")
                 .Map(x => x.Money, 4)
                 .Map(x => x.Color, 5)
-                .Build(" ; ");
+                .BuildForUnitTest(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
@@ -79,7 +79,7 @@ namespace RecordParser.Test
             var charsWritten = writer.Parse(instance, destination);
             var result = destination.Slice(0, charsWritten).ToString();
 
-            result.Should().Be(" ; foo bar baz ; 2020.05.23 ;  ; 123,45 ; LightBlue");
+            result.Should().Be(" ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; LightBlue");
         }
 
         [Fact]
@@ -89,7 +89,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, indexColumn: 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Money, 2)
-                .Build(" ; ");
+                .BuildForUnitTest(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M);
 
@@ -109,7 +109,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 2, "yyyy.MM.dd")
                 .Map(x => x.Money, 4)
                 .Map(x => x.Color, 5)
-                .Build(" ; ");
+                .BuildForUnitTest(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
