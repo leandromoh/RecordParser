@@ -3,13 +3,31 @@
 RecordParser is a expression tree based parser that helps you to write maintainable, fast and simple parsers.  
 It makes easier for developers to do parsing by automating non-relevant code, allowing the developer to focus on the essentials of mapping.
 
+### Why another library?
+I looked a lot of libraries but always encounter several of the bellow problems
+
+1. Use strings instead of [span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay), therefore slow and wasting computational resource
+2. It does not support .NET Core, therefore not taking advantages of performance improviments and new features (e.g. span, [skiplocalsinit](https://github.com/dotnet/csharplang/blob/master/proposals/csharp-9.0/skip-localsinit.md), etc) 
+3. The code executed at runtime is not as straight as handwriting code. It does a lot of object iterations during the parse, therefore more costly
+4. It has flooded API with poor examples
+5. It does not support both indexed and sequential configuration. You can not choose most convenient way for each case
+6. It does not offer a way to ignore columns. You are forced to map what you does not care
+7. It does not support to map structs, only classes (i.e., value and reference types, respectively)
+8. It supports structs, but does [boxing](https://docs.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing) (improper usage of memory)
+9. It parses only files, not records. If you have a bunch individual lines, you are leave in the lurch
+10. It is intrusive, configuration is made with attributes in mapped type (No POCO and low coupling)
+
+### RecordParser came to solve these problems
+
 1. It is fast because the relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is almost fast as handwriting code [(sometimes faster, see benchmark)](/Benchmark.md)
 2. It is even faster because it does intense use of [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a new .NET type designed to have high-performance and reduce memory allocations
 3. It is extensible: developers can easily create wrapper methods with [custom maps](/RecordParser.Test/FixedLengthReaderBuilderTest.cs#L85)
-4. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your POCO classes with minimised dependencies and low coupling  
-5. It provides simple API: reader objects provides 2 familiar methods `Parse` and `TryParse`
-6. It supports to parse classes and structs types (i.e., reference and value types)
-7. It supports .NET Core 2.1, 3.1 and 5.0
+4. It is flexible: choose the most convenient way to configure each of your parsers (indexed or sequential configuration)
+5. It is even more flexible because you can totally customize your parsing with lambdas/delegates 
+6. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your POCO classes with minimised dependencies and low coupling  
+7. It provides simple API: reader objects provides 2 familiar methods Parse and TryParse
+8. It supports to parse classes and structs types (i.e., reference and value types)
+9. It supports .NET Core 2.1, 3.1 and 5.0
 
 ### Currently there are parsers for 2 record formats: 
 1. Fixed length, common in positional files, e.g. mainframe use, COBOL, etc
