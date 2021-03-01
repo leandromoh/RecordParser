@@ -2,6 +2,7 @@
 using RecordParser.Parsers;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.BuilderWrite.SpanExpressionHelper;
@@ -10,7 +11,7 @@ namespace RecordParser.BuilderWrite
 {
     public interface IVariableLengthWriterBuilder<T>
     {
-        IVariableLengthWriter<T> Build(string separator);
+        IVariableLengthWriter<T> Build(string separator, CultureInfo cultureInfo = null);
         IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format);
         IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null);
     }
@@ -22,7 +23,7 @@ namespace RecordParser.BuilderWrite
         public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            var config = new MappingWriteConfiguration(member, indexColumn, null, converter.WrapInLambdaExpression(), null, default, default, typeof(R), null);
+            var config = new MappingWriteConfiguration(member, indexColumn, null, converter.WrapInLambdaExpression(), null, default, default, typeof(R));
             list.Add(indexColumn, config);
             return this;
         }
@@ -30,20 +31,20 @@ namespace RecordParser.BuilderWrite
         public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            var config = new MappingWriteConfiguration(member, indexColumn, null, null, format, default, default, typeof(R), null);
+            var config = new MappingWriteConfiguration(member, indexColumn, null, null, format, default, default, typeof(R));
             list.Add(indexColumn, config);
             return this;
         }
 
-        public IVariableLengthWriter<T> Build(string separator)
+        public IVariableLengthWriter<T> Build(string separator, CultureInfo cultureInfo = null)
         {
             var maps = list.Select(x => x.Value).OrderBy(x => x.start);
-            var expression = GetFuncThatSetProperties(maps);
+            var expression = GetFuncThatSetProperties(maps, cultureInfo);
 
             return new VariableLengthWriter<T>(expression.Compile(), separator);
         }
 
-        private static Expression<FuncSpanSpanTInt<T>> GetFuncThatSetProperties(IEnumerable<MappingWriteConfiguration> mappedColumns)
+        private static Expression<FuncSpanSpanTInt<T>> GetFuncThatSetProperties(IEnumerable<MappingWriteConfiguration> mappedColumns, CultureInfo cultureInfo)
         {
             // parameters
             ParameterExpression span = Expression.Variable(typeof(Span<char>), "span");
@@ -101,7 +102,7 @@ namespace RecordParser.BuilderWrite
 
                 var prop = replacer.Visit(map.prop);
 
-                DAs(prop, map, commands, spanTemp, offset, gotoReturn);
+                DAs(prop, map, commands, spanTemp, offset, gotoReturn, cultureInfo);
 
                 var bla = Expression.Call(spanTemp, "Slice", Type.EmptyTypes, offset);
 

@@ -2,6 +2,7 @@
 using RecordParser.Parsers;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.BuilderWrite.SpanExpressionHelper;
@@ -10,7 +11,7 @@ namespace RecordParser.BuilderWrite
 {
     public interface IFixedLengthWriterBuilder<T>
     {
-        IFixedLengthWriter<T> Build();
+        IFixedLengthWriter<T> Build(CultureInfo cultureInfo = null);
         IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, string format, Padding padding = Padding.Right, char paddingChar = ' ');
         IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanTIntBool<R> converter = null, Padding padding = Padding.Right, char paddingChar = ' ');
     }
@@ -22,25 +23,25 @@ namespace RecordParser.BuilderWrite
         public IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanTIntBool<R> converter = null, Padding padding = Padding.Right, char paddingChar = ' ')
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingWriteConfiguration(member, startIndex, length, converter.WrapInLambdaExpression(), null, padding, paddingChar, typeof(R), null));
+            list.Add(new MappingWriteConfiguration(member, startIndex, length, converter.WrapInLambdaExpression(), null, padding, paddingChar, typeof(R)));
             return this;
 
         }
         public IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, string format, Padding padding = Padding.Right, char paddingChar = ' ')
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingWriteConfiguration(member, startIndex, length, null, format, padding, paddingChar, typeof(R), null));
+            list.Add(new MappingWriteConfiguration(member, startIndex, length, null, format, padding, paddingChar, typeof(R)));
             return this;
         }
 
-        public IFixedLengthWriter<T> Build()
+        public IFixedLengthWriter<T> Build(CultureInfo cultureInfo = null)
         {
-            var expression = GetFuncThatSetProperties(list);
+            var expression = GetFuncThatSetProperties(list, cultureInfo);
 
             return new FixedLengthWriter<T>(expression.Compile());
         }
 
-        private static Expression<FuncSpanTInt<T>> GetFuncThatSetProperties(IEnumerable<MappingWriteConfiguration> mappedColumns)
+        private static Expression<FuncSpanTInt<T>> GetFuncThatSetProperties(IEnumerable<MappingWriteConfiguration> mappedColumns, CultureInfo cultureInfo)
         {
             // parameters
             ParameterExpression span = Expression.Variable(typeof(Span<char>), "span");
@@ -78,7 +79,7 @@ namespace RecordParser.BuilderWrite
 
                 var prop = replacer.Visit(map.prop);
 
-                DAs(prop, map, commands, temp, charsWritten, gotoReturn);
+                DAs(prop, map, commands, temp, charsWritten, gotoReturn, cultureInfo);
 
                 CallPad(map);
             }
@@ -112,7 +113,7 @@ namespace RecordParser.BuilderWrite
     internal static class SpanExpressionHelper
     {
 
-        public static void DAs(Expression prop, MappingWriteConfiguration map, List<Expression> commands, ParameterExpression temp, ParameterExpression charsWritten, GotoExpression gotoReturn)
+        public static void DAs(Expression prop, MappingWriteConfiguration map, List<Expression> commands, ParameterExpression temp, ParameterExpression charsWritten, GotoExpression gotoReturn, CultureInfo cultureInfo)
         {
             if (map.converter != null)
             {
@@ -150,7 +151,7 @@ namespace RecordParser.BuilderWrite
 
                 var tryFormat =
                     Expression.Call(prop, "TryFormat", Type.EmptyTypes,
-                    temp, charsWritten, format, Expression.Constant(map.formatProvider, typeof(IFormatProvider)));
+                    temp, charsWritten, format, Expression.Constant(cultureInfo, typeof(CultureInfo)));
 
                 commands.Add(Expression.IfThen(Expression.Not(tryFormat), gotoReturn));
             }
