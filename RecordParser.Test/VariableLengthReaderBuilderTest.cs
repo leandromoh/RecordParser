@@ -237,6 +237,7 @@ namespace RecordParser.Test
 
                 Guid = new Guid("e808927a-48f9-4402-ab2b-400bf1658169"),
                 Date = DateTime.Parse(DateTime.Now.ToString()),
+                TimeSpan = DateTime.Now.TimeOfDay,
 
                 Bool = true,
                 Decimal = -1.99M,
@@ -263,6 +264,7 @@ namespace RecordParser.Test
 
             .Map(x => x.Guid)
             .Map(x => x.Date)
+            .Map(x => x.TimeSpan)
 
             .Map(x => x.Bool)
             .Map(x => x.Decimal)
@@ -291,6 +293,7 @@ namespace RecordParser.Test
 
                 expected.Guid,
                 expected.Date,
+                expected.TimeSpan,
 
                 expected.Bool,
                 expected.Decimal,

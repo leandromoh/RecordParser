@@ -105,6 +105,7 @@ namespace RecordParser.Generic
 
             mapping.AddMapForReadOnlySpan(span => Guid.Parse(span));
             mapping.AddMapForReadOnlySpan(span => DateTime.Parse(span, null, DateTimeStyles.AllowWhiteSpaces));
+            mapping.AddMapForReadOnlySpan(span => TimeSpan.Parse(span, null));
 
             mapping.AddMapForReadOnlySpan(span => bool.Parse(span));
             mapping.AddMapForReadOnlySpan(span => decimal.Parse(span, NumberStyles.Number, null));

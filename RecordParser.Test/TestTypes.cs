@@ -40,6 +40,7 @@ namespace RecordParser.Test
 
         public Guid Guid;
         public DateTime Date;
+        public TimeSpan TimeSpan;
 
         public bool Bool;
         public decimal Decimal;
