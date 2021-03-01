@@ -16,7 +16,7 @@ namespace RecordParser.Benchmark
     [SimpleJob(RuntimeMoniker.NetCoreApp50)]
     public partial class TestRunner
     {
-        [Params(100_000, 500_000)]
+        [Params(500_000)]
         public int LimitRecord { get; set; }
         
         public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
