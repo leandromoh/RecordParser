@@ -170,14 +170,14 @@ namespace RecordParser.Test
     public static class FixedLengthCustomExtensions
     {
 
-        public static T FloatingNumbersPrecision<T>(this T source, int decimalPlaces) 
+        public static T FloatingNumbersPrecision<T>(this T source, int precision) 
             where T : Bla<T>
         {
-            var divide = Math.Pow(10, decimalPlaces);
+            var divide = Math.Pow(10, precision);
 
             return source
-                .DefaultTypeConvert(value => double.Parse(value) / divide)
-                .DefaultTypeConvert(value => float.Parse(value) / divide)
+                .DefaultTypeConvert(value => double.Parse(value) / (double)divide)
+                .DefaultTypeConvert(value => float.Parse(value) / (float)divide)
                 .DefaultTypeConvert(value => decimal.Parse(value) / (decimal)divide);
         }
 
