@@ -49,7 +49,7 @@ namespace RecordParser.Benchmark
                 .Map(x => x.gender, 85, 6)
                 .Map(x => x.email, 92, 22)
                 .Map(x => x.children, 121, 5)
-                .Build();
+                .Build(CultureInfo.InvariantCulture);
 
             await ProcessFlatFile(parser.Parse);
         }

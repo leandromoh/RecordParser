@@ -59,7 +59,7 @@ namespace RecordParser.Benchmark
                 .Map(x => x.gender, 4)
                 .Map(x => x.email, 5)
                 .Map(x => x.children, 7)
-                .Build(",");
+                .Build(",", CultureInfo.InvariantCulture);
 
             await ProcessCSVFile(parser.Parse);
         }
