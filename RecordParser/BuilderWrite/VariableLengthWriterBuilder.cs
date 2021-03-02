@@ -83,7 +83,8 @@ namespace RecordParser.BuilderWrite
                 commands.Add(
                     Expression.Assign(spanTemp, Expression.Call(span, "Slice", Type.EmptyTypes, position)));
 
-                if (++i != map.start)
+                var isEmptyColumn = ++i != map.start;
+                if (isEmptyColumn)
                 {
                     WriteDelimiter(spanTemp, delimiterLength);
                     goto reloop;
