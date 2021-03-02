@@ -21,14 +21,15 @@ I looked a lot of libraries but always encounter several of the bellow problems
 ### RecordParser came to solve these problems
 
 1. It is fast because the relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is almost fast as handwriting code [(sometimes faster, see benchmark)](/Benchmark.md)
-2. It is even faster because it does intense use of [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a new .NET type designed to have high-performance and reduce memory allocations
-3. It is extensible: developers can easily create wrapper methods with [custom maps](/RecordParser.Test/FixedLengthReaderBuilderTest.cs#L85)
-4. It is flexible: choose the most convenient way to configure each of your parsers (indexed or sequential configuration)
-5. It is even more flexible because you can totally customize your parsing with lambdas/delegates 
-6. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your POCO classes with minimised dependencies and low coupling  
-7. It provides simple API: reader objects provides 2 familiar methods Parse and TryParse
-8. It supports to parse classes and structs types (i.e., reference and value types)
-9. It supports .NET Core 2.1, 3.1 and 5.0
+2. The code generated using expression tree is basically the code you would write yourself if not using any library, simple, straight and fast
+3. It is even faster because it does intense use of [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a new .NET type designed to have high-performance and reduce memory allocations
+4. It is extensible: developers can easily create wrapper methods with [custom maps](/RecordParser.Test/FixedLengthReaderBuilderTest.cs#L85)
+5. It is flexible: choose the most convenient way to configure each of your parsers (indexed or sequential configuration)
+6. It is even more flexible because you can totally customize your parsing with lambdas/delegates 
+7. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your POCO classes with minimised dependencies and low coupling  
+8. It provides simple API: reader objects provides 2 familiar methods Parse and TryParse
+9. It supports to parse classes and structs types (i.e., reference and value types)
+10. It supports .NET Core 2.1, 3.1 and 5.0
 
 ### Currently there are parsers for 2 record formats: 
 1. Fixed length, common in positional files, e.g. mainframe use, COBOL, etc
@@ -203,6 +204,10 @@ public void Given_nested_mapped_property_should_create_nested_instance_to_parse(
     });
 }
 ```
-### Benchmark
+## What about writers?
 
-Check some benchmark of the library [here](/Benchmark.md)
+It is comming soon! [PR](https://github.com/leandromoh/RecordParser/pull/7) is working in progress
+
+## Benchmark
+
+Check library benchmark [here](/Benchmark.md)
