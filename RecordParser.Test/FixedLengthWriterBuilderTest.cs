@@ -77,8 +77,10 @@ namespace RecordParser.Test
 
         public static IFixedLengthWriterBuilder<T> Map<T>(this IFixedLengthWriterBuilder<T> builder, Expression<Func<T, decimal>> ex, int startIndex, int length, int precision, string format = null, Padding padding = Padding.Right, char paddingChar = ' ')
         {
+            var multiply = (int)Math.Pow(10, precision);
+
             return builder.Map(ex, startIndex, length,
-                (span, value) => (((int)(value * (decimal)Math.Pow(10, precision))).TryFormat(span, out var written, format), written),
+                (span, value) => (((int)(value * multiply)).TryFormat(span, out var written, format), written),
                 padding, paddingChar);
         }
     }
