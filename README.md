@@ -16,6 +16,7 @@ I looked a lot of libraries but always encounter several of the bellow problems
 8. It supports structs, but does [boxing](https://docs.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing) (improper usage of memory)
 9. It parses only files, not records. If you have a bunch individual lines, you are leave in the lurch
 10. It is intrusive, configuration is made with attributes in mapped type (No POCO and low coupling)
+11. It requires to define a class for each type that you want to define a parser, which is something really verbose
 
 ### RecordParser came to solve these problems
 
