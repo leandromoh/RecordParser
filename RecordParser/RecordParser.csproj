@@ -1,8 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;netcoreapp5.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netcoreapp2.1;netcoreapp3.1;netcoreapp5.0</TargetFrameworks>
     <LangVersion>8</LangVersion>
+    <Authors>Leandro Fernandes Vieira (leandromoh)</Authors>
+    <Description>Simple expression tree based parser, focused in high-performance, extensibility and simple usage</Description>
+    <Copyright>Copyright 2021 (c) Leandro F. Vieira (leandromoh). All rights reserved.</Copyright>
+    <PackageProjectUrl>https://github.com/leandromoh/RecordParser</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/leandromoh/RecordParser</RepositoryUrl>
+    <PackageTags>tsv parser performance csv mapper file flat reader dotnet-core span flatfile expression-tree delimited fixedlength</PackageTags>
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp5.0|AnyCPU'">

@@ -29,7 +29,7 @@ I looked a lot of libraries but always encounter several of the bellow problems
 7. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your POCO classes with minimised dependencies and low coupling  
 8. It provides simple API: reader objects provides 2 familiar methods Parse and TryParse
 9. It supports to parse classes and structs types (i.e., reference and value types)
-10. It supports .NET Core 2.1, 3.1 and 5.0
+10. It supports .NET Core 2.1, 3.1, 5.0 and .NET Standard 2.1
 
 ### Currently there are parsers for 2 record formats: 
 1. Fixed length, common in positional files, e.g. mainframe use, COBOL, etc
