@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.Generic.GenericRecordParser;
@@ -45,12 +46,20 @@ namespace RecordParser.Generic
 
             var blockExpr = MountSetProperties(objectParameter, mappedColumns, (i, mapConfig) =>
             {
-                var arrayIndex = ReadOnlySpanIndex<(int, int)>(configParameter, Expression.Constant(i));
+                (Expression startIndex, Expression length) = (null, null);
+
+                if (mapConfig.length.HasValue)
+                {
+                    (startIndex, length) = (Expression.Constant(mapConfig.start), Expression.Constant(mapConfig.length.Value));
+                }
+                else
+                {
+                    var arrayIndex = ReadOnlySpanIndex<(int, int)>(configParameter, Expression.Constant(i));
+                    (startIndex, length) = (Expression.Field(arrayIndex, "Item1"), Expression.Field(arrayIndex, "Item2"));
+                }
 
                 var textValue =
-                    Expression.Call(span, nameof(ReadOnlySpan<char>.Slice), Type.EmptyTypes,
-                    Expression.Field(arrayIndex, "Item1"),
-                    Expression.Field(arrayIndex, "Item2"));
+                    Expression.Call(span, nameof(ReadOnlySpan<char>.Slice), Type.EmptyTypes, startIndex, length);
 
                 var shouldTrim = mapConfig.prop.Type == typeof(string)
                               || mapConfig.prop.Type == typeof(char)
@@ -74,9 +83,11 @@ namespace RecordParser.Generic
 
         private static Expression ReadOnlySpanIndex<T>(params Expression[] args)
         {
-            static T func(ReadOnlySpan<T> span, int i) => span[i];
+            Debug.Assert(args.Length == 2);
 
-            return GetExpressionFunc((FuncSpanIntT<T>)func, args);
+            return GetExpressionFunc((FuncSpanIntT<T>)GetItem, args);
         }
+
+        private static T GetItem<T>(this ReadOnlySpan<T> span, int i) => span[i];
     }
 }
