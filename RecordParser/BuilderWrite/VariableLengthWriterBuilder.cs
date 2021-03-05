@@ -73,7 +73,8 @@ namespace RecordParser.BuilderWrite
             commands.Add(Expression.Assign(position, Expression.Constant(0)));
 
             LabelTarget returnTarget = Expression.Label(typeof(int));
-            GotoExpression gotoReturn = Expression.Return(returnTarget, Expression.Constant(0));
+            GotoExpression returnPosition = Expression.Return(returnTarget, position);
+            GotoExpression returnPositionOffset = Expression.Return(returnTarget, Expression.Add(position, offset));
 
             var i = -1;
             foreach (var map in mappedColumns)
@@ -86,17 +87,22 @@ namespace RecordParser.BuilderWrite
                 var isEmptyColumn = ++i != map.start;
                 if (isEmptyColumn)
                 {
-                    WriteDelimiter(spanTemp, delimiterLength);
+                    WriteDelimiter(spanTemp, delimiterLength, returnPosition);
                     goto reloop;
                 }
 
                 var prop = replacer.Visit(map.prop);
 
+                var gotoReturn = map.converter == null && (prop.Type.IsEnum || prop.Type == typeof(string))
+                    ? returnPosition
+                    : returnPositionOffset;
+
                 DAs(prop, map, commands, spanTemp, offset, gotoReturn, cultureInfo);
 
                 WriteDelimiter(
                     Expression.Call(spanTemp, "Slice", Type.EmptyTypes, offset),
-                    Expression.Add(offset, delimiterLength));
+                    Expression.Add(offset, delimiterLength),
+                    returnPositionOffset);
             }
 
             //remove the last 3 commands (if toLarge, copy delimiter and add delimiterLength to position)
@@ -114,13 +120,13 @@ namespace RecordParser.BuilderWrite
 
             return lambda;
 
-            void WriteDelimiter(Expression freeSpan, Expression addToPosition)
+            void WriteDelimiter(Expression freeSpan, Expression addToPosition, GotoExpression returnExpression)
             {
                 var toLarge = Expression.GreaterThan(
                     delimiterLength,
                     Expression.PropertyOrField(freeSpan, "Length"));
 
-                commands.Add(Expression.IfThen(toLarge, gotoReturn));
+                commands.Add(Expression.IfThen(toLarge, returnExpression));
 
                 commands.Add(
                     Expression.Call(delimiter, "CopyTo", Type.EmptyTypes, freeSpan));
