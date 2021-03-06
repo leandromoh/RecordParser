@@ -4,10 +4,10 @@ namespace RecordParser.Parsers
 {
     public interface IVariableLengthWriter<T>
     {
-        int Parse(T instance, Span<char> destination);
+        bool Parse(T instance, Span<char> destination, out int charsWritten);
     }
 
-    internal delegate int FuncSpanSpanTInt<T>(Span<char> span, ReadOnlySpan<char> delimiter, T inst);
+    internal delegate (bool success, int charsWritten) FuncSpanSpanTInt<T>(Span<char> span, ReadOnlySpan<char> delimiter, T inst);
 
     internal class VariableLengthWriter<T> : IVariableLengthWriter<T>
     {
@@ -20,10 +20,12 @@ namespace RecordParser.Parsers
             this.separator = separator;
         }
 
-        public int Parse(T instance, Span<char> destination)
+        public bool Parse(T instance, Span<char> destination, out int charsWritten)
         {
-            var charsWritten = parse(destination, separator, instance);
-            return charsWritten;
+            var result = parse(destination, separator, instance);
+
+            charsWritten = result.charsWritten;
+            return result.success;
         }
     }
 }

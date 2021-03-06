@@ -4,11 +4,11 @@ namespace RecordParser.Parsers
 {
     public interface IFixedLengthWriter<T>
     {
-        int Parse(T instance, Span<char> destination);
+        bool Parse(T instance, Span<char> destination, out int charsWritten);
     }
 
-    internal delegate int FuncSpanTInt<T>(Span<char> span, T inst);
-    public delegate (bool, int) FuncSpanTIntBool<T>(Span<char> span, T inst);
+    internal delegate (bool success, int charsWritten) FuncSpanTInt<T>(Span<char> span, T inst);
+    public delegate (bool success, int charsWritten) FuncSpanTIntBool<T>(Span<char> span, T inst);
 
     internal class FixedLengthWriter<T> : IFixedLengthWriter<T>
     {
@@ -19,10 +19,12 @@ namespace RecordParser.Parsers
             this.parse = parse;
         }
 
-        public int Parse(T instance, Span<char> destination)
+        public bool Parse(T instance, Span<char> destination, out int charsWritten)
         {
-            var charsWritten = parse(destination, instance);
-            return charsWritten;
+            var result = parse(destination, instance);
+
+            charsWritten = result.charsWritten;
+            return result.success;
         }
     }
 }

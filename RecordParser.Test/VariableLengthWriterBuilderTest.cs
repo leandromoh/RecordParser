@@ -20,7 +20,12 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
             Span<char> destination = stackalloc char[100];
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
+
             var result = destination.Slice(0, charsWritten).ToString();
 
             result.Should().Be("foo bar baz ; 2020.05.23 ; 123.45 ; LightBlue");
@@ -38,7 +43,11 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
             Span<char> destination = stackalloc char[100];
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
             var result = destination.Slice(0, charsWritten).ToString();
 
             result.Should().Be("foo bar baz ; 2020.05.23 ;  ;  ; LightBlue");
@@ -57,7 +66,11 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
             Span<char> destination = stackalloc char[100];
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
             var result = destination.Slice(0, charsWritten).ToString();
 
             result.Should().Be(" ; foo bar baz ; 2020.05.23 ; 123.45 ; LightBlue");
@@ -76,7 +89,11 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
             Span<char> destination = stackalloc char[100];
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
             var result = destination.Slice(0, charsWritten).ToString();
 
             result.Should().Be(" ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; LightBlue");
@@ -94,7 +111,11 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M);
 
             Span<char> destination = stackalloc char[100];
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
             var result = destination.Slice(charsWritten).ToString();
 
             var expected = new string(default, result.Length);
@@ -102,46 +123,46 @@ namespace RecordParser.Test
         }
 
         [Theory]
-        [InlineData(99, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; LightBlue")]
-        [InlineData(52, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; LightBlue")]
-        [InlineData(51, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; LightBlue")]
+        [InlineData(99, true, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; LightBlue")]
+        [InlineData(52, true, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; LightBlue")]
+        [InlineData(51, true, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; LightBlue")]
 
-        [InlineData(50, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; ")]
-        [InlineData(43, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; ")]
-        [InlineData(42, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; ")]
-
-        [InlineData(41, " ; foo bar baz ; 2020.05.23 ;  ; 123.45")]
-        [InlineData(40, " ; foo bar baz ; 2020.05.23 ;  ; 123.45")]
-        [InlineData(39, " ; foo bar baz ; 2020.05.23 ;  ; 123.45")]
-
-        [InlineData(38, " ; foo bar baz ; 2020.05.23 ;  ; ")]
-        [InlineData(34, " ; foo bar baz ; 2020.05.23 ;  ; ")]
-        [InlineData(33, " ; foo bar baz ; 2020.05.23 ;  ; ")]
-
-        [InlineData(32, " ; foo bar baz ; 2020.05.23 ; ")]
-        [InlineData(31, " ; foo bar baz ; 2020.05.23 ; ")]
-        [InlineData(30, " ; foo bar baz ; 2020.05.23 ; ")]
-
-        [InlineData(29, " ; foo bar baz ; 2020.05.23")]
-        [InlineData(28, " ; foo bar baz ; 2020.05.23")]
-        [InlineData(27, " ; foo bar baz ; 2020.05.23")]
-
-        [InlineData(26, " ; foo bar baz ; ")]
-        [InlineData(18, " ; foo bar baz ; ")]
-        [InlineData(17, " ; foo bar baz ; ")]
-
-        [InlineData(16, " ; foo bar baz")]
-        [InlineData(15, " ; foo bar baz")]
-        [InlineData(14, " ; foo bar baz")]
-
-        [InlineData(13, " ; ")]
-        [InlineData(04, " ; ")]
-        [InlineData(03, " ; ")]
-
-        [InlineData(02, "")]
-        [InlineData(01, "")]
-        [InlineData(00, "")]
-        public void Given_too_short_destination_should_write_while_have_enough_space(int destinationSize, string expected)
+        [InlineData(50, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; ")]
+        [InlineData(43, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; ")]
+        [InlineData(42, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; ")]
+                       
+        [InlineData(41, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45")]
+        [InlineData(40, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45")]
+        [InlineData(39, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45")]
+                       
+        [InlineData(38, false, " ; foo bar baz ; 2020.05.23 ;  ; ")]
+        [InlineData(34, false, " ; foo bar baz ; 2020.05.23 ;  ; ")]
+        [InlineData(33, false, " ; foo bar baz ; 2020.05.23 ;  ; ")]
+                       
+        [InlineData(32, false, " ; foo bar baz ; 2020.05.23 ; ")]
+        [InlineData(31, false, " ; foo bar baz ; 2020.05.23 ; ")]
+        [InlineData(30, false, " ; foo bar baz ; 2020.05.23 ; ")]
+                       
+        [InlineData(29, false, " ; foo bar baz ; 2020.05.23")]
+        [InlineData(28, false, " ; foo bar baz ; 2020.05.23")]
+        [InlineData(27, false, " ; foo bar baz ; 2020.05.23")]
+                       
+        [InlineData(26, false, " ; foo bar baz ; ")]
+        [InlineData(18, false, " ; foo bar baz ; ")]
+        [InlineData(17, false, " ; foo bar baz ; ")]
+                       
+        [InlineData(16, false, " ; foo bar baz")]
+        [InlineData(15, false, " ; foo bar baz")]
+        [InlineData(14, false, " ; foo bar baz")]
+                       
+        [InlineData(13, false, " ; ")]
+        [InlineData(04, false, " ; ")]
+        [InlineData(03, false, " ; ")]
+                       
+        [InlineData(02, false, "")]
+        [InlineData(01, false, "")]
+        [InlineData(00, false, "")]
+        public void Given_too_short_destination_should_write_while_have_enough_space(int destinationSize, bool successfulExpected, string expected)
         {
             // Arrange 
 
@@ -158,10 +179,11 @@ namespace RecordParser.Test
 
             // Act
             
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().Be(successfulExpected);
             charsWritten.Should().Be(expected.Length);
 
             var result = destination.Slice(0, charsWritten).ToString();
@@ -193,10 +215,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeTrue();
             charsWritten.Should().Be(30);
 
             var expected = "12345 ; 12345678901 ; 23052020";
@@ -230,10 +253,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeTrue();
             charsWritten.Should().Be(41);
 
             var expected = " ; FOO BAR BAZ ; 23052020 ; 123.45 ; NICK";
@@ -266,10 +290,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeTrue();
             charsWritten.Should().Be(12);
 
             var expected = "30 ; 42 ; 52";

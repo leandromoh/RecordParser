@@ -34,10 +34,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeTrue();
             charsWritten.Should().Be(50);
 
             var expected = string.Join('\0', new[]
@@ -81,10 +82,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeFalse();
             charsWritten.Should().Be(0);
             destination.ToString().Should().Be(new string(default, destinationSize));
         }
@@ -106,10 +108,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeFalse();
             charsWritten.Should().Be(10);
 
             var result = destination.Slice(0, charsWritten).ToString();
@@ -137,10 +140,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeFalse();
             charsWritten.Should().Be(15);
 
             var result = destination.Slice(0, charsWritten).ToString();
@@ -172,10 +176,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeTrue();
             charsWritten.Should().Be(28);
 
             var expected = "012345678901\0012345\023052020";
@@ -209,10 +214,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeTrue();
             charsWritten.Should().Be(37);
 
             var expected = "FOO BAR BAZ 23052020\00123.45\0NICK----";
@@ -245,10 +251,11 @@ namespace RecordParser.Test
 
             // Act
 
-            var charsWritten = writer.Parse(instance, destination);
+            var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
 
+            success.Should().BeTrue();
             charsWritten.Should().Be(9);
 
             var expected = "30 42 52 ";

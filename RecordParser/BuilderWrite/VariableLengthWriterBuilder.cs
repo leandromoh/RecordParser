@@ -81,9 +81,9 @@ namespace RecordParser.BuilderWrite
 
             commands.Add(Expression.Assign(position, Expression.Constant(0)));
 
-            LabelTarget returnTarget = Expression.Label(typeof(int));
-            GotoExpression returnPosition = Expression.Return(returnTarget, position);
-            GotoExpression returnPositionOffset = Expression.Return(returnTarget, Expression.Add(position, offset));
+            LabelTarget returnTarget = Expression.Label(typeof((bool, int)));
+            Expression returnPosition = GetReturn(false, position);
+            Expression returnPositionOffset = GetReturn(false, Expression.Add(position, offset));
 
             var i = -1;
             foreach (var map in mappedColumns)
@@ -118,10 +118,10 @@ namespace RecordParser.BuilderWrite
             commands.RemoveRange(commands.Count - 3, 3);
 
             commands.Add(Expression.AddAssign(position, offset));
-            commands.Add(Expression.Return(returnTarget, position));
+            commands.Add(GetReturn(true, position));
 
 
-            commands.Add(Expression.Label(returnTarget, Expression.Constant(0)));
+            commands.Add(Expression.Label(returnTarget, Expression.Constant(default((bool, int)))));
 
             var blockExpr = Expression.Block(variables, commands);
 
@@ -129,7 +129,7 @@ namespace RecordParser.BuilderWrite
 
             return lambda;
 
-            void WriteDelimiter(Expression freeSpan, Expression addToPosition, GotoExpression returnExpression)
+            void WriteDelimiter(Expression freeSpan, Expression addToPosition, Expression returnExpression)
             {
                 var toLarge = Expression.GreaterThan(
                     delimiterLength,
@@ -142,6 +142,15 @@ namespace RecordParser.BuilderWrite
 
                 commands.Add(
                     Expression.AddAssign(position, addToPosition));
+            }
+
+            Expression GetReturn(bool success, Expression countWritten)
+            {
+                var returnValue = Expression.New(
+                                typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) }),
+                                Expression.Constant(success), countWritten);
+
+                return Expression.Return(returnTarget, returnValue);
             }
         }
     }

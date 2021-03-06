@@ -70,7 +70,7 @@ namespace RecordParser.BuilderWrite
             // commands
             List<Expression> commands = new List<Expression>();
 
-            LabelTarget returnTarget = Expression.Label(typeof(int));
+            LabelTarget returnTarget = Expression.Label(typeof((bool, int)));
 
             var necessarySpace = Expression.Constant(mappedColumns.Max(x => x.start + x.length.Value));
 
@@ -80,7 +80,7 @@ namespace RecordParser.BuilderWrite
 
             var charsWritten = Expression.Constant(0);
 
-            commands.Add(Expression.IfThen(tooShort, Expression.Return(returnTarget, charsWritten)));
+            commands.Add(Expression.IfThen(tooShort, GetReturn(false, charsWritten)));
 
             foreach (var map in mappedColumns)
             {
@@ -90,8 +90,8 @@ namespace RecordParser.BuilderWrite
                 var prop = replacer.Visit(map.prop);
 
                 var gotoReturn = map.converter == null && (prop.Type.IsEnum || prop.Type == typeof(string))
-                    ? Expression.Return(returnTarget, charsWritten)
-                    : Expression.Return(returnTarget, Expression.Add(charsWritten, offset));
+                    ? GetReturn(false, charsWritten)
+                    : GetReturn(false, Expression.Add(charsWritten, offset));
 
                 DAs(prop, map, commands, temp, offset, gotoReturn, cultureInfo);
 
@@ -100,9 +100,9 @@ namespace RecordParser.BuilderWrite
                 charsWritten = Expression.Constant(map.start + map.length.Value);
             }
 
-            commands.Add(Expression.Return(returnTarget, necessarySpace));
+            commands.Add(GetReturn(true, necessarySpace));
 
-            commands.Add(Expression.Label(returnTarget, Expression.Constant(0)));
+            commands.Add(Expression.Label(returnTarget, Expression.Constant(default((bool, int)))));
 
 
             var blockExpr = Expression.Block(variables, commands);
@@ -123,13 +123,22 @@ namespace RecordParser.BuilderWrite
                         temp,
                         Expression.Constant(map.paddingChar)));
             }
+
+            Expression GetReturn(bool success, Expression countWritten)
+            {
+                var returnValue = Expression.New(
+                                typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) }),
+                                Expression.Constant(success), countWritten);
+
+                return Expression.Return(returnTarget, returnValue);
+            }
         }
     }
 
     internal static class SpanExpressionHelper
     {
 
-        public static void DAs(Expression prop, MappingWriteConfiguration map, List<Expression> commands, ParameterExpression temp, ParameterExpression charsWritten, GotoExpression gotoReturn, CultureInfo cultureInfo)
+        public static void DAs(Expression prop, MappingWriteConfiguration map, List<Expression> commands, ParameterExpression temp, ParameterExpression charsWritten, Expression gotoReturn, CultureInfo cultureInfo)
         {
             if (map.converter != null)
             {
