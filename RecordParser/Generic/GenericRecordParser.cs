@@ -252,7 +252,7 @@ namespace RecordParser.Generic
 
             result = result
                 .OrderBy(x => x.start)
-                .ToArray();
+                .ToList();
 
             return result;
         }
