@@ -50,28 +50,28 @@ namespace RecordParser.BuilderWrite
             var replacer = new ParameterReplacerVisitor(inst);
 
             // variables
-            ParameterExpression charsWritten = Expression.Variable(typeof(int), "charsWritten");
+            ParameterExpression offset = Expression.Variable(typeof(int), "charsWritten");
             ParameterExpression temp = Expression.Variable(typeof(Span<char>), "tempSpan");
 
             List<ParameterExpression> variables = new List<ParameterExpression>();
-            variables.Add(charsWritten);
+            variables.Add(offset);
             variables.Add(temp);
 
             // commands
             List<Expression> commands = new List<Expression>();
 
             LabelTarget returnTarget = Expression.Label(typeof(int));
-            GotoExpression gotoReturn = Expression.Return(returnTarget, Expression.Constant(0));
 
             var necessarySpace = Expression.Constant(mappedColumns.Max(x => x.start + x.length.Value));
 
-            var toLarge = Expression.LessThan(
+            var tooShort = Expression.LessThan(
                                 Expression.PropertyOrField(span, "Length"),
                                 necessarySpace);
 
-            commands.Add(Expression.IfThen(toLarge, gotoReturn));
+            var charsWritten = Expression.Constant(0);
 
-            //  var i = -1;
+            commands.Add(Expression.IfThen(tooShort, Expression.Return(returnTarget, charsWritten)));
+
             foreach (var map in mappedColumns)
             {
                 commands.Add(
@@ -79,9 +79,15 @@ namespace RecordParser.BuilderWrite
 
                 var prop = replacer.Visit(map.prop);
 
-                DAs(prop, map, commands, temp, charsWritten, gotoReturn, cultureInfo);
+                var gotoReturn = map.converter == null && (prop.Type.IsEnum || prop.Type == typeof(string))
+                    ? Expression.Return(returnTarget, charsWritten)
+                    : Expression.Return(returnTarget, Expression.Add(charsWritten, offset));
+
+                DAs(prop, map, commands, temp, offset, gotoReturn, cultureInfo);
 
                 CallPad(map);
+
+                charsWritten = Expression.Constant(map.start + map.length.Value);
             }
 
             commands.Add(Expression.Return(returnTarget, necessarySpace));
@@ -103,7 +109,7 @@ namespace RecordParser.BuilderWrite
 
                 commands.Add(
                     Expression.Call(typeof(SpanExpressionHelper), padFunc, Type.EmptyTypes,
-                        Slice(temp, 0, charsWritten),
+                        Slice(temp, 0, offset),
                         temp,
                         Expression.Constant(map.paddingChar)));
             }
