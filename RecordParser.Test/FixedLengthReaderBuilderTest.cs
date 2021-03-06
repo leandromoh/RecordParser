@@ -8,7 +8,7 @@ using Xunit;
 
 namespace RecordParser.Test
 {
-    public class FixedLengthReaderBuilderTest
+    public class FixedLengthReaderBuilderTest : TestSetup
     {
         [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
@@ -17,7 +17,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, startIndex: 0, length: 11)
                 .Map(x => x.Birthday, 12, 10)
                 .Map(x => x.Money, 23, 7)
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
 
@@ -35,7 +35,7 @@ namespace RecordParser.Test
                 .Map(x => x.Debit, 22, 6)
                 .DefaultTypeConvert(value => decimal.Parse(value) / 100)
                 .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse("012345678901 23052020 012345");
 
@@ -52,7 +52,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 12, 8, value => DateTime.ParseExact(value, "ddMMyyyy", null))
                 .Map(x => x.Money, 21, 7)
                 .Map(x => x.Nickname, 28, 8, value => value.Slice(0, 4).ToString())
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
 
@@ -70,7 +70,7 @@ namespace RecordParser.Test
                 .Map(x => x.MotherAge, 4, 4)
                 .Map(x => x.FatherAge, 8, 4)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse(" 15  40  50 ");
 
@@ -102,7 +102,7 @@ namespace RecordParser.Test
                 .Map(x => x.Foo, 0, 5)
                 .Map(x => x.Bar, 4, 5)
                 .Map(x => x.Baz, 8, 5)
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse(" foo bar baz ");
 
@@ -117,7 +117,7 @@ namespace RecordParser.Test
             var reader = new FixedLengthReaderBuilder<(string Name, DateTime Birthday)>()
                 .Map(x => x.Name, 0, 5)
                 .Map(x => x.Birthday, 5, 10)
-                .BuildForUnitTest();
+                .Build();
 
             var parsed = reader.TryParse(" foo datehere", out var result);
 
@@ -132,7 +132,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, startIndex: 0, length: 11)
                 .Map(x => x.Birthday, 12, 10)
                 .Map(x => x.Money, 23, 7)
-                .BuildForUnitTest();
+                .Build();
 
             var parsed = reader.TryParse("foo bar baz 2020.05.23 0123.45", out var result);
 
@@ -151,7 +151,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, 10, 10)
                 .Map(x => x.Mother.BirthDay, 20, 10)
                 .Map(x => x.Mother.Name, 30, 12)
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse("2020.05.23 son name 1980.01.15 mother name");
 
@@ -209,12 +209,6 @@ namespace RecordParser.Test
 
     public static class FixedLengthCustomExtensions
     {
-        public static IFixedLengthReader<T> BuildForUnitTest<T>(this IFixedLengthReaderBuilder<T> source)
-            => source.Build(CultureInfo.InvariantCulture);
-
-        public static IFixedLengthReader<T> BuildForUnitTest<T>(this IFixedLengthReaderSequentialBuilder<T> source)
-            => source.Build(CultureInfo.InvariantCulture);
-
         public static IFixedLengthReaderBuilder<T> MyMap<T>(
             this IFixedLengthReaderBuilder<T> source,
             Expression<Func<T, DateTime>> ex, int startIndex, int length,
@@ -248,7 +242,7 @@ namespace RecordParser.Test
         public static IFixedLengthReader<T> MyBuild<T>(this IFixedLengthReaderBuilder<T> source)
         {
             return source.DefaultTypeConvert(value => value.ToLower())
-                         .BuildForUnitTest();
+                         .Build();
         }
     }
 }

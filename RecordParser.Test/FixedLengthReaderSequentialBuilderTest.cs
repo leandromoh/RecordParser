@@ -7,7 +7,7 @@ using Xunit;
 
 namespace RecordParser.Test
 {
-    public class FixedLengthReaderSequentialBuilderTest
+    public class FixedLengthReaderSequentialBuilderTest : TestSetup
     {
         [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
@@ -18,7 +18,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 10)
                 .Skip(1)
                 .Map(x => x.Money, 7)
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse("foo bar baz 2020.05.23 0123.45");
 
@@ -38,7 +38,7 @@ namespace RecordParser.Test
                 .Map(x => x.Debit, 5)
                 .DefaultTypeConvert(value => decimal.Parse(value) / 100)
                 .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse("012345678901 23052020 12345");
 
@@ -56,7 +56,7 @@ namespace RecordParser.Test
                 .Skip(1)
                 .Map(x => x.Money, 7)
                 .Map(x => x.Nickname, 8, value => value.Slice(0, 4).ToString())
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse("foo bar baz 23052020 012345 nickname");
 
@@ -74,7 +74,7 @@ namespace RecordParser.Test
                 .Map(x => x.MotherAge, 4)
                 .Map(x => x.FatherAge, 4)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse(" 15  40  50 ");
 
@@ -90,7 +90,7 @@ namespace RecordParser.Test
                 .Map(x => x.Foo, 4)
                 .Map(x => x.Bar, 4)
                 .Map(x => x.Baz, 4)
-                .BuildForUnitTest();
+                .Build();
 
             var result = reader.Parse(" foo bar baz ");
 
