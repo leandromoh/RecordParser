@@ -96,11 +96,11 @@ namespace RecordParser.Test
 
             var writer = new FixedLengthWriterBuilder<(DateTime Birthday, string Name)>()
                 .Map(x => x.Birthday, 0, 10, "yyyy.MM.dd")
-                .Map(x => x.Name, 11, 15, paddingChar: ' ')
+                .Map(x => x.Name, 11, 10)
                 .BuildForUnitTest();
 
             var instance = (Birthday: new DateTime(2020, 05, 23),
-                            Name: "foo bar baz 3456");
+                            Name: "foo bar baz");
 
             Span<char> destination = stackalloc char[50];
 
@@ -126,7 +126,7 @@ namespace RecordParser.Test
             // Arrange
 
             var writer = new FixedLengthWriterBuilder<(string Name, DateTime Birthday)>()
-                .Map(x => x.Name, 0, 15, paddingChar: ' ')
+                .Map(x => x.Name, 0, 15, paddingChar: '-')
                 .Map(x => x.Birthday, 16, 9, "yyyy.MM.dd")
                 .BuildForUnitTest();
 
@@ -147,7 +147,117 @@ namespace RecordParser.Test
             var unwritted = destination.Slice(charsWritten).ToString();
             var freeSpace = destination.Length - charsWritten;
 
-            result.Should().Be("foo bar baz    ");
+            result.Should().Be("foo bar baz----");
+            unwritted.Should().Be(new string(default, freeSpace));
+        }
+
+        [Fact]
+        public void Given_types_with_custom_format_should_allow_define_default_parser_for_type()
+        {
+            // Arrange
+
+            var writer = new FixedLengthWriterBuilder<(decimal Debit, decimal Balance, DateTime Date)>()
+                .Map(x => x.Balance, 0, 12, padding: Padding.Left, paddingChar: '0')
+                .Map(x => x.Debit, 13, 6, padding: Padding.Left, paddingChar: '0')
+                .Map(x => x.Date, 20, 8)
+                .DefaultTypeConvert<decimal>((span, value) => (((long)(value * 100)).TryFormat(span, out var written), written))
+                .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy"), written))
+                .BuildForUnitTest();
+
+            var instance = (Debit: 0123.45M,
+                            Balance: 0123456789.01M,
+                            Date: new DateTime(2020, 05, 23));
+
+            Span<char> destination = stackalloc char[50];
+
+            // Act
+
+            var charsWritten = writer.Parse(instance, destination);
+
+            // Assert
+
+            charsWritten.Should().Be(28);
+
+            var expected = "012345678901\0012345\023052020";
+
+            var result = destination.Slice(0, charsWritten).ToString();
+            var unwritted = destination.Slice(charsWritten).ToString();
+            var freeSpace = destination.Length - charsWritten;
+
+            result.Should().Be(expected);
+            unwritted.Should().Be(new string(default, freeSpace));
+        }
+
+        [Fact]
+        public void Given_members_with_custom_format_should_use_custom_parser()
+        {
+            // Arrange
+
+            var writer = new FixedLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, string Nickname)>()
+                .Map(x => x.Name, 0, 12, (span, text) => (true, text.AsSpan().ToUpperInvariant(span)))
+                .Map(x => x.Birthday, 12, 8, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy"), written))
+                .Map(x => x.Money, 21, 7, padding: Padding.Left, paddingChar: '0')
+                .Map(x => x.Nickname, 29, 8, (span, text) => (true, text.AsSpan().Slice(0, 4).ToUpperInvariant(span)), paddingChar: '-')
+                .BuildForUnitTest();
+
+            var instance = (Name: "foo bar baz",
+                            Birthday: new DateTime(2020, 05, 23),
+                            Money: 123.45M,
+                            Nickname: "nick name");
+
+            Span<char> destination = stackalloc char[50];
+
+            // Act
+
+            var charsWritten = writer.Parse(instance, destination);
+
+            // Assert
+
+            charsWritten.Should().Be(37);
+
+            var expected = "FOO BAR BAZ 23052020\00123.45\0NICK----";
+
+            var result = destination.Slice(0, charsWritten).ToString();
+            var unwritted = destination.Slice(charsWritten).ToString();
+            var freeSpace = destination.Length - charsWritten;
+
+            result.Should().Be(expected);
+            unwritted.Should().Be(new string(default, freeSpace));
+        }
+
+        [Fact]
+        public void Given_specified_custom_parser_for_member_should_have_priority_over_custom_parser_for_type()
+        {
+            // Assert
+
+            var writer = new FixedLengthWriterBuilder<(int Age, int MotherAge, int FatherAge)>()
+                .Map(x => x.Age, 0, 3, (span, value) => ((value * 2).TryFormat(span, out var written), written))
+                .Map(x => x.MotherAge, 3, 3)
+                .Map(x => x.FatherAge, 6, 3)
+                .DefaultTypeConvert<int>((span, value) => ((value + 2).TryFormat(span, out var written), written))
+                .BuildForUnitTest();
+
+            var instance = (Age: 15,
+                            MotherAge: 40,
+                            FatherAge: 50);
+
+            Span<char> destination = stackalloc char[50];
+
+            // Act
+
+            var charsWritten = writer.Parse(instance, destination);
+
+            // Assert
+
+            charsWritten.Should().Be(9);
+
+            var expected = "30 42 52 ";
+
+            var result = destination.Slice(0, charsWritten).ToString();
+            var unwritted = destination.Slice(charsWritten).ToString();
+            var freeSpace = destination.Length - charsWritten;
+
+            result.Should().Be(expected);
             unwritted.Should().Be(new string(default, freeSpace));
         }
     }
