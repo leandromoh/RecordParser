@@ -1,15 +1,13 @@
 ﻿using FluentAssertions;
 using RecordParser.BuilderWrite;
 using RecordParser.Generic;
-using RecordParser.Parsers;
 using System;
-using System.Globalization;
 using System.Linq.Expressions;
 using Xunit;
 
 namespace RecordParser.Test
 {
-    public class FixedLengthWriterBuilderTest
+    public class FixedLengthWriterBuilderTest : TestSetup
     {
         [Theory]
         [InlineData(50)]
@@ -23,7 +21,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 16, 10, "yyyy.MM.dd")
                 .Map(x => x.Money, 27, 7, precision: 2)
                 .Map(x => x.Color, 35, 15, padding: Padding.Left, paddingChar: '-')
-                .BuildForUnitTest();
+                .Build();
 
             var instance = (Name: "foo bar baz",
                             Birthday: new DateTime(2020, 05, 23),
@@ -71,7 +69,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 16, 10, "yyyy.MM.dd")
                 .Map(x => x.Money, 27, 7, precision: 2, padding: Padding.Left, paddingChar: '0')
                 .Map(x => x.Color, 35, 15, padding: Padding.Left, paddingChar: '-')
-                .BuildForUnitTest();
+                .Build();
 
             var instance = (Name: "foo bar baz",
                             Birthday: new DateTime(2020, 05, 23),
@@ -99,7 +97,7 @@ namespace RecordParser.Test
             var writer = new FixedLengthWriterBuilder<(DateTime Birthday, string Name)>()
                 .Map(x => x.Birthday, 0, 10, "yyyy.MM.dd")
                 .Map(x => x.Name, 11, 10)
-                .BuildForUnitTest();
+                .Build();
 
             var instance = (Birthday: new DateTime(2020, 05, 23),
                             Name: "foo bar baz");
@@ -131,7 +129,7 @@ namespace RecordParser.Test
             var writer = new FixedLengthWriterBuilder<(string Name, DateTime Birthday)>()
                 .Map(x => x.Name, 0, 15, paddingChar: '-')
                 .Map(x => x.Birthday, 16, 9, "yyyy.MM.dd")
-                .BuildForUnitTest();
+                .Build();
 
             var instance = (Name: "foo bar baz",
                             Birthday: new DateTime(2020, 05, 23));
@@ -166,7 +164,7 @@ namespace RecordParser.Test
                 .Map(x => x.Date, 20, 8)
                 .DefaultTypeConvert<decimal>((span, value) => (((long)(value * 100)).TryFormat(span, out var written), written))
                 .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy"), written))
-                .BuildForUnitTest();
+                .Build();
 
             var instance = (Debit: 0123.45M,
                             Balance: 0123456789.01M,
@@ -203,7 +201,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 12, 8, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy"), written))
                 .Map(x => x.Money, 21, 7, padding: Padding.Left, paddingChar: '0')
                 .Map(x => x.Nickname, 29, 8, (span, text) => (true, text.AsSpan().Slice(0, 4).ToUpperInvariant(span)), paddingChar: '-')
-                .BuildForUnitTest();
+                .Build();
 
             var instance = (Name: "foo bar baz",
                             Birthday: new DateTime(2020, 05, 23),
@@ -241,7 +239,7 @@ namespace RecordParser.Test
                 .Map(x => x.MotherAge, 3, 3)
                 .Map(x => x.FatherAge, 6, 3)
                 .DefaultTypeConvert<int>((span, value) => ((value + 2).TryFormat(span, out var written), written))
-                .BuildForUnitTest();
+                .Build();
 
             var instance = (Age: 15,
                             MotherAge: 40,
@@ -271,12 +269,6 @@ namespace RecordParser.Test
 
     public static class FixedLengthWriterHelpers
     {
-        public static IFixedLengthWriter<T> BuildForUnitTest<T>(this IFixedLengthWriterBuilder<T> source)
-            => source.Build(CultureInfo.InvariantCulture);
-
-        public static IVariableLengthWriter<T> BuildForUnitTest<T>(this IVariableLengthWriterBuilder<T> source, string separator)
-            => source.Build(separator, CultureInfo.InvariantCulture);
-
         public static IFixedLengthWriterBuilder<T> Map<T>(this IFixedLengthWriterBuilder<T> builder, Expression<Func<T, decimal>> ex, int startIndex, int length, int precision, string format = null, Padding padding = Padding.Right, char paddingChar = ' ')
         {
             var multiply = (int)Math.Pow(10, precision);

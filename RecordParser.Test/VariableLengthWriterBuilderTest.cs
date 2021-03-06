@@ -5,7 +5,7 @@ using Xunit;
 
 namespace RecordParser.Test
 {
-    public class VariableLengthWriterBuilderTest
+    public class VariableLengthWriterBuilderTest : TestSetup
     {
         [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
@@ -15,7 +15,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
-                .BuildForUnitTest(" ; ");
+                .Build(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
@@ -38,7 +38,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Color, 4)
-                .BuildForUnitTest(" ; ");
+                .Build(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
@@ -61,7 +61,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 2, "yyyy.MM.dd")
                 .Map(x => x.Money, 3)
                 .Map(x => x.Color, 4)
-                .BuildForUnitTest(" ; ");
+                .Build(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
@@ -84,7 +84,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 2, "yyyy.MM.dd")
                 .Map(x => x.Money, 4)
                 .Map(x => x.Color, 5)
-                .BuildForUnitTest(" ; ");
+                .Build(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
@@ -106,7 +106,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name, indexColumn: 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Money, 2)
-                .BuildForUnitTest(" ; ");
+                .Build(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M);
 
@@ -171,7 +171,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 2, "yyyy.MM.dd")
                 .Map(x => x.Money, 4)
                 .Map(x => x.Color, 5)
-                .BuildForUnitTest(" ; ");
+                .Build(" ; ");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
@@ -205,7 +205,7 @@ namespace RecordParser.Test
                 .Map(x => x.Date, 2)
                 .DefaultTypeConvert<decimal>((span, value) => (((long)(value * 100)).TryFormat(span, out var written), written))
                 .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy"), written))
-                .BuildForUnitTest(" ; ");
+                .Build(" ; ");
 
             var instance = (Debit: 0123.45M,
                             Balance: 0123456789.01M,
@@ -242,7 +242,7 @@ namespace RecordParser.Test
                 .Map(x => x.Birthday, 2, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy"), written))
                 .Map(x => x.Money, 3)
                 .Map(x => x.Nickname, 4, (span, text) => (true, text.AsSpan().Slice(0, 4).ToUpperInvariant(span)))
-                .BuildForUnitTest(" ; ");
+                .Build(" ; ");
 
             var instance = (Name: "foo bar baz",
                             Birthday: new DateTime(2020, 05, 23),
@@ -280,7 +280,7 @@ namespace RecordParser.Test
                 .Map(x => x.MotherAge, 1)
                 .Map(x => x.FatherAge, 2)
                 .DefaultTypeConvert<int>((span, value) => ((value + 2).TryFormat(span, out var written), written))
-                .BuildForUnitTest(" ; ");
+                .Build(" ; ");
 
             var instance = (Age: 15,
                             MotherAge: 40,
