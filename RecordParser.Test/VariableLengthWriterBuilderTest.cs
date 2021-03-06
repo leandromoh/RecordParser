@@ -10,6 +10,8 @@ namespace RecordParser.Test
         [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
         {
+            // Arrange 
+
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)> ()
                 .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
@@ -20,6 +22,9 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
             Span<char> destination = stackalloc char[100];
+
+            // Act
+
             var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
@@ -34,6 +39,8 @@ namespace RecordParser.Test
         [Fact]
         public void Given_skip_column_using_standard_format_should_parse_without_extra_configuration()
         {
+            // Arrange 
+
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
                 .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
@@ -43,6 +50,9 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
             Span<char> destination = stackalloc char[100];
+
+            // Act
+
             var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
@@ -56,6 +66,8 @@ namespace RecordParser.Test
         [Fact]
         public void Given_skip_first_column_using_standard_format_should_parse_without_extra_configuration()
         {
+            // Arrange 
+
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
                 .Map(x => x.Name, 1)
                 .Map(x => x.Birthday, 2, "yyyy.MM.dd")
@@ -66,6 +78,9 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
             Span<char> destination = stackalloc char[100];
+
+            // Act
+
             var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
@@ -79,6 +94,8 @@ namespace RecordParser.Test
         [Fact]
         public void Given_skip2_first_column_using_standard_format_should_parse_without_extra_configuration()
         {
+            // Arrange 
+
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
                 .Map(x => x.Name, indexColumn: 1)
                 .Map(x => x.Birthday, 2, "yyyy.MM.dd")
@@ -89,6 +106,9 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
             Span<char> destination = stackalloc char[100];
+
+            // Act
+
             var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
@@ -102,6 +122,8 @@ namespace RecordParser.Test
         [Fact]
         public void Given_value_should_not_write_in_span_more_than_return_charswritten()
         {
+            // Arrange 
+
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money)>()
                 .Map(x => x.Name, indexColumn: 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
@@ -111,6 +133,9 @@ namespace RecordParser.Test
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M);
 
             Span<char> destination = stackalloc char[100];
+
+            // Act
+
             var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
