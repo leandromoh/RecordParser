@@ -12,13 +12,16 @@ namespace RecordParser.BuilderWrite
     public interface IVariableLengthWriterBuilder<T>
     {
         IVariableLengthWriter<T> Build(string separator, CultureInfo cultureInfo = null);
+        IVariableLengthWriterBuilder<T> DefaultTypeConvert<R>(FuncSpanTIntBool<R> ex);
+
         IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format);
         IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null);
     }
 
     public class VariableLengthWriterBuilder<T> : IVariableLengthWriterBuilder<T>
     {
-        private readonly Dictionary<int, MappingWriteConfiguration> list = new Dictionary<int, MappingWriteConfiguration>();
+        private readonly Dictionary<int, MappingWriteConfiguration> list = new();
+        private readonly Dictionary<Type, Func<Expression, Expression, Expression, Expression>> dic = new();
 
         public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null)
         {
@@ -36,9 +39,15 @@ namespace RecordParser.BuilderWrite
             return this;
         }
 
+        public IVariableLengthWriterBuilder<T> DefaultTypeConvert<R>(FuncSpanTIntBool<R> ex)
+        {
+            dic.Add(typeof(R), ex?.WrapInLambdaExpression());
+            return this;
+        }
+
         public IVariableLengthWriter<T> Build(string separator, CultureInfo cultureInfo = null)
         {
-            var maps = list.Select(x => x.Value).OrderBy(x => x.start);
+            var maps = MappingWriteConfiguration.Merge(list.Select(x => x.Value), dic);
             var expression = GetFuncThatSetProperties(maps, cultureInfo);
 
             return new VariableLengthWriter<T>(expression.Compile(), separator);

@@ -12,13 +12,16 @@ namespace RecordParser.BuilderWrite
     public interface IFixedLengthWriterBuilder<T>
     {
         IFixedLengthWriter<T> Build(CultureInfo cultureInfo = null);
+        IFixedLengthWriterBuilder<T> DefaultTypeConvert<R>(FuncSpanTIntBool<R> ex);
+
         IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, string format, Padding padding = Padding.Right, char paddingChar = ' ');
         IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanTIntBool<R> converter = null, Padding padding = Padding.Right, char paddingChar = ' ');
     }
 
     public class FixedLengthWriterBuilder<T> : IFixedLengthWriterBuilder<T>
     {
-        private readonly List<MappingWriteConfiguration> list = new List<MappingWriteConfiguration>();
+        private readonly List<MappingWriteConfiguration> list = new();
+        private readonly Dictionary<Type, Func<Expression, Expression, Expression, Expression>> dic = new();
 
         public IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanTIntBool<R> converter = null, Padding padding = Padding.Right, char paddingChar = ' ')
         {
@@ -34,9 +37,16 @@ namespace RecordParser.BuilderWrite
             return this;
         }
 
+        public IFixedLengthWriterBuilder<T> DefaultTypeConvert<R>(FuncSpanTIntBool<R> ex)
+        {
+            dic.Add(typeof(R), ex?.WrapInLambdaExpression());
+            return this;
+        }
+
         public IFixedLengthWriter<T> Build(CultureInfo cultureInfo = null)
         {
-            var expression = GetFuncThatSetProperties(list, cultureInfo);
+            var maps = MappingWriteConfiguration.Merge(list, dic);
+            var expression = GetFuncThatSetProperties(maps, cultureInfo);
 
             return new FixedLengthWriter<T>(expression.Compile());
         }
