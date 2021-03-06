@@ -111,7 +111,6 @@ namespace RecordParser.Test
             // Assert
 
             success.Should().BeFalse();
-            charsWritten.Should().Be(10);
 
             var result = destination.Slice(0, charsWritten).ToString();
             var unwritted = destination.Slice(charsWritten).ToString();
@@ -143,7 +142,6 @@ namespace RecordParser.Test
             // Assert
 
             success.Should().BeFalse();
-            charsWritten.Should().Be(15);
 
             var result = destination.Slice(0, charsWritten).ToString();
             var unwritted = destination.Slice(charsWritten).ToString();
@@ -179,15 +177,12 @@ namespace RecordParser.Test
             // Assert
 
             success.Should().BeTrue();
-            charsWritten.Should().Be(28);
-
-            var expected = "012345678901\0012345\023052020";
 
             var result = destination.Slice(0, charsWritten).ToString();
             var unwritted = destination.Slice(charsWritten).ToString();
             var freeSpace = destination.Length - charsWritten;
 
-            result.Should().Be(expected);
+            result.Should().Be("012345678901\0012345\023052020");
             unwritted.Should().Be(new string(default, freeSpace));
         }
 
@@ -217,15 +212,12 @@ namespace RecordParser.Test
             // Assert
 
             success.Should().BeTrue();
-            charsWritten.Should().Be(37);
-
-            var expected = "FOO BAR BAZ 23052020\00123.45\0NICK----";
 
             var result = destination.Slice(0, charsWritten).ToString();
             var unwritted = destination.Slice(charsWritten).ToString();
             var freeSpace = destination.Length - charsWritten;
 
-            result.Should().Be(expected);
+            result.Should().Be("FOO BAR BAZ 23052020\00123.45\0NICK----");
             unwritted.Should().Be(new string(default, freeSpace));
         }
 
@@ -254,15 +246,12 @@ namespace RecordParser.Test
             // Assert
 
             success.Should().BeTrue();
-            charsWritten.Should().Be(9);
-
-            var expected = "30 42 52 ";
 
             var result = destination.Slice(0, charsWritten).ToString();
             var unwritted = destination.Slice(charsWritten).ToString();
             var freeSpace = destination.Length - charsWritten;
 
-            result.Should().Be(expected);
+            result.Should().Be("30 42 52 ");
             unwritted.Should().Be(new string(default, freeSpace));
         }
     }
