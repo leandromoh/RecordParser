@@ -11,13 +11,25 @@ namespace RecordParser.BuilderWrite
 {
     internal static class SpanExpressionHelper
     {
-        public static void DAs(Expression prop, MappingWriteConfiguration map, List<Expression> commands, ParameterExpression temp, ParameterExpression charsWritten, Expression gotoReturn, CultureInfo cultureInfo)
+        public static Expression DAs(Expression prop, MappingWriteConfiguration map, ParameterExpression temp, ParameterExpression charsWritten, Expression gotoReturn, CultureInfo cultureInfo)
         {
             if (map.converter != null)
             {
                 var toLarge = map.converter(temp, prop, charsWritten);
-                commands.Add(Expression.IfThen(toLarge, gotoReturn));
-                return;
+                return Expression.IfThen(toLarge, gotoReturn);
+            }
+
+            var isNullableT = prop.Type.IsValueType &&
+                              Nullable.GetUnderlyingType(prop.Type) is not null;
+            if (isNullableT)
+            {
+                var hasValue = Expression.PropertyOrField(prop, "HasValue");
+                var value = Expression.PropertyOrField(prop, "Value");
+
+                var ifTrue = Expression.Assign(charsWritten, Expression.Constant(0));
+                var ifFalse = DAs(value, map, temp, charsWritten, gotoReturn, cultureInfo);
+
+                return Expression.IfThenElse(Expression.Not(hasValue), ifTrue, ifFalse);
             }
 
             if (prop.Type.IsEnum)
@@ -29,8 +41,7 @@ namespace RecordParser.BuilderWrite
                     Expression.Assign(charsWritten, Expression.PropertyOrField(result, "Item2")),
                     Expression.Not(Expression.PropertyOrField(result, "Item1")));
 
-                commands.Add(Expression.IfThen(toLarge, gotoReturn));
-                return;
+                return Expression.IfThen(toLarge, gotoReturn);
             }
 
             if (prop.Type == typeof(string))
@@ -41,12 +52,9 @@ namespace RecordParser.BuilderWrite
                         Expression.PropertyOrField(prop, "Length"),
                         Expression.PropertyOrField(temp, "Length"));
 
-                commands.Add(Expression.IfThen(toLarge, gotoReturn));
-
-                commands.Add(
-                    Expression.Call(strSpan, "CopyTo", Type.EmptyTypes, temp));
-
-                commands.Add(
+                return Expression.Block(
+                    Expression.IfThen(toLarge, gotoReturn),
+                    Expression.Call(strSpan, "CopyTo", Type.EmptyTypes, temp),
                     Expression.Assign(charsWritten, Expression.PropertyOrField(prop, "Length")));
             }
             else
@@ -67,7 +75,7 @@ namespace RecordParser.BuilderWrite
                             Expression.Constant(cultureInfo, typeof(CultureInfo)))
                 };
 
-                commands.Add(Expression.IfThen(Expression.Not(tryFormat), gotoReturn));
+                return Expression.IfThen(Expression.Not(tryFormat), gotoReturn);
             }
         }
 

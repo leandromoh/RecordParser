@@ -94,7 +94,9 @@ namespace RecordParser.BuilderWrite
                     ? GetReturn(false, Expression.Add(charsWritten, offset), returnTarget)
                     : GetReturn(false, charsWritten, returnTarget);
 
-                DAs(prop, map, commands, temp, offset, gotoReturn, cultureInfo);
+                var parse = DAs(prop, map, temp, offset, gotoReturn, cultureInfo);
+
+                commands.Add(parse);
 
                 CallPad(map);
 

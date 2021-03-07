@@ -106,7 +106,9 @@ namespace RecordParser.BuilderWrite
                     ? returnPositionOffset
                     : returnPosition;
 
-                DAs(prop, map, commands, spanTemp, offset, gotoReturn, cultureInfo);
+                var parse = DAs(prop, map, spanTemp, offset, gotoReturn, cultureInfo);
+
+                commands.Add(parse);
 
                 WriteDelimiter(
                     Expression.Call(spanTemp, "Slice", Type.EmptyTypes, offset),
