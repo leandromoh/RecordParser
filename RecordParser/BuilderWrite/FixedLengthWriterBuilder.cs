@@ -2,11 +2,11 @@
 using RecordParser.Parsers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.BuilderWrite.SpanExpressionHelper;
+using static RecordParser.BuilderWrite.FixedLengthPadWriter;
 
 namespace RecordParser.BuilderWrite
 {
@@ -119,7 +119,7 @@ namespace RecordParser.BuilderWrite
                     : nameof(PadRight);
 
                 commands.Add(
-                    Expression.Call(typeof(SpanExpressionHelper), padFunc, Type.EmptyTypes,
+                    Expression.Call(typeof(FixedLengthPadWriter), padFunc, Type.EmptyTypes,
                         Slice(temp, 0, offset),
                         temp,
                         Expression.Constant(map.paddingChar)));
