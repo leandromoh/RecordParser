@@ -212,19 +212,19 @@ namespace RecordParser.Test
         {
             // Arrange
 
-            var writer = new VariableLengthWriterBuilder<(decimal Debit, decimal Balance, DateTime Date)>()
-                .Map(x => x.Debit, 0)
-                .Map(x => x.Balance, 1)
-                .Map(x => x.Date, 2)
-                .DefaultTypeConvert<decimal>((span, value) => (((long)(value * 100)).TryFormat(span, out var written), written))
+            var writer = new VariableLengthWriterBuilder<(decimal Balance, DateTime Date, decimal Debit)>()
+                .Map(x => x.Balance, 0)
+                .Map(x => x.Date, 1)
+                .Map(x => x.Debit, 2)
+                .DefaultTypeConvert<decimal>((span, value) => (value.TryFormat(span, out var written), written))
                 .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy"), written))
                 .Build(" ; ");
 
-            var instance = (Debit: 0123.45M,
-                            Balance: 0123456789.01M,
-                            Date: new DateTime(2020, 05, 23));
+            var instance = (Balance: 0123456789.01M,
+                            Date: new DateTime(2020, 05, 23),
+                            Debit: 0123.45M);
 
-            Span<char> destination = stackalloc char[31];
+            Span<char> destination = stackalloc char[33];
 
             // Act
 
@@ -238,7 +238,7 @@ namespace RecordParser.Test
             var unwritted = destination.Slice(charsWritten).ToString();
             var freeSpace = destination.Length - charsWritten;
 
-            result.Should().Be("12345 ; 12345678901 ; 23052020");
+            result.Should().Be("123456789.01 ; 23052020 ; 123.45");
             unwritted.Should().Be(new string(default, freeSpace));
         }
 

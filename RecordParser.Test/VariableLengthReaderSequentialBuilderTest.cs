@@ -47,7 +47,7 @@ namespace RecordParser.Test
         [Fact]
         public void Given_types_with_custom_format_should_allow_define_default_parser_for_type()
         {
-            var reader = new VariableLengthReaderSequentialBuilder<(decimal Debit, decimal Balance, DateTime Date)>()
+            var reader = new VariableLengthReaderSequentialBuilder<(decimal Balance, DateTime Date, decimal Debit)>()
                 .Map(x => x.Balance)
                 .Map(x => x.Date)
                 .Map(x => x.Debit)
@@ -57,9 +57,9 @@ namespace RecordParser.Test
 
             var result = reader.Parse("012345678901 ; 23052020 ; 012345");
 
-            result.Should().BeEquivalentTo((Debit: 0123.45M,
-                                            Balance: 0123456789.01M,
-                                            Date: new DateTime(2020, 05, 23)));
+            result.Should().BeEquivalentTo((Balance: 0123456789.01M,
+                                            Date: new DateTime(2020, 05, 23),
+                                            Debit: 0123.45M));
         }
 
         [Fact]
