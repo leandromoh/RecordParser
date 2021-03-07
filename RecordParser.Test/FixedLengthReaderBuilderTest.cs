@@ -225,20 +225,6 @@ namespace RecordParser.Test
             return source.Map(ex, startIndex, length, value => decimal.Parse(value) / (decimal)Math.Pow(10, decimalPlaces));
         }
 
-        public static string ToUpper(this ReadOnlySpan<char> value)
-        {
-            Span<char> temp = stackalloc char[value.Length];
-            value.ToUpperInvariant(temp);
-            return temp.ToString();
-        }
-
-        public static string ToLower(this ReadOnlySpan<char> value)
-        {
-            Span<char> temp = stackalloc char[value.Length];
-            value.ToLowerInvariant(temp);
-            return temp.ToString();
-        }
-
         public static IFixedLengthReader<T> MyBuild<T>(this IFixedLengthReaderBuilder<T> source)
         {
             return source.DefaultTypeConvert(value => value.ToLower())
