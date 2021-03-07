@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace RecordParser.BuilderWrite
 {
@@ -62,6 +63,27 @@ namespace RecordParser.BuilderWrite
             }
         }
 
+        private static readonly ConstructorInfo _boolIntTupleConstructor;
+
+        static SpanExpressionHelper()
+        {
+            _boolIntTupleConstructor = typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) });
+        }
+
+        private static NewExpression CreateTuple(bool success, Expression countWritten)
+        {
+            Debug.Assert(countWritten.Type == typeof(int));
+
+            return Expression.New(_boolIntTupleConstructor, Expression.Constant(success), countWritten);
+        }
+
+        public static Expression GetReturn(bool success, Expression countWritten, LabelTarget returnTarget)
+        {
+            var returnValue = CreateTuple(success, countWritten);
+
+            return Expression.Return(returnTarget, returnValue);
+        }
+
         private static Expression TryFormatEnum(Expression enumValue, Expression span)
         {
             var type = enumValue.Type;
@@ -102,13 +124,8 @@ namespace RecordParser.BuilderWrite
                             Expression.Convert(enumValue, under), "TryFormat", Type.EmptyTypes, span, charsWritten,
                                 Expression.Default(typeof(ReadOnlySpan<char>)), Expression.Constant(null, typeof(CultureInfo)))
                         ,
-                        Expression.New(
-                                typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) }),
-                                Expression.Constant(true), charsWritten),
-
-                        Expression.New(
-                                typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) }),
-                                Expression.Constant(false), charsWritten)),
+                        CreateTuple(true, charsWritten),
+                        CreateTuple(false, charsWritten)),
 
                             (acc, item) =>
                                 Expression.Condition(
@@ -122,7 +139,6 @@ namespace RecordParser.BuilderWrite
 
             return blockExpr;
         }
-
 
         public static Expression StringAsSpan(Expression str) =>
             Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);

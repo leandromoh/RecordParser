@@ -81,7 +81,7 @@ namespace RecordParser.BuilderWrite
 
             var charsWritten = Expression.Constant(0);
 
-            commands.Add(Expression.IfThen(tooShort, GetReturn(false, charsWritten)));
+            commands.Add(Expression.IfThen(tooShort, GetReturn(false, charsWritten, returnTarget)));
 
             foreach (var map in mappedColumns)
             {
@@ -91,8 +91,8 @@ namespace RecordParser.BuilderWrite
                 var prop = replacer.Visit(map.prop);
 
                 var gotoReturn = map.converter == null && prop.Type == typeof(string)
-                    ? GetReturn(false, charsWritten)
-                    : GetReturn(false, Expression.Add(charsWritten, offset));
+                    ? GetReturn(false, charsWritten, returnTarget)
+                    : GetReturn(false, Expression.Add(charsWritten, offset), returnTarget);
 
                 DAs(prop, map, commands, temp, offset, gotoReturn, cultureInfo);
 
@@ -101,7 +101,7 @@ namespace RecordParser.BuilderWrite
                 charsWritten = Expression.Constant(map.start + map.length.Value);
             }
 
-            commands.Add(GetReturn(true, necessarySpace));
+            commands.Add(GetReturn(true, necessarySpace, returnTarget));
 
             commands.Add(Expression.Label(returnTarget, Expression.Constant(default((bool, int)))));
 
@@ -123,15 +123,6 @@ namespace RecordParser.BuilderWrite
                         Slice(temp, 0, offset),
                         temp,
                         Expression.Constant(map.paddingChar)));
-            }
-
-            Expression GetReturn(bool success, Expression countWritten)
-            {
-                var returnValue = Expression.New(
-                                typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) }),
-                                Expression.Constant(success), countWritten);
-
-                return Expression.Return(returnTarget, returnValue);
             }
         }
     }

@@ -82,8 +82,8 @@ namespace RecordParser.BuilderWrite
             commands.Add(Expression.Assign(position, Expression.Constant(0)));
 
             LabelTarget returnTarget = Expression.Label(typeof((bool, int)));
-            Expression returnPosition = GetReturn(false, position);
-            Expression returnPositionOffset = GetReturn(false, Expression.Add(position, offset));
+            Expression returnPosition = GetReturn(false, position, returnTarget);
+            Expression returnPositionOffset = GetReturn(false, Expression.Add(position, offset), returnTarget);
 
             var i = -1;
             foreach (var map in mappedColumns)
@@ -118,7 +118,7 @@ namespace RecordParser.BuilderWrite
             commands.RemoveRange(commands.Count - 3, 3);
 
             commands.Add(Expression.AddAssign(position, offset));
-            commands.Add(GetReturn(true, position));
+            commands.Add(GetReturn(true, position, returnTarget));
 
 
             commands.Add(Expression.Label(returnTarget, Expression.Constant(default((bool, int)))));
@@ -142,15 +142,6 @@ namespace RecordParser.BuilderWrite
 
                 commands.Add(
                     Expression.AddAssign(position, addToPosition));
-            }
-
-            Expression GetReturn(bool success, Expression countWritten)
-            {
-                var returnValue = Expression.New(
-                                typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) }),
-                                Expression.Constant(success), countWritten);
-
-                return Expression.Return(returnTarget, returnValue);
             }
         }
     }
