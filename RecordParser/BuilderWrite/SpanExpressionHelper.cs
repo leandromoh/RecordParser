@@ -120,12 +120,11 @@ namespace RecordParser.BuilderWrite
                 })
                 .Reverse()
                 .Aggregate(Expression.Condition(
-                        Expression.Call(
-                            Expression.Convert(enumValue, under), "TryFormat", Type.EmptyTypes, span, charsWritten,
-                                Expression.Default(typeof(ReadOnlySpan<char>)), Expression.Constant(null, typeof(CultureInfo)))
-                        ,
-                        CreateTuple(true, charsWritten),
-                        CreateTuple(false, charsWritten)),
+                        test: Expression.Call(
+                               Expression.Convert(enumValue, under), "TryFormat", Type.EmptyTypes, span, charsWritten,
+                                Expression.Default(typeof(ReadOnlySpan<char>)), Expression.Constant(null, typeof(CultureInfo))),
+                        ifTrue: CreateTuple(true, charsWritten),
+                        ifFalse: CreateTuple(false, charsWritten)),
 
                             (acc, item) =>
                                 Expression.Condition(
