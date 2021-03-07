@@ -55,12 +55,63 @@ namespace RecordParser.BuilderWrite
                     ? Expression.Default(typeof(ReadOnlySpan<char>))
                     : StringAsSpan(Expression.Constant(map.format));
 
-                var tryFormat =
-                    Expression.Call(prop, "TryFormat", Type.EmptyTypes,
-                    temp, charsWritten, format, Expression.Constant(cultureInfo, typeof(CultureInfo)));
+                var tryFormat = prop.Type switch
+                {
+                    _ when prop.Type == typeof(char) || prop.Type == typeof(bool) =>
+                        Expression.Call(typeof(SpanExpressionHelper), "TryFormat", Type.EmptyTypes, prop, temp, charsWritten),
+
+                    _ when prop.Type == typeof(Guid) => 
+                        Expression.Call(prop, "TryFormat", Type.EmptyTypes, temp, charsWritten, format),
+
+                    _ => Expression.Call(prop, "TryFormat", Type.EmptyTypes, temp, charsWritten, format,
+                            Expression.Constant(cultureInfo, typeof(CultureInfo)))
+                };
 
                 commands.Add(Expression.IfThen(Expression.Not(tryFormat), gotoReturn));
             }
+        }
+
+
+        public static bool TryFormat(this char c, Span<char> span, out int written)
+        {
+            if (span.Length > 0)
+            {
+                span[0] = c;
+                written = 1;
+                return true;
+            }
+
+            written = 0;
+            return false;
+        }
+
+        public static bool TryFormat(this bool b, Span<char> span, out int written)
+        {
+            if (b && span.Length > 3)
+            {
+                span[0] = 'T';
+                span[1] = 'r';
+                span[2] = 'u';
+                span[3] = 'e';
+
+                written = 4;
+                return true;
+            }
+
+            if (!b && span.Length > 4)
+            {
+                span[0] = 'F';
+                span[1] = 'a';
+                span[2] = 'l';
+                span[3] = 's';
+                span[4] = 'e';
+
+                written = 5;
+                return true;
+            }
+
+            written = 0;
+            return false;
         }
 
         private static readonly ConstructorInfo _boolIntTupleConstructor;

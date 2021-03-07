@@ -1,6 +1,8 @@
 ﻿using FluentAssertions;
 using RecordParser.BuilderWrite;
 using System;
+using System.Globalization;
+using System.Linq;
 using Xunit;
 
 namespace RecordParser.Test
@@ -362,6 +364,122 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
             destination.Slice(0, charsWritten).ToString().Should().Be(expected);
+        }
+
+        [Theory]
+        [InlineData("pt-BR")]
+        [InlineData("en-US")]
+        [InlineData("fr-FR")]
+        [InlineData("ru-RU")]
+        [InlineData("es-ES")]
+        public void Registered_primitives_types_should_have_default_converters_which_uses_current_cultureinfo(string cultureName)
+        {
+            // Arrange
+
+            var instance = new AllType
+            {
+                Str = "Foo Bar",
+                Char = 'z',
+
+                Byte = 42,
+                SByte = -43,
+
+                Double = -1.58D,
+                Float = 1.46F,
+
+                Int = -6,
+                UInt = 7,
+
+                Long = -3,
+                ULong = 45,
+
+                Short = -2,
+                UShort = 8,
+
+                Guid = new Guid("e808927a-48f9-4402-ab2b-400bf1658169"),
+                Date = DateTime.Parse(DateTime.Now.ToString()),
+                TimeSpan = DateTime.Now.TimeOfDay,
+
+                Bool = true,
+                Decimal = -1.99M,
+            };
+
+            var i = 0;
+            var writer = new VariableLengthWriterBuilder<AllType>()
+            .Map(x => x.Str, i++)
+            .Map(x => x.Char, i++)
+
+            .Map(x => x.Byte, i++)
+            .Map(x => x.SByte, i++)
+
+            .Map(x => x.Double, i++)
+            .Map(x => x.Float, i++)
+
+            .Map(x => x.Int, i++)
+            .Map(x => x.UInt, i++)
+
+            .Map(x => x.Long, i++)
+            .Map(x => x.ULong, i++)
+
+            .Map(x => x.Short, i++)
+            .Map(x => x.UShort, i++)
+
+            .Map(x => x.Guid, i++)
+            .Map(x => x.Date, i++)
+            .Map(x => x.TimeSpan, i++)
+
+            .Map(x => x.Bool, i++)
+            .Map(x => x.Decimal, i++)
+
+            .Build(" ; ");
+
+            var values = new object[]
+            {
+                instance.Str,
+                instance.Char,
+
+                instance.Byte,
+                instance.SByte,
+
+                instance.Double,
+                instance.Float,
+
+                instance.Int,
+                instance.UInt,
+
+                instance.Long,
+                instance.ULong,
+
+                instance.Short,
+                instance.UShort,
+
+                instance.Guid,
+                instance.Date,
+                instance.TimeSpan,
+
+                instance.Bool,
+                instance.Decimal,
+            };
+
+            CultureInfo.CurrentCulture = new CultureInfo(cultureName);
+            var expected = string.Join(" ; ", values.Select(x => $"{x}"));
+
+            Span<char> destination = stackalloc char[200];
+
+            // Act
+
+            var success = writer.Parse(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
+
+            var result = destination.Slice(0, charsWritten).ToString();
+            var unwritted = destination.Slice(charsWritten).ToString();
+            var freeSpace = destination.Length - charsWritten;
+
+            result.Should().Be(expected);
+            unwritted.Should().Be(new string(default, freeSpace));
         }
     }
 }
