@@ -404,32 +404,31 @@ namespace RecordParser.Test
                 Decimal = -1.99M,
             };
 
-            var i = 0;
-            var writer = new VariableLengthWriterBuilder<AllType>()
-            .Map(x => x.Str, i++)
-            .Map(x => x.Char, i++)
+            var writer = new VariableLengthWriterSequentialBuilder<AllType>()
+            .Map(x => x.Str)
+            .Map(x => x.Char)
 
-            .Map(x => x.Byte, i++)
-            .Map(x => x.SByte, i++)
+            .Map(x => x.Byte)
+            .Map(x => x.SByte)
 
-            .Map(x => x.Double, i++)
-            .Map(x => x.Float, i++)
+            .Map(x => x.Double)
+            .Map(x => x.Float)
 
-            .Map(x => x.Int, i++)
-            .Map(x => x.UInt, i++)
+            .Map(x => x.Int)
+            .Map(x => x.UInt)
 
-            .Map(x => x.Long, i++)
-            .Map(x => x.ULong, i++)
+            .Map(x => x.Long)
+            .Map(x => x.ULong)
 
-            .Map(x => x.Short, i++)
-            .Map(x => x.UShort, i++)
+            .Map(x => x.Short)
+            .Map(x => x.UShort)
 
-            .Map(x => x.Guid, i++)
-            .Map(x => x.Date, i++)
-            .Map(x => x.TimeSpan, i++)
+            .Map(x => x.Guid)
+            .Map(x => x.Date)
+            .Map(x => x.TimeSpan)
 
-            .Map(x => x.Bool, i++)
-            .Map(x => x.Decimal, i++)
+            .Map(x => x.Bool)
+            .Map(x => x.Decimal)
 
             .Build(" ; ");
 
