@@ -102,7 +102,7 @@ namespace RecordParser.BuilderWrite
 
                 var prop = replacer.Visit(map.prop);
 
-                var gotoReturn = map.converter == null && (prop.Type.IsEnum || prop.Type == typeof(string))
+                var gotoReturn = map.converter == null && prop.Type == typeof(string)
                     ? returnPosition
                     : returnPositionOffset;
 

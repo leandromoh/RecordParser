@@ -2,6 +2,7 @@
 using RecordParser.Parsers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -89,7 +90,7 @@ namespace RecordParser.BuilderWrite
 
                 var prop = replacer.Visit(map.prop);
 
-                var gotoReturn = map.converter == null && (prop.Type.IsEnum || prop.Type == typeof(string))
+                var gotoReturn = map.converter == null && prop.Type == typeof(string)
                     ? GetReturn(false, charsWritten)
                     : GetReturn(false, Expression.Add(charsWritten, offset));
 
@@ -149,7 +150,15 @@ namespace RecordParser.BuilderWrite
 
             if (prop.Type.IsEnum)
             {
-                prop = Expression.Call(prop, "ToString", Type.EmptyTypes);
+                var result = Expression.Variable(typeof((bool, int)), "temp");
+
+                var toLarge = Expression.Block(variables: new[] { result },
+                    Expression.Assign(result, TryFormatEnum(prop, temp)),
+                    Expression.Assign(charsWritten, Expression.PropertyOrField(result, "Item2")),
+                    Expression.Not(Expression.PropertyOrField(result, "Item1")));
+
+                commands.Add(Expression.IfThen(toLarge, gotoReturn));
+                return;
             }
 
             if (prop.Type == typeof(string))
@@ -181,6 +190,68 @@ namespace RecordParser.BuilderWrite
                 commands.Add(Expression.IfThen(Expression.Not(tryFormat), gotoReturn));
             }
         }
+
+        private static Expression TryFormatEnum(Expression enumValue, Expression span)
+        {
+            var type = enumValue.Type;
+
+            Debug.Assert(type.IsEnum);
+            Debug.Assert(span.Type == typeof(Span<char>));
+
+            var under = Enum.GetUnderlyingType(type);
+            var charsWritten = Expression.Variable(typeof(int), "charsWritten");
+
+            var body = Enum.GetValues(type)
+                .Cast<object>()
+                .Select(color =>
+                {
+                    var text = color.ToString();
+
+                    var valueEquals = Expression.Equal(enumValue, Expression.Constant(color, type));
+
+                    var enoughSpace = Expression.GreaterThanOrEqual(
+                        Expression.PropertyOrField(span, "Length"),
+                        Expression.Constant(text.Length));
+
+                    var strSpan = StringAsSpan(Expression.Constant(text));
+
+                    var ifTrue = Expression.Block(
+                        Expression.Call(strSpan, "CopyTo", Type.EmptyTypes, span),
+                        Expression.Constant((true, text.Length)));
+
+                    var ifFalse = Expression.Constant((false, 0));
+
+                    var block = Expression.Condition(enoughSpace, ifTrue, ifFalse);
+
+                    return (value: block, condition: valueEquals);
+                })
+                .Reverse()
+                .Aggregate(Expression.Condition(
+                        Expression.Call(
+                            Expression.Convert(enumValue, under), "TryFormat", Type.EmptyTypes, span, charsWritten,
+                                Expression.Default(typeof(ReadOnlySpan<char>)), Expression.Constant(null, typeof(CultureInfo)))
+                        ,
+                        Expression.New(
+                                typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) }),
+                                Expression.Constant(true), charsWritten),
+
+                        Expression.New(
+                                typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) }),
+                                Expression.Constant(false), charsWritten)),
+
+                            (acc, item) =>
+                                Expression.Condition(
+                                    item.condition,
+                                    item.value,
+                                    acc));
+
+            var blockExpr = Expression.Block(
+                                variables: new[] { charsWritten },
+                                expressions: body);
+
+            return blockExpr;
+        }
+
 
         public static Expression StringAsSpan(Expression str) =>
             Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);

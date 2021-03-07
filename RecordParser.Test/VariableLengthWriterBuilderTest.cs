@@ -12,7 +12,7 @@ namespace RecordParser.Test
         {
             // Arrange 
 
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)> ()
+            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
                 .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Money, 2)
@@ -142,35 +142,35 @@ namespace RecordParser.Test
         [InlineData(50, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; ")]
         [InlineData(43, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; ")]
         [InlineData(42, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; ")]
-                       
+
         [InlineData(41, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45")]
         [InlineData(40, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45")]
         [InlineData(39, false, " ; foo bar baz ; 2020.05.23 ;  ; 123.45")]
-                       
+
         [InlineData(38, false, " ; foo bar baz ; 2020.05.23 ;  ; ")]
         [InlineData(34, false, " ; foo bar baz ; 2020.05.23 ;  ; ")]
         [InlineData(33, false, " ; foo bar baz ; 2020.05.23 ;  ; ")]
-                       
+
         [InlineData(32, false, " ; foo bar baz ; 2020.05.23 ; ")]
         [InlineData(31, false, " ; foo bar baz ; 2020.05.23 ; ")]
         [InlineData(30, false, " ; foo bar baz ; 2020.05.23 ; ")]
-                       
+
         [InlineData(29, false, " ; foo bar baz ; 2020.05.23")]
         [InlineData(28, false, " ; foo bar baz ; 2020.05.23")]
         [InlineData(27, false, " ; foo bar baz ; 2020.05.23")]
-                       
+
         [InlineData(26, false, " ; foo bar baz ; ")]
         [InlineData(18, false, " ; foo bar baz ; ")]
         [InlineData(17, false, " ; foo bar baz ; ")]
-                       
+
         [InlineData(16, false, " ; foo bar baz")]
         [InlineData(15, false, " ; foo bar baz")]
         [InlineData(14, false, " ; foo bar baz")]
-                       
+
         [InlineData(13, false, " ; ")]
         [InlineData(04, false, " ; ")]
         [InlineData(03, false, " ; ")]
-                       
+
         [InlineData(02, false, "")]
         [InlineData(01, false, "")]
         [InlineData(00, false, "")]
@@ -190,7 +190,7 @@ namespace RecordParser.Test
             Span<char> destination = stackalloc char[destinationSize];
 
             // Act
-            
+
             var success = writer.Parse(instance, destination, out var charsWritten);
 
             // Assert
@@ -307,6 +307,61 @@ namespace RecordParser.Test
 
             result.Should().Be("30 ; 42 ; 52");
             unwritted.Should().Be(new string(default, freeSpace));
+        }
+
+        [Fact]
+        public void Parse_enum_same_way_framework()
+        {
+            var writer = new VariableLengthWriterBuilder<(Color color, int)>()
+                .Map(x => x.color, 0)
+                .Build(";");
+
+            Span<char> destination = stackalloc char[50];
+
+            // values present in enum
+
+            Assert(Color.Black, destination);
+            Assert(Color.White, destination);
+            Assert(Color.Yellow, destination);
+            Assert(Color.LightBlue, destination);
+
+            // value NOT present in enum
+            Assert((Color)777, destination);
+
+            void Assert(Color value, Span<char> span)
+            {
+                var expected = value.ToString();
+                var instance = (value, 0);
+
+                var success = writer.Parse(instance, span, out var charsWritten);
+                
+                success.Should().BeTrue();
+                span.Slice(0, charsWritten).ToString().Should().Be(expected);
+            }
+        }
+
+        [Fact]
+        public void Given_empty_enum_should_parse_same_way_framework()
+        {
+            // Arrange 
+
+            var writer = new VariableLengthWriterBuilder<(EmptyEnum color, bool _)>()
+                .Map(x => x.color, 0)
+                .Build(";");
+
+            Span<char> destination = stackalloc char[50];
+
+            var instance = (color: (EmptyEnum)777, false);
+            var expected = instance.color.ToString();
+
+            // Act
+
+            var success = writer.Parse(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
+            destination.Slice(0, charsWritten).ToString().Should().Be(expected);
         }
     }
 }
