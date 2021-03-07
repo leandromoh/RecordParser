@@ -216,7 +216,7 @@ namespace RecordParser.Test
                 .Map(x => x.Balance, 0)
                 .Map(x => x.Date, 1)
                 .Map(x => x.Debit, 2)
-                .DefaultTypeConvert<decimal>((span, value) => (value.TryFormat(span, out var written), written))
+                .DefaultTypeConvert<decimal>((span, value) => (((long)(value * 100)).TryFormat(span, out var written), written))
                 .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy"), written))
                 .Build(" ; ");
 
@@ -238,7 +238,7 @@ namespace RecordParser.Test
             var unwritted = destination.Slice(charsWritten).ToString();
             var freeSpace = destination.Length - charsWritten;
 
-            result.Should().Be("123456789.01 ; 23052020 ; 123.45");
+            result.Should().Be("12345678901 ; 23052020 ; 12345");
             unwritted.Should().Be(new string(default, freeSpace));
         }
 
@@ -336,7 +336,7 @@ namespace RecordParser.Test
                 var instance = (value, 0);
 
                 var success = writer.Parse(instance, span, out var charsWritten);
-                
+
                 success.Should().BeTrue();
                 span.Slice(0, charsWritten).ToString().Should().Be(expected);
             }
