@@ -14,7 +14,7 @@ namespace RecordParser.Benchmark
     [MemoryDiagnoser]
     [SimpleJob(RuntimeMoniker.NetCoreApp31)]
     [SimpleJob(RuntimeMoniker.NetCoreApp50)]
-    public partial class TestRunner
+    public partial class ReaderTestRunner
     {
         [Params(500_000)]
         public int LimitRecord { get; set; }
