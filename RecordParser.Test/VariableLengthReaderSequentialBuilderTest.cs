@@ -168,6 +168,106 @@ namespace RecordParser.Test
 
             result.Should().BeEquivalentTo(expected);
         }
+
+        [Theory]
+        [InlineData("pt-BR")]
+        [InlineData("en-US")]
+        [InlineData("fr-FR")]
+        [InlineData("ru-RU")]
+        [InlineData("es-ES")]
+        public void Registered_primitives_types_should_have_default_converters_which_uses_current_cultureinfo(string cultureName)
+        {
+            var expected = new AllType
+            {
+                Str = "Foo Bar",
+                Char = 'z',
+
+                Byte = 42,
+                SByte = -43,
+
+                Double = -1.58D,
+                Float = 1.46F,
+
+                Int = -6,
+                UInt = 7,
+
+                Long = -3,
+                ULong = 45,
+
+                Short = -2,
+                UShort = 8,
+
+                Guid = new Guid("e808927a-48f9-4402-ab2b-400bf1658169"),
+                Date = DateTime.Parse(DateTime.Now.ToString()),
+                TimeSpan = DateTime.Now.TimeOfDay,
+
+                Bool = true,
+                Decimal = -1.99M,
+            };
+
+            var reader = new VariableLengthReaderSequentialBuilder<AllType>()
+            .Map(x => x.Str)
+            .Map(x => x.Char)
+
+            .Map(x => x.Byte)
+            .Map(x => x.SByte)
+
+            .Map(x => x.Double)
+            .Map(x => x.Float)
+
+            .Map(x => x.Int)
+            .Map(x => x.UInt)
+
+            .Map(x => x.Long)
+            .Map(x => x.ULong)
+
+            .Map(x => x.Short)
+            .Map(x => x.UShort)
+
+            .Map(x => x.Guid)
+            .Map(x => x.Date)
+            .Map(x => x.TimeSpan)
+
+            .Map(x => x.Bool)
+            .Map(x => x.Decimal)
+
+            .Build(";");
+
+            var values = new object[]
+            {
+                expected.Str,
+                expected.Char,
+
+                expected.Byte,
+                expected.SByte,
+
+                expected.Double,
+                expected.Float,
+
+                expected.Int,
+                expected.UInt,
+
+                expected.Long,
+                expected.ULong,
+
+                expected.Short,
+                expected.UShort,
+
+                expected.Guid,
+                expected.Date,
+                expected.TimeSpan,
+
+                expected.Bool,
+                expected.Decimal,
+            };
+
+            CultureInfo.CurrentCulture = new CultureInfo(cultureName);
+            var line = string.Join(';', values.Select(x => $"  {x}  "));
+
+            var result = reader.Parse(line);
+
+            result.Should().BeEquivalentTo(expected);
+        }
     }
 
     public static class CSVSequentialBuilderExtensions
