@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace RecordParser.Benchmark
 {
-    public partial class TestRunner
+    public partial class ReaderTestRunner
     {
         public string PathSampleDataTXT => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.txt");
 

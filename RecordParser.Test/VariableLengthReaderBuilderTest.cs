@@ -31,7 +31,7 @@ namespace RecordParser.Test
         [Fact]
         public void Given_types_with_custom_format_should_allow_define_default_parser_for_type()
         {
-            var reader = new VariableLengthReaderBuilder<(decimal Debit, decimal Balance, DateTime Date)>()
+            var reader = new VariableLengthReaderBuilder<(decimal Balance, DateTime Date, decimal Debit)>()
                 .Map(x => x.Balance, 0)
                 .Map(x => x.Date, 1)
                 .Map(x => x.Debit, 2)
@@ -41,9 +41,9 @@ namespace RecordParser.Test
 
             var result = reader.Parse("012345678901 ; 23052020 ; 012345");
 
-            result.Should().BeEquivalentTo((Debit: 0123.45M,
-                                            Balance: 0123456789.01M,
-                                            Date: new DateTime(2020, 05, 23)));
+            result.Should().BeEquivalentTo((Balance: 0123456789.01M,
+                                            Date: new DateTime(2020, 05, 23),
+                                            Debit: 0123.45M));
         }
 
         [Fact]
@@ -207,111 +207,6 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo(expected);
         }
 
-        [Theory]
-        [InlineData("pt-BR")]
-        [InlineData("en-US")]
-        [InlineData("fr-FR")]
-        [InlineData("ru-RU")]
-        [InlineData("es-ES")]
-        public void Registered_primitives_types_should_have_default_converters_which_uses_current_cultureinfo(string cultureName)
-        {
-            var expected = new AllType
-            {
-                Str = "Foo Bar",
-                Char = 'z',
-
-                Byte = 42,
-                SByte = -43,
-
-                Double = -1.58D,
-                Float = 1.46F,
-
-                Int = -6,
-                UInt = 7,
-
-                Long = -3,
-                ULong = 45,
-
-                Short = -2,
-                UShort = 8,
-
-                Guid = new Guid("e808927a-48f9-4402-ab2b-400bf1658169"),
-                Date = DateTime.Parse(DateTime.Now.ToString()),
-                TimeSpan = DateTime.Now.TimeOfDay,
-
-                Bool = true,
-                Decimal = -1.99M,
-            };
-
-            var reader = new VariableLengthReaderSequentialBuilder<AllType>()
-            .Map(x => x.Str)
-            .Map(x => x.Char)
-
-            .Map(x => x.Byte)
-            .Map(x => x.SByte)
-
-            .Map(x => x.Double)
-            .Map(x => x.Float)
-
-            .Map(x => x.Int)
-            .Map(x => x.UInt)
-
-            .Map(x => x.Long)
-            .Map(x => x.ULong)
-
-            .Map(x => x.Short)
-            .Map(x => x.UShort)
-
-            .Map(x => x.Guid)
-            .Map(x => x.Date)
-            .Map(x => x.TimeSpan)
-
-            .Map(x => x.Bool)
-            .Map(x => x.Decimal)
-
-            .Build(";");
-
-            var values = new object[]
-            {
-                expected.Str,
-                expected.Char,
-
-                expected.Byte,
-                expected.SByte,
-
-                expected.Double,
-                expected.Float,
-
-                expected.Int,
-                expected.UInt,
-
-                expected.Long,
-                expected.ULong,
-
-                expected.Short,
-                expected.UShort,
-
-                expected.Guid,
-                expected.Date,
-                expected.TimeSpan,
-
-                expected.Bool,
-                expected.Decimal,
-            };
-
-            CultureInfo.CurrentCulture = new CultureInfo(cultureName);
-            var line = string.Join(';', values.Select(x => $"  {x}  "));
-
-            var result = reader.Parse(line);
-
-            result.Should().BeEquivalentTo(expected);
-        }
-
-        public enum EmptyEnum
-        {
-
-        }
-
         [Fact]
         public void Parse_enum_same_way_framework()
         {
@@ -338,8 +233,15 @@ namespace RecordParser.Test
             Action act = () => reader.Parse("foo");
 
             act.Should().Throw<ArgumentException>().WithMessage("value foo not present in enum Color");
+        }
 
-            // enum without elements
+        [Fact]
+        public void Given_empty_enum_should_parse_same_way_framework()
+        {
+            var reader = new VariableLengthReaderBuilder<(EmptyEnum color, bool _)>()
+                .Map(x => x.color, 0)
+                .Build(";");
+
             reader.Parse("777").color.Should().Be((EmptyEnum)777);
         }
     }

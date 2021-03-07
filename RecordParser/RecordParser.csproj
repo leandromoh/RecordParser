@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1;netcoreapp2.1;netcoreapp3.1;netcoreapp5.0</TargetFrameworks>
-    <LangVersion>8</LangVersion>
+    <LangVersion>9</LangVersion>
     <Authors>Leandro Fernandes Vieira (leandromoh)</Authors>
     <Description>Simple expression tree based parser, focused in high-performance, extensibility and simple usage</Description>
     <Copyright>Copyright 2021 (c) Leandro F. Vieira (leandromoh). All rights reserved.</Copyright>

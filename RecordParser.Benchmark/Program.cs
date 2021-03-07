@@ -9,9 +9,9 @@ namespace RecordParser.Benchmark
         static async Task Main(string[] args)
         {
 #if DEBUG
-            await new TestRunner().FixedLength_Span_Builder();
+            await new WriterTestRunner().VariableLength_Write_Span_Builder();
 #else
-            BenchmarkRunner.Run<TestRunner>();
+            BenchmarkRunner.Run<WriterTestRunner>();
 #endif
             Console.Out.Write("Hit <enter> to exit...");
             Console.In.ReadLine();
