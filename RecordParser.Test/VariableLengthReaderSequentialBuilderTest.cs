@@ -84,13 +84,13 @@ namespace RecordParser.Test
         public void Given_specified_custom_parser_for_member_should_have_priority_over_custom_parser_for_type()
         {
             var reader = new VariableLengthReaderSequentialBuilder<(int Age, int MotherAge, int FatherAge)>()
-                .Map(x => x.MotherAge)
                 .Map(x => x.Age, value => int.Parse(value) * 2)
+                .Map(x => x.MotherAge)
                 .Map(x => x.FatherAge)
                 .DefaultTypeConvert(value => int.Parse(value) + 2)
                 .Build(";");
 
-            var result = reader.Parse(" 40 ; 15 ; 50 ");
+            var result = reader.Parse(" 15 ; 40 ; 50 ");
 
             result.Should().BeEquivalentTo((Age: 30,
                                             MotherAge: 42,
