@@ -90,9 +90,9 @@ namespace RecordParser.BuilderWrite
 
                 var prop = replacer.Visit(map.prop);
 
-                var gotoReturn = map.converter == null && prop.Type == typeof(string)
-                    ? GetReturn(false, charsWritten, returnTarget)
-                    : GetReturn(false, Expression.Add(charsWritten, offset), returnTarget);
+                var gotoReturn = map.UseTryPattern
+                    ? GetReturn(false, Expression.Add(charsWritten, offset), returnTarget)
+                    : GetReturn(false, charsWritten, returnTarget);
 
                 DAs(prop, map, commands, temp, offset, gotoReturn, cultureInfo);
 
