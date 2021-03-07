@@ -10,6 +10,11 @@ namespace RecordParser.Test
         LightBlue,
     }
 
+    public enum EmptyEnum
+    {
+
+    }
+
     internal class Person
     {
         public DateTime BirthDay { get; set; }

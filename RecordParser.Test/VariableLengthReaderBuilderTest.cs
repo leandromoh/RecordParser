@@ -307,11 +307,6 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo(expected);
         }
 
-        public enum EmptyEnum
-        {
-
-        }
-
         [Fact]
         public void Parse_enum_same_way_framework()
         {
@@ -338,8 +333,15 @@ namespace RecordParser.Test
             Action act = () => reader.Parse("foo");
 
             act.Should().Throw<ArgumentException>().WithMessage("value foo not present in enum Color");
+        }
 
-            // enum without elements
+        [Fact]
+        public void Given_empty_enum_should_parse_same_way_framework()
+        {
+            var reader = new VariableLengthReaderBuilder<(EmptyEnum color, bool _)>()
+                .Map(x => x.color, 0)
+                .Build(";");
+
             reader.Parse("777").color.Should().Be((EmptyEnum)777);
         }
     }
