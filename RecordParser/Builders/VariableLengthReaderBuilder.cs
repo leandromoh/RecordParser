@@ -37,7 +37,7 @@ namespace RecordParser.Parsers
 
         public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null)
         {
-            var map = GenericRecordParser.Merge(list.Select(x => x.Value), dic);
+            var map = MappingConfiguration.Merge(list.Select(x => x.Value), dic);
             var func = SpanExpressionParser.RecordParserSpan<T>(map);
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);

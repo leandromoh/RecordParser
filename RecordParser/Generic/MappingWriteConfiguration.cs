@@ -11,7 +11,7 @@ namespace RecordParser.Generic
         Right = 1,
     }
 
-    public readonly struct MappingWriteConfiguration
+    internal readonly struct MappingWriteConfiguration
     {
         public MemberExpression prop { get; }
         public int start { get; }

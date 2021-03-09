@@ -36,7 +36,7 @@ namespace RecordParser.Parsers
 
         public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null) 
         {
-            var map = GenericRecordParser.Merge(list, dic);
+            var map = MappingConfiguration.Merge(list, dic);
             var func = SpanExpressionParser.RecordParserSpan<T>(map);
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
