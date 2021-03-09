@@ -7,13 +7,13 @@ namespace RecordParser.Generic
 {
     internal readonly struct MappingConfiguration
     {
-        public MemberExpression prop { get; }
+        public Expression prop { get; }
         public int start { get; }
         public int? length { get; }
         public Expression fmask { get; }
         public Type type { get; }
 
-        public MappingConfiguration(MemberExpression prop, int start, int? length, Type type, Expression fmask)
+        public MappingConfiguration(Expression prop, int start, int? length, Type type, Expression fmask)
         {
             this.prop = prop;
             this.start = start;

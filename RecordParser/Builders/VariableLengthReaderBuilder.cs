@@ -23,7 +23,7 @@ namespace RecordParser.Parsers
         public IVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn,
             FuncSpanT<R> convert = null)
         {
-            var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
+            var member = ex.Body;
             var config = new MappingConfiguration(member, indexColumn, null, typeof(R), convert?.WrapInLambdaExpression());
             list.Add(indexColumn, config);
             return this;

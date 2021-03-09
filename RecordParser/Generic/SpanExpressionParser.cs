@@ -17,7 +17,7 @@ namespace RecordParser.Generic
         public static Expression<FuncSpanArrayT<T>> RecordParserSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
         {
             var funcThatSetProperties = GetFuncThatSetPropertiesSpan<T>(mappedColumns);
-            var getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop));
+            var getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop).OfType<MemberExpression>());
 
             var instanceParameter = funcThatSetProperties.Parameters[0];
             var valueParameter = funcThatSetProperties.Parameters[1];

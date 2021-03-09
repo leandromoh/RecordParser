@@ -13,7 +13,7 @@ namespace RecordParser.Generic
 
     internal readonly struct MappingWriteConfiguration
     {
-        public MemberExpression prop { get; }
+        public Expression prop { get; }
         public int start { get; }
         public int? length { get; }
 
@@ -26,7 +26,7 @@ namespace RecordParser.Generic
 
         public bool UseTryPattern => converter != null || prop.Type != typeof(string);
 
-        public MappingWriteConfiguration(MemberExpression prop, int start, int? length, Func<Expression, Expression, Expression, Expression> converter, string format, Padding padding, char paddingChar, Type type)
+        public MappingWriteConfiguration(Expression prop, int start, int? length, Func<Expression, Expression, Expression, Expression> converter, string format, Padding padding, char paddingChar, Type type)
         {
             this.prop = prop;
             this.start = start;

@@ -23,7 +23,7 @@ namespace RecordParser.Parsers
             Expression<Func<T, R>> ex, int startIndex, int length,
             FuncSpanT<R> convert = null)
         {
-            var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
+            var member = ex.Body;
             list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), convert?.WrapInLambdaExpression()));
             return this;
         }
