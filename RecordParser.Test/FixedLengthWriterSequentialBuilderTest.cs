@@ -266,6 +266,50 @@ namespace RecordParser.Test
             result.Should().Be("30 42 52 ");
             unwritted.Should().Be(new string(default, freeSpace));
         }
+
+        [Fact]
+        public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
+        {
+            // Arrange 
+
+            var writer = new FixedLengthWriterSequentialBuilder<Person>()
+                .Map(x => x.BirthDay, 10, "yyyy.MM.dd")
+                .Skip(1)
+                .Map(x => x.Name, 8)
+                .Skip(1)
+                .Map(x => x.Mother.BirthDay, 10, "yyyy.MM.dd")
+                .Skip(1)
+                .Map(x => x.Mother.Name, 11)
+                .Build();
+
+            var instance = new Person
+            {
+                BirthDay = new DateTime(2020, 05, 23),
+                Name = "son name",
+                Mother = new Person
+                {
+                    BirthDay = new DateTime(1980, 01, 15),
+                    Name = "mother name",
+                }
+            };
+
+            Span<char> destination = stackalloc char[50];
+
+            // Act
+
+            var success = writer.Parse(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
+
+            var result = destination.Slice(0, charsWritten).ToString();
+            var unwritted = destination.Slice(charsWritten).ToString();
+            var freeSpace = destination.Length - charsWritten;
+
+            result.Should().Be("2020.05.23\0son name\01980.01.15\0mother name");
+            unwritted.Should().Be(new string(default, freeSpace));
+        }
     }
 
     public static class FixedLengthWriterSequentialHelpers

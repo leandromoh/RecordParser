@@ -373,6 +373,47 @@ namespace RecordParser.Test
             destination.Slice(0, charsWritten).ToString().Should().Be(expected);
         }
 
+        [Fact]
+        public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
+        {
+            // Arrange 
+
+            var writer = new VariableLengthWriterSequentialBuilder<Person>()
+                .Map(x => x.BirthDay, "yyyy.MM.dd")
+                .Map(x => x.Name)
+                .Map(x => x.Mother.BirthDay, "yyyy.MM.dd")
+                .Map(x => x.Mother.Name)
+                .Build(" ; ");
+
+            var instance = new Person
+            {
+                BirthDay = new DateTime(2020, 05, 23),
+                Name = "son name",
+                Mother = new Person
+                {
+                    BirthDay = new DateTime(1980, 01, 15),
+                    Name = "mother name",
+                }
+            };
+
+            Span<char> destination = stackalloc char[50];
+
+            // Act
+
+            var success = writer.Parse(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
+
+            var result = destination.Slice(0, charsWritten).ToString();
+            var unwritted = destination.Slice(charsWritten).ToString();
+            var freeSpace = destination.Length - charsWritten;
+
+            result.Should().Be("2020.05.23 ; son name ; 1980.01.15 ; mother name");
+            unwritted.Should().Be(new string(default, freeSpace));
+        }
+
         [Theory]
         [InlineData("pt-BR")]
         [InlineData("en-US")]
