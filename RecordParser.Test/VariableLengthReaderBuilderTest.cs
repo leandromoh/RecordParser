@@ -210,24 +210,24 @@ namespace RecordParser.Test
         [Fact]
         public void Parse_enum_same_way_framework()
         {
-            var reader = new VariableLengthReaderBuilder<(Color color, bool _)>()
-                .Map(x => x.color, 0)
+            var reader = new VariableLengthReaderBuilder<Color>()
+                .Map(x => x, 0)
                 .Build(";");
 
             // text as is
-            reader.Parse("Black").color.Should().Be(Color.Black);
+            reader.Parse("Black").Should().Be(Color.Black);
 
             // text uppercase
-            reader.Parse("WHITE").color.Should().Be(Color.White);
+            reader.Parse("WHITE").Should().Be(Color.White);
 
             // text lowercase
-            reader.Parse("yellow").color.Should().Be(Color.Yellow);
+            reader.Parse("yellow").Should().Be(Color.Yellow);
 
             // numeric value present in enum
-            reader.Parse("3").color.Should().Be(Color.LightBlue);
+            reader.Parse("3").Should().Be(Color.LightBlue);
 
             // numeric value NOT present in enum
-            reader.Parse("777").color.Should().Be((Color)777);
+            reader.Parse("777").Should().Be((Color)777);
 
             // text NOT present in enum
             Action act = () => reader.Parse("foo");
@@ -238,11 +238,11 @@ namespace RecordParser.Test
         [Fact]
         public void Given_empty_enum_should_parse_same_way_framework()
         {
-            var reader = new VariableLengthReaderBuilder<(EmptyEnum color, bool _)>()
-                .Map(x => x.color, 0)
+            var reader = new VariableLengthReaderBuilder<EmptyEnum>()
+                .Map(x => x, 0)
                 .Build(";");
 
-            reader.Parse("777").color.Should().Be((EmptyEnum)777);
+            reader.Parse("777").Should().Be((EmptyEnum)777);
         }
     }
 

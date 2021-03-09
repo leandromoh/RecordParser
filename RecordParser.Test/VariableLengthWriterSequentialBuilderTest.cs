@@ -321,8 +321,8 @@ namespace RecordParser.Test
         [Fact]
         public void Parse_enum_same_way_framework()
         {
-            var writer = new VariableLengthWriterSequentialBuilder<(Color color, int)>()
-                .Map(x => x.color)
+            var writer = new VariableLengthWriterSequentialBuilder<Color>()
+                .Map(x => x)
                 .Build(";");
 
             Span<char> destination = stackalloc char[50];
@@ -340,7 +340,7 @@ namespace RecordParser.Test
             void Assert(Color value, Span<char> span)
             {
                 var expected = value.ToString();
-                var instance = (value, 0);
+                var instance = value;
 
                 var success = writer.Parse(instance, span, out var charsWritten);
 
