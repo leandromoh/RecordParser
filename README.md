@@ -1,3 +1,7 @@
+![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/leandromoh/RecordParser/Validate%20dotnet/master)
+![GitHub](https://img.shields.io/github/license/leandromoh/recordparser)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/leandromoh/RecordParser)
+
 # RecordParser - simple, fast, extensible parse for records
 
 RecordParser is a expression tree based parser that helps you to write maintainable, fast and simple parsers.  
