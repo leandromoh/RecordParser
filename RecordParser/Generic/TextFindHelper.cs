@@ -25,10 +25,10 @@ namespace RecordParser.Generic
         {
             scanned += position + delimiter.Length;
 
-            position = span.Slice(scanned, span.Length - scanned).IndexOf(delimiter);
+            position = span.Slice(scanned).IndexOf(delimiter);
             if (position < 0)
             {
-                position = span.Slice(scanned, span.Length - scanned).Length;
+                position = span.Length - scanned;
             }
 
             return (scanned, position);
