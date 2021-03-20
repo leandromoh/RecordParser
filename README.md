@@ -225,11 +225,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
                     Birthday: new DateTime(2020, 05, 23),
                     Money: 01234.567M);
 
-    // it is also ok have destination variable of type char[] 
-    // because it can be implicit convertible to Span<char>, 
-    // which is what writer method receives
-
-    Span<char> destination = stackalloc char[50];
+    Span<char> destination = new char[50];
 
     // Act
 
@@ -264,11 +260,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
                     Birthday: new DateTime(2020, 05, 23),
                     Money: 01234.567M);
 
-    // it is also ok have destination variable of type char[] 
-    // because it can be implicit convertible to Span<char>, 
-    // which is what writer method receives
-
-    Span<char> destination = stackalloc char[50];
+    Span<char> destination = new char[50];
 
     // Act
 
@@ -309,11 +301,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
 
-    // it is also ok have destination variable of type char[] 
-    // because it can be implicit convertible to Span<char>, 
-    // which is what writer method receives
-    
-    Span<char> destination = stackalloc char[100];
+    Span<char> destination = new char[100];
 
     // Act
 
@@ -346,11 +334,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M);
 
-    // it is also ok have destination variable of type char[] 
-    // because it can be implicit convertible to Span<char>, 
-    // which is what writer method receives
-    
-    Span<char> destination = stackalloc char[100];
+    Span<char> destination = new char[100];
 
     // Act
 
@@ -390,11 +374,7 @@ public void Given_types_with_custom_format_should_allow_define_default_parser_fo
                     Date: new DateTime(2020, 05, 23),
                     Debit: 123.45M);
 
-    // it is also ok have destination variable of type char[] 
-    // because it can be implicit convertible to Span<char>, 
-    // which is what writer method receives
-    
-    Span<char> destination = stackalloc char[50];
+    Span<char> destination = new char[50];
 
     // Act
 
@@ -434,7 +414,7 @@ public void Given_specified_custom_parser_for_member_should_have_priority_over_c
                     MotherAge: 40,
                     FatherAge: 50);
 
-    Span<char> destination = stackalloc char[50];
+    Span<char> destination = new char[50];
 
     // Act
 
