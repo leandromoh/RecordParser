@@ -15,14 +15,15 @@ namespace RecordParser.Engines
             Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, str);
 
         public static Expression Slice(Expression span, int start, int length) =>
-            Slice(span, start, Expression.Constant(length));
+            Slice(span, Expression.Constant(start), Expression.Constant(length));
 
         public static Expression Slice(Expression span, int start, Expression length) =>
-            Expression.Call(span, "Slice", Type.EmptyTypes, Expression.Constant(start), length);
+            Slice(span, Expression.Constant(start), length);
+
+        public static Expression Slice(Expression span, Expression start, Expression length) =>
+            Expression.Call(span, "Slice", Type.EmptyTypes, start, length);
 
         public static Expression IsWhiteSpace(Expression valueText) =>
-            Expression.Call(typeof(MemoryExtensions),
-                nameof(MemoryExtensions.IsWhiteSpace),
-                Type.EmptyTypes, valueText);
+            Expression.Call(typeof(MemoryExtensions), "IsWhiteSpace", Type.EmptyTypes, valueText);
     }
 }
