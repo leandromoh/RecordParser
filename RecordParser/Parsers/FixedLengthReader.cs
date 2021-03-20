@@ -15,7 +15,7 @@ namespace RecordParser.Parsers
     {
         private readonly FuncSpanArrayT<T> parser;
 
-        internal FixedLengthReader(IEnumerable<MappingConfiguration> list, FuncSpanArrayT<T> parser)
+        internal FixedLengthReader(IEnumerable<MappingReadConfiguration> list, FuncSpanArrayT<T> parser)
         {
             this.parser = parser;
         }

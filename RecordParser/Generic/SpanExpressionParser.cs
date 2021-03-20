@@ -14,7 +14,7 @@ namespace RecordParser.Generic
 {
     internal static class SpanExpressionParser
     {
-        public static Expression<FuncSpanArrayT<T>> RecordParserSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
+        public static Expression<FuncSpanArrayT<T>> RecordParserSpan<T>(IEnumerable<MappingReadConfiguration> mappedColumns)
         {
             var funcThatSetProperties = GetFuncThatSetPropertiesSpan<T>(mappedColumns);
             var getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop));
@@ -38,7 +38,7 @@ namespace RecordParser.Generic
             return result;
         }
 
-        private static Expression<FuncTSpanArrayT<T>> GetFuncThatSetPropertiesSpan<T>(IEnumerable<MappingConfiguration> mappedColumns)
+        private static Expression<FuncTSpanArrayT<T>> GetFuncThatSetPropertiesSpan<T>(IEnumerable<MappingReadConfiguration> mappedColumns)
         {
             ParameterExpression objectParameter = Expression.Variable(typeof(T), "a");
             ParameterExpression span = Expression.Variable(typeof(ReadOnlySpan<char>), "span");

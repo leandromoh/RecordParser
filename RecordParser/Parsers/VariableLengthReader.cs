@@ -20,7 +20,7 @@ namespace RecordParser.Parsers
         private readonly int maxColumnIndex;
         private readonly string delimiter;
 
-        internal VariableLengthReader(IEnumerable<MappingConfiguration> list, FuncSpanArrayT<T> parser, string separator)
+        internal VariableLengthReader(IEnumerable<MappingReadConfiguration> list, FuncSpanArrayT<T> parser, string separator)
         {
             config = list.Select(x => x.start).ToArray();
             maxColumnIndex = config.Max();

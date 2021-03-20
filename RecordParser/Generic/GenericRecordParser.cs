@@ -12,8 +12,8 @@ namespace RecordParser.Generic
     {
         public static BlockExpression MountSetProperties(
             ParameterExpression objectParameter,
-            IEnumerable<MappingConfiguration> mappedColumns,
-            Func<int, MappingConfiguration, Expression> getTextValue,
+            IEnumerable<MappingReadConfiguration> mappedColumns,
+            Func<int, MappingReadConfiguration, Expression> getTextValue,
             Func<Expression, Expression> getIsNullOrWhiteSpace)
         {
             var replacer = new ParameterReplacerVisitor(objectParameter);

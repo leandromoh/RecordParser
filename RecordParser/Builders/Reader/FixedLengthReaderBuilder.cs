@@ -16,7 +16,7 @@ namespace RecordParser.Parsers
 
     public class FixedLengthReaderBuilder<T> : IFixedLengthReaderBuilder<T>
     {
-        private readonly List<MappingConfiguration> list = new List<MappingConfiguration>();
+        private readonly List<MappingReadConfiguration> list = new List<MappingReadConfiguration>();
         private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
 
         public IFixedLengthReaderBuilder<T> Map<R>(
@@ -24,7 +24,7 @@ namespace RecordParser.Parsers
             FuncSpanT<R> convert = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingConfiguration(member, startIndex, length, typeof(R), convert?.WrapInLambdaExpression()));
+            list.Add(new MappingReadConfiguration(member, startIndex, length, typeof(R), convert?.WrapInLambdaExpression()));
             return this;
         }
 
@@ -36,7 +36,7 @@ namespace RecordParser.Parsers
 
         public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null) 
         {
-            var map = MappingConfiguration.Merge(list, dic);
+            var map = MappingReadConfiguration.Merge(list, dic);
             var func = SpanExpressionParser.RecordParserSpan<T>(map);
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
