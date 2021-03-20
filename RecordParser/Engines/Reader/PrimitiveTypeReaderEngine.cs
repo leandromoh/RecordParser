@@ -63,18 +63,6 @@ namespace RecordParser.Engines.Reader
             return (Type _, Expression valueText) => new ParameterReplacerVisitor(valueText).Visit(intTao.Body);
         }
 
-        public static Expression GetParseExpression(Type type, Expression valueText)
-        {
-            return Expression.Call(
-                typeof(Convert), nameof(Convert.ChangeType), Type.EmptyTypes,
-                arguments: new[]
-                {
-                    valueText,
-                    Expression.Constant(type, typeof(Type)),
-                    Expression.Constant(CultureInfo.InvariantCulture)
-                });
-        }
-
         private static Expression GetEnumFromSpanParseExpression(Type type, Expression span)
         {
             Debug.Assert(type.IsEnum);

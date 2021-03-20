@@ -10,7 +10,6 @@ using static RecordParser.Engines.ExpressionHelper;
 public delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
 public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
 public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, ReadOnlySpan<(int start, int length)> config);
-public delegate T FuncTSpanArrayT<T>(T instance, ReadOnlySpan<char> line, ReadOnlySpan<(int start, int length)> config);
 
 namespace RecordParser.Engines.Reader
 {
@@ -135,7 +134,7 @@ namespace RecordParser.Engines.Reader
             if (PrimitiveTypeReaderEngine.dic.TryGetValue((valueText.Type, targetType), out var expF))
                 return expF(propertyType, valueText);
 
-            return PrimitiveTypeReaderEngine.GetParseExpression(propertyType, valueText);
+            throw new InvalidOperationException($"Type '{propertyType.FullName}' does not have a default parse");
         }
 
         public static Expression<FuncSpanT<T>> WrapInLambdaExpression<T>(this FuncSpanT<T> convert)
