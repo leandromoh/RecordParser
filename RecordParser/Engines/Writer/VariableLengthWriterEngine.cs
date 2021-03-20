@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq.Expressions;
 using static RecordParser.Engines.Writer.WriteEngine;
+using static RecordParser.Engines.ExpressionHelper;
 
 namespace RecordParser.Engines.Writer
 {
@@ -14,34 +15,30 @@ namespace RecordParser.Engines.Writer
         public static Expression<FuncSpanSpanTInt<T>> GetFuncThatSetProperties<T>(IEnumerable<MappingWriteConfiguration> mappedColumns, CultureInfo cultureInfo)
         {
             // parameters
-            ParameterExpression span = Expression.Variable(typeof(Span<char>), "span");
-            ParameterExpression delimiter = Expression.Variable(typeof(ReadOnlySpan<char>), "delimiter");
-            ParameterExpression inst = Expression.Variable(typeof(T), "inst");
-
-            var replacer = new ParameterReplacerVisitor(inst);
+            var span = Expression.Parameter(typeof(Span<char>), "span");
+            var delimiter = Expression.Parameter(typeof(ReadOnlySpan<char>), "delimiter");
+            var inst = Expression.Parameter(typeof(T), "inst");
 
             // variables
-            ParameterExpression offset = Expression.Variable(typeof(int), "offset");
-            ParameterExpression position = Expression.Variable(typeof(int), "position");
-            ParameterExpression delimiterLength = Expression.Variable(typeof(int), "delimiterLength");
-            ParameterExpression spanTemp = Expression.Variable(typeof(Span<char>), "spanTemp");
+            var offset = Expression.Variable(typeof(int), "offset");
+            var position = Expression.Variable(typeof(int), "position");
+            var delimiterLength = Expression.Variable(typeof(int), "delimiterLength");
+            var spanTemp = Expression.Variable(typeof(Span<char>), "spanTemp");
 
-            List<ParameterExpression> variables = new List<ParameterExpression>();
-            variables.Add(offset);
-            variables.Add(position);
-            variables.Add(delimiterLength);
-            variables.Add(spanTemp);
+            var variables = new List<ParameterExpression>() { offset, position, delimiterLength, spanTemp };
 
             // commands
-            List<Expression> commands = new List<Expression>();
-            commands.Add(
-                Expression.Assign(delimiterLength, Expression.PropertyOrField(delimiter, "Length")));
+            var commands = new List<Expression>()
+            {
+                Expression.Assign(delimiterLength, Expression.PropertyOrField(delimiter, "Length")),
+                Expression.Assign(position, Expression.Constant(0))
+            };
 
-            commands.Add(Expression.Assign(position, Expression.Constant(0)));
+            var returnTarget = Expression.Label(typeof((bool, int)));
+            var returnPosition = GetReturn(false, position, returnTarget);
+            var returnPositionOffset = GetReturn(false, Expression.Add(position, offset), returnTarget);
 
-            LabelTarget returnTarget = Expression.Label(typeof((bool, int)));
-            Expression returnPosition = GetReturn(false, position, returnTarget);
-            Expression returnPositionOffset = GetReturn(false, Expression.Add(position, offset), returnTarget);
+            var replacer = new ParameterReplacerVisitor(inst);
 
             var i = -1;
             foreach (var map in mappedColumns)
@@ -49,7 +46,7 @@ namespace RecordParser.Engines.Writer
                 reloop:
 
                 commands.Add(
-                    Expression.Assign(spanTemp, Expression.Call(span, "Slice", Type.EmptyTypes, position)));
+                    Expression.Assign(spanTemp, Slice(span, position)));
 
                 var isEmptyColumn = ++i != map.start;
                 if (isEmptyColumn)
@@ -69,7 +66,7 @@ namespace RecordParser.Engines.Writer
                 commands.Add(parse);
 
                 WriteDelimiter(
-                    Expression.Call(spanTemp, "Slice", Type.EmptyTypes, offset),
+                    Slice(spanTemp, offset),
                     Expression.Add(offset, delimiterLength),
                     returnPositionOffset);
             }

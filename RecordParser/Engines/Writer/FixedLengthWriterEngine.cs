@@ -16,33 +16,27 @@ namespace RecordParser.Engines.Writer
         public static Expression<FuncSpanTInt<T>> GetFuncThatSetProperties<T>(IEnumerable<MappingWriteConfiguration> mappedColumns, CultureInfo cultureInfo)
         {
             // parameters
-            ParameterExpression span = Expression.Variable(typeof(Span<char>), "span");
-            ParameterExpression inst = Expression.Variable(typeof(T), "inst");
-
-            var replacer = new ParameterReplacerVisitor(inst);
+            var span = Expression.Parameter(typeof(Span<char>), "span");
+            var inst = Expression.Parameter(typeof(T), "inst");
 
             // variables
-            ParameterExpression offset = Expression.Variable(typeof(int), "charsWritten");
-            ParameterExpression temp = Expression.Variable(typeof(Span<char>), "tempSpan");
+            var offset = Expression.Variable(typeof(int), "charsWritten");
+            var temp = Expression.Variable(typeof(Span<char>), "tempSpan");
 
-            List<ParameterExpression> variables = new List<ParameterExpression>();
-            variables.Add(offset);
-            variables.Add(temp);
+            var variables = new List<ParameterExpression>() { offset, temp };
 
             // commands
-            List<Expression> commands = new List<Expression>();
-
-            LabelTarget returnTarget = Expression.Label(typeof((bool, int)));
-
+            var commands = new List<Expression>();
+            var returnTarget = Expression.Label(typeof((bool, int)));
             var necessarySpace = Expression.Constant(mappedColumns.Max(x => x.start + x.length.Value));
-
+            var charsWritten = Expression.Constant(0);
             var tooShort = Expression.LessThan(
                                 Expression.PropertyOrField(span, "Length"),
                                 necessarySpace);
 
-            var charsWritten = Expression.Constant(0);
-
             commands.Add(Expression.IfThen(tooShort, GetReturn(false, charsWritten, returnTarget)));
+
+            var replacer = new ParameterReplacerVisitor(inst);
 
             foreach (var map in mappedColumns)
             {
@@ -67,7 +61,6 @@ namespace RecordParser.Engines.Writer
             commands.Add(GetReturn(true, necessarySpace, returnTarget));
 
             commands.Add(Expression.Label(returnTarget, Expression.Constant(default((bool, int)))));
-
 
             var blockExpr = Expression.Block(variables, commands);
 

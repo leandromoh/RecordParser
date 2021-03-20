@@ -14,6 +14,9 @@ namespace RecordParser.Engines
         public static Expression Trim(Expression str) =>
             Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, str);
 
+        public static Expression Slice(Expression span, Expression start) =>
+            Expression.Call(span, "Slice", Type.EmptyTypes, start);
+
         public static Expression Slice(Expression span, int start, int length) =>
             Slice(span, Expression.Constant(start), Expression.Constant(length));
 
