@@ -1,7 +1,6 @@
-﻿using RecordParser.Generic;
+﻿using RecordParser.Builders.Reader;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace RecordParser.Parsers
 {

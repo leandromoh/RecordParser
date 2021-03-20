@@ -1,8 +1,9 @@
-﻿using System;
+﻿using RecordParser.Parsers;
+using System;
 using System.Globalization;
 using System.Linq.Expressions;
 
-namespace RecordParser.Parsers
+namespace RecordParser.Builders.Reader
 {
     public interface IVariableLengthReaderSequentialBuilder<T>
     {

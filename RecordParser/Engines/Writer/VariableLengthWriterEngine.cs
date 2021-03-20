@@ -1,10 +1,11 @@
-﻿using RecordParser.Generic;
+﻿using RecordParser.Builders.Writer;
 using RecordParser.Parsers;
+using RecordParser.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq.Expressions;
-using static RecordParser.BuilderWrite.WriteEngine;
+using static RecordParser.Engines.Writer.WriteEngine;
 
 namespace RecordParser.Engines.Writer
 {

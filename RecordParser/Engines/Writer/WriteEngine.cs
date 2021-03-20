@@ -1,4 +1,4 @@
-﻿using RecordParser.Generic;
+﻿using RecordParser.Builders.Writer;
 using RecordParser.Parsers;
 using System;
 using System.Diagnostics;
@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using static RecordParser.Engines.ExpressionHelper;
 
-namespace RecordParser.BuilderWrite
+namespace RecordParser.Engines.Writer
 {
     internal static class WriteEngine
     {

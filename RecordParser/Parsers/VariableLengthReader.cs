@@ -1,4 +1,5 @@
-﻿using RecordParser.Generic;
+﻿using RecordParser.Builders.Reader;
+using RecordParser.Engines.Reader;
 using System;
 using System.Buffers;
 using System.Collections.Generic;

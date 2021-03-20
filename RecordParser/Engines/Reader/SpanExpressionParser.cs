@@ -1,9 +1,11 @@
-﻿using System;
+﻿using RecordParser.Builders.Reader;
+using RecordParser.Visitors;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using static RecordParser.Generic.GenericRecordParser;
+using static RecordParser.Engines.Reader.GenericRecordParser;
 using static RecordParser.Engines.ExpressionHelper;
 
 public delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
@@ -11,7 +13,7 @@ public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
 public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, ReadOnlySpan<(int start, int length)> config);
 public delegate T FuncTSpanArrayT<T>(T instance, ReadOnlySpan<char> line, ReadOnlySpan<(int start, int length)> config);
 
-namespace RecordParser.Generic
+namespace RecordParser.Engines.Reader
 {
     internal static class SpanExpressionParser
     {

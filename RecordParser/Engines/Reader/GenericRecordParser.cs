@@ -1,4 +1,6 @@
-﻿using System;
+﻿using RecordParser.Builders.Reader;
+using RecordParser.Visitors;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -6,7 +8,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.Engines.ExpressionHelper;
 
-namespace RecordParser.Generic
+namespace RecordParser.Engines.Reader
 {
     internal static class GenericRecordParser
     {

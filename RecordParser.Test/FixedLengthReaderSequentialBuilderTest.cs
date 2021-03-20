@@ -1,8 +1,8 @@
 using FluentAssertions;
+using RecordParser.Builders.Reader;
 using RecordParser.Parsers;
 using System;
 using System.Globalization;
-using System.Linq;
 using System.Linq.Expressions;
 using Xunit;
 

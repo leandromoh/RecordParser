@@ -1,5 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
-using RecordParser.Parsers;
+using RecordParser.Builders.Reader;
 using System;
 using System.Globalization;
 using System.IO;

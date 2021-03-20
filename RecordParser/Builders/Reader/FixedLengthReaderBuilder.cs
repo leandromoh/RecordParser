@@ -1,11 +1,12 @@
-﻿using RecordParser.Generic;
+﻿using RecordParser.Engines.Reader;
+using RecordParser.Parsers;
 using RecordParser.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq.Expressions;
 
-namespace RecordParser.Parsers
+namespace RecordParser.Builders.Reader
 {
     public interface IFixedLengthReaderBuilder<T>
     {

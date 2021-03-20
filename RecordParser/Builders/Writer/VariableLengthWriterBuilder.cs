@@ -1,5 +1,4 @@
 ﻿using RecordParser.Engines.Writer;
-using RecordParser.Generic;
 using RecordParser.Parsers;
 using System;
 using System.Collections.Generic;
@@ -7,7 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace RecordParser.BuilderWrite
+namespace RecordParser.Builders.Writer
 {
     public interface IVariableLengthWriterBuilder<T>
     {
