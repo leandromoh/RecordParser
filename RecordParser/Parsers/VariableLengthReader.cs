@@ -17,14 +17,16 @@ namespace RecordParser.Parsers
     internal class VariableLengthReader<T> : IVariableLengthReader<T>
     {
         private readonly FuncSpanArrayT<T> parser;
-        private readonly int[] config;
+        private readonly ReadOnlyMemory<int> config;
         private readonly int maxColumnIndex;
         private readonly string delimiter;
 
         internal VariableLengthReader(IEnumerable<MappingReadConfiguration> list, FuncSpanArrayT<T> parser, string separator)
         {
-            config = list.Select(x => x.start).ToArray();
-            maxColumnIndex = config.Max();
+            var temp = list.Select(x => x.start).ToArray();
+
+            config = temp;
+            maxColumnIndex = temp.Max();
             this.parser = parser;
             delimiter = separator;
         }
@@ -34,10 +36,10 @@ namespace RecordParser.Parsers
 #endif
         public T Parse(ReadOnlySpan<char> line)
         {
-            Span<(int start, int length)> csv = stackalloc (int, int)[config.Length];
-            TextFindHelper.SetStartLengthPositions(line, delimiter, config, maxColumnIndex, in csv);
-            T result = parser(line, csv);
-            return result;
+            Span<(int start, int length)> positions = stackalloc (int, int)[config.Length];
+            TextFindHelper.SetStartLengthPositions(line, delimiter, config.Span, maxColumnIndex, in positions);
+
+            return parser(line, positions);
         }
 
         public bool TryParse(ReadOnlySpan<char> line, out T result)
