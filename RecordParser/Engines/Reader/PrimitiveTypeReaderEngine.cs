@@ -1,5 +1,4 @@
-﻿using RecordParser.Builders.Reader;
-using RecordParser.Visitors;
+﻿using RecordParser.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,80 +9,11 @@ using static RecordParser.Engines.ExpressionHelper;
 
 namespace RecordParser.Engines.Reader
 {
-    internal static class GenericRecordParser
+    internal static class PrimitiveTypeReaderEngine
     {
-        public static BlockExpression MountSetProperties(
-            ParameterExpression objectParameter,
-            IEnumerable<MappingReadConfiguration> mappedColumns,
-            Func<int, MappingReadConfiguration, Expression> getTextValue)
-        {
-            var replacer = new ParameterReplacerVisitor(objectParameter);
-            var assignsExpressions = new List<Expression>();
-            var i = -1;
+        public static readonly IReadOnlyDictionary<(Type, Type), Func<Type, Expression, Expression>> dic;
 
-            foreach (var x in mappedColumns)
-            {
-                i++;
-
-                if (x.prop is null)
-                    continue;
-
-                Expression textValue = getTextValue(i, x);
-
-                var propertyType = x.prop.Type;
-                var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
-                var isPropertyNullable = nullableUnderlyingType != null;
-                var propertyUnderlyingType = nullableUnderlyingType ?? propertyType;
-
-                Expression valueToBeSetExpression = GetValueToBeSetExpression(
-                                                        propertyUnderlyingType,
-                                                        textValue,
-                                                        x.fmask);
-
-                if (valueToBeSetExpression.Type != propertyType)
-                {
-                    valueToBeSetExpression = Expression.Convert(valueToBeSetExpression, propertyType);
-                }
-
-                if (isPropertyNullable)
-                {
-                    valueToBeSetExpression = Expression.Condition(
-                        test: IsWhiteSpace(textValue),
-                        ifTrue: Expression.Constant(null, propertyType),
-                        ifFalse: valueToBeSetExpression);
-                }
-
-                var assign = Expression.Assign(replacer.Visit(x.prop), valueToBeSetExpression);
-
-                assignsExpressions.Add(assign);
-            }
-
-            assignsExpressions.Add(objectParameter);
-
-            var blockExpr = Expression.Block(assignsExpressions);
-
-            return blockExpr;
-        }
-
-        public static Expression GetValueToBeSetExpression(Type propertyType, Expression valueText, Expression func)
-        {
-            if (func != null)
-                if (func is LambdaExpression lamb)
-                    return new ParameterReplacerVisitor(valueText).Visit(lamb.Body);
-                else
-                    return Expression.Invoke(func, valueText);
-
-            var targetType = propertyType.IsEnum ? typeof(Enum) : propertyType;
-
-            if (dic.TryGetValue((valueText.Type, targetType), out var expF))
-                return expF(propertyType, valueText);
-
-            return GetParseExpression(propertyType, valueText);
-        }
-
-        private static readonly IReadOnlyDictionary<(Type, Type), Func<Type, Expression, Expression>> dic;
-
-        static GenericRecordParser()
+        static PrimitiveTypeReaderEngine()
         {
             var mapping = new Dictionary<(Type, Type), Func<Type, Expression, Expression>>();
 
@@ -126,7 +56,14 @@ namespace RecordParser.Engines.Reader
             dic.Add((typeof(ReadOnlySpan<char>), typeof(T)), GetExpressionExpChar(ex));
         }
 
-        private static Expression GetParseExpression(Type type, Expression valueText)
+        private static Func<Type, Expression, Expression> GetExpressionExpChar<T>(Expression<Func<ReadOnlySpanChar, T>> ex)
+        {
+            var intTao = new ReadOnlySpanVisitor().Modify(ex);
+
+            return (Type _, Expression valueText) => new ParameterReplacerVisitor(valueText).Visit(intTao.Body);
+        }
+
+        public static Expression GetParseExpression(Type type, Expression valueText)
         {
             return Expression.Call(
                 typeof(Convert), nameof(Convert.ChangeType), Type.EmptyTypes,
@@ -192,22 +129,6 @@ namespace RecordParser.Engines.Reader
                                 });
 
             return blockExpr;
-        }
-
-        private static Func<Type, Expression, Expression> GetExpressionExpChar<T>(Expression<Func<ReadOnlySpanChar, T>> ex)
-        {
-            var intTao = new ReadOnlySpanVisitor().Modify(ex);
-
-            return (Type _, Expression valueText) => new ParameterReplacerVisitor(valueText).Visit(intTao.Body);
-        }
-
-        public static Expression<FuncSpanT<T>> WrapInLambdaExpression<T>(this FuncSpanT<T> convert)
-        {
-            var arg = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
-            var call = Call(convert, arg);
-            var lambda = Expression.Lambda<FuncSpanT<T>>(call, arg);
-
-            return lambda;
         }
     }
 }

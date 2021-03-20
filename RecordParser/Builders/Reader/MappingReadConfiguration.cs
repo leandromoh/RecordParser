@@ -13,6 +13,11 @@ namespace RecordParser.Builders.Reader
         public Expression fmask { get; }
         public Type type { get; }
 
+        public bool ShouldTrim =>
+            prop.Type == typeof(string) ||
+            prop.Type == typeof(char) ||
+           (prop.Type == typeof(DateTime) && fmask != null);
+
         public MappingReadConfiguration(MemberExpression prop, int start, int? length, Type type, Expression fmask)
         {
             this.prop = prop;
