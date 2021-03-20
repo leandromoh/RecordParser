@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.Generic.GenericRecordParser;
+using static RecordParser.Engines.ExpressionHelper;
 
 public delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
 public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
@@ -17,7 +18,7 @@ namespace RecordParser.Generic
         public static Expression<FuncSpanArrayT<T>> RecordParserSpan<T>(IEnumerable<MappingReadConfiguration> mappedColumns)
         {
             var funcThatSetProperties = GetFuncThatSetPropertiesSpan<T>(mappedColumns);
-            var getNewInstance = CreateInstanceHelper.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop));
+            var getNewInstance = CreateInstanceEngine.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop));
 
             var instanceParameter = funcThatSetProperties.Parameters[0];
             var valueParameter = funcThatSetProperties.Parameters[1];
@@ -61,31 +62,24 @@ namespace RecordParser.Generic
                 var textValue =
                     Expression.Call(span, nameof(ReadOnlySpan<char>.Slice), Type.EmptyTypes, startIndex, length);
 
-                var shouldTrim = mapConfig.prop.Type == typeof(string)
-                              || mapConfig.prop.Type == typeof(char)
-                              || (mapConfig.prop.Type == typeof(DateTime) && mapConfig.fmask != null);
-
-                return shouldTrim
-                    ? Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, textValue)
+                return ShouldTrim(mapConfig)
+                    ? Trim(textValue)
                     : textValue;
-            },
-            GetIsWhiteSpaceExpression);
+            });
 
             return Expression.Lambda<FuncTSpanArrayT<T>>(blockExpr, new[] { objectParameter, span, configParameter });
         }
 
-        private static Expression GetIsWhiteSpaceExpression(Expression valueText)
-        {
-            return Expression.Call(typeof(MemoryExtensions),
-                nameof(MemoryExtensions.IsWhiteSpace),
-                Type.EmptyTypes, valueText);
-        }
+        private static bool ShouldTrim(MappingReadConfiguration mapConfig) =>
+            mapConfig.prop.Type == typeof(string) ||
+            mapConfig.prop.Type == typeof(char) ||
+           (mapConfig.prop.Type == typeof(DateTime) && mapConfig.fmask != null);
 
         private static Expression ReadOnlySpanIndex<T>(params Expression[] args)
         {
             Debug.Assert(args.Length == 2);
 
-            return GetExpressionFunc((FuncSpanIntT<T>)GetItem, args);
+            return Call((FuncSpanIntT<T>)GetItem, args);
         }
 
         private static T GetItem<T>(this ReadOnlySpan<T> span, int i) => span[i];

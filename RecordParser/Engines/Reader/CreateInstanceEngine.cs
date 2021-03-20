@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace RecordParser.Generic
 {
-    internal static class CreateInstanceHelper
+    internal static class CreateInstanceEngine
     {
         public static Expression<Func<T>> GetInstanceGenerator<T>(IEnumerable<MemberExpression> mapped)
         {

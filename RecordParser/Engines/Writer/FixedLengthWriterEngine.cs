@@ -6,7 +6,8 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using RecordParser.BuilderWrite;
-using static RecordParser.BuilderWrite.SpanExpressionHelper;
+using static RecordParser.BuilderWrite.WriteEngine;
+using static RecordParser.Engines.ExpressionHelper;
 
 namespace RecordParser.Engines.Writer
 {

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq.Expressions;
-using static RecordParser.BuilderWrite.SpanExpressionHelper;
+using static RecordParser.BuilderWrite.WriteEngine;
 
 namespace RecordParser.Engines.Writer
 {
