@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using RecordParser.Builders.Reader;
 using RecordParser.Parsers;
 using System;
 using System.Globalization;

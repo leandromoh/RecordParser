@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RecordParser.Generic
+namespace RecordParser.Engines.Reader
 {
     internal static class TextFindHelper
     {

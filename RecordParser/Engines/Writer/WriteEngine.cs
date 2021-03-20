@@ -1,15 +1,16 @@
-﻿using RecordParser.Generic;
+﻿using RecordParser.Builders.Writer;
+using RecordParser.Parsers;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using static RecordParser.Engines.ExpressionHelper;
 
-namespace RecordParser.BuilderWrite
+namespace RecordParser.Engines.Writer
 {
-    internal static class SpanExpressionHelper
+    internal static class WriteEngine
     {
         public static Expression DAs(Expression prop, MappingWriteConfiguration map, ParameterExpression temp, ParameterExpression charsWritten, Expression gotoReturn, CultureInfo cultureInfo)
         {
@@ -66,7 +67,7 @@ namespace RecordParser.BuilderWrite
                 var tryFormat = prop.Type switch
                 {
                     _ when prop.Type == typeof(char) || prop.Type == typeof(bool) =>
-                        Expression.Call(typeof(SpanExpressionHelper), "TryFormat", Type.EmptyTypes, prop, temp, charsWritten),
+                        Expression.Call(typeof(WriteEngine), "TryFormat", Type.EmptyTypes, prop, temp, charsWritten),
 
                     _ when prop.Type == typeof(Guid) => 
                         Expression.Call(prop, "TryFormat", Type.EmptyTypes, temp, charsWritten, format),
@@ -124,7 +125,7 @@ namespace RecordParser.BuilderWrite
 
         private static readonly ConstructorInfo _boolIntTupleConstructor;
 
-        static SpanExpressionHelper()
+        static WriteEngine()
         {
             _boolIntTupleConstructor = typeof((bool, int)).GetConstructor(new[] { typeof(bool), typeof(int) });
         }
@@ -198,13 +199,20 @@ namespace RecordParser.BuilderWrite
             return blockExpr;
         }
 
-        public static Expression StringAsSpan(Expression str) =>
-            Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);
+        public static Func<Expression, Expression, Expression, Expression> WrapInLambdaExpression<T>(this FuncSpanTIntBool<T> convert)
+        {
+            if (convert == null)
+                return null;
 
-        public static Expression Slice(Expression span, int start, int length) =>
-            Slice(span, start, Expression.Constant(length));
+            return (span, inst, offset) =>
+            {
+                var result = Expression.Variable(typeof((bool, int)), "temp");
 
-        public static Expression Slice(Expression span, int start, Expression length) =>
-            Expression.Call(span, "Slice", Type.EmptyTypes, Expression.Constant(start), length);
+                return Expression.Block(variables: new[] { result },
+                    Expression.Assign(result, Call(convert, span, inst)),
+                    Expression.Assign(offset, Expression.PropertyOrField(result, "Item2")),
+                    Expression.Not(Expression.PropertyOrField(result, "Item1")));
+            };
+        }
     }
 }

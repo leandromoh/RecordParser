@@ -1,6 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
-using RecordParser.BuilderWrite;
+using RecordParser.Builders.Writer;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace RecordParser.Generic
+namespace RecordParser.Builders.Reader
 {
-    internal readonly struct MappingConfiguration
+    internal readonly struct MappingReadConfiguration
     {
         public MemberExpression prop { get; }
         public int start { get; }
@@ -13,7 +13,7 @@ namespace RecordParser.Generic
         public Expression fmask { get; }
         public Type type { get; }
 
-        public MappingConfiguration(MemberExpression prop, int start, int? length, Type type, Expression fmask)
+        public MappingReadConfiguration(MemberExpression prop, int start, int? length, Type type, Expression fmask)
         {
             this.prop = prop;
             this.start = start;
@@ -22,8 +22,8 @@ namespace RecordParser.Generic
             this.fmask = fmask;
         }
 
-        public static IEnumerable<MappingConfiguration> Merge(
-            IEnumerable<MappingConfiguration> list,
+        public static IEnumerable<MappingReadConfiguration> Merge(
+            IEnumerable<MappingReadConfiguration> list,
             IReadOnlyDictionary<Type, Expression> dic)
         {
             var result = dic.Any() != true
@@ -33,7 +33,7 @@ namespace RecordParser.Generic
                         if (i.fmask != null || !dic.TryGetValue(i.type, out var fmask))
                             return i;
 
-                        return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask);
+                        return new MappingReadConfiguration(i.prop, i.start, i.length, i.type, fmask);
                     });
 
             result = result

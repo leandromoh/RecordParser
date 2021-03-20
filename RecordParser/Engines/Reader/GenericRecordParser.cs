@@ -1,20 +1,21 @@
-﻿using RecordParser.Parsers;
+﻿using RecordParser.Builders.Reader;
+using RecordParser.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using static RecordParser.Engines.ExpressionHelper;
 
-namespace RecordParser.Generic
+namespace RecordParser.Engines.Reader
 {
     internal static class GenericRecordParser
     {
         public static BlockExpression MountSetProperties(
             ParameterExpression objectParameter,
-            IEnumerable<MappingConfiguration> mappedColumns,
-            Func<int, MappingConfiguration, Expression> getTextValue,
-            Func<Expression, Expression> getIsNullOrWhiteSpace)
+            IEnumerable<MappingReadConfiguration> mappedColumns,
+            Func<int, MappingReadConfiguration, Expression> getTextValue)
         {
             var replacer = new ParameterReplacerVisitor(objectParameter);
             var assignsExpressions = new List<Expression>();
@@ -47,7 +48,7 @@ namespace RecordParser.Generic
                 if (isPropertyNullable)
                 {
                     valueToBeSetExpression = Expression.Condition(
-                        test: getIsNullOrWhiteSpace(textValue),
+                        test: IsWhiteSpace(textValue),
                         ifTrue: Expression.Constant(null, propertyType),
                         ifFalse: valueToBeSetExpression);
                 }
@@ -137,12 +138,6 @@ namespace RecordParser.Generic
                 });
         }
 
-        public static Expression StringAsSpan(Expression str) =>
-            Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);
-
-        public static Expression Trim(Expression str) =>
-            Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, str);
-
         private static Expression GetEnumFromSpanParseExpression(Type type, Expression span)
         {
             Debug.Assert(type.IsEnum);
@@ -206,34 +201,13 @@ namespace RecordParser.Generic
             return (Type _, Expression valueText) => new ParameterReplacerVisitor(valueText).Visit(intTao.Body);
         }
 
-        public static Expression GetExpressionFunc(Delegate f, params Expression[] args)
-        {
-            return Expression.Call(f.Target is null ? null : Expression.Constant(f.Target), f.Method, args);
-        }
-
         public static Expression<FuncSpanT<T>> WrapInLambdaExpression<T>(this FuncSpanT<T> convert)
         {
             var arg = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
-            var call = GetExpressionFunc(convert, arg);
+            var call = Call(convert, arg);
             var lambda = Expression.Lambda<FuncSpanT<T>>(call, arg);
 
             return lambda;
-        }
-
-        public static Func<Expression, Expression, Expression, Expression> WrapInLambdaExpression<T>(this FuncSpanTIntBool<T> convert)
-        {
-            if (convert == null)
-                return null;
-
-            return (span, inst, offset) =>
-            {
-                var result = Expression.Variable(typeof((bool, int)), "temp");
-
-                return Expression.Block(variables: new[] { result }, 
-                    Expression.Assign(result, GetExpressionFunc(convert, span, inst)),
-                    Expression.Assign(offset, Expression.PropertyOrField(result, "Item2")),
-                    Expression.Not(Expression.PropertyOrField(result, "Item1")));
-            };
         }
     }
 }

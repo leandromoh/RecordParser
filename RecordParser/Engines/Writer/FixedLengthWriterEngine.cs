@@ -1,58 +1,19 @@
-﻿using RecordParser.Generic;
+﻿using RecordParser.Builders.Writer;
 using RecordParser.Parsers;
+using RecordParser.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
-using static RecordParser.BuilderWrite.SpanExpressionHelper;
-using static RecordParser.BuilderWrite.FixedLengthPadWriter;
+using static RecordParser.Engines.ExpressionHelper;
+using static RecordParser.Engines.Writer.WriteEngine;
 
-namespace RecordParser.BuilderWrite
+namespace RecordParser.Engines.Writer
 {
-    public interface IFixedLengthWriterBuilder<T>
+    internal static class FixedLengthWriterEngine
     {
-        IFixedLengthWriter<T> Build(CultureInfo cultureInfo = null);
-        IFixedLengthWriterBuilder<T> DefaultTypeConvert<R>(FuncSpanTIntBool<R> ex);
-
-        IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, string format, Padding padding = Padding.Right, char paddingChar = ' ');
-        IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanTIntBool<R> converter = null, Padding padding = Padding.Right, char paddingChar = ' ');
-    }
-
-    public class FixedLengthWriterBuilder<T> : IFixedLengthWriterBuilder<T>
-    {
-        private readonly List<MappingWriteConfiguration> list = new();
-        private readonly Dictionary<Type, Func<Expression, Expression, Expression, Expression>> dic = new();
-
-        public IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanTIntBool<R> converter = null, Padding padding = Padding.Right, char paddingChar = ' ')
-        {
-            var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingWriteConfiguration(member, startIndex, length, converter.WrapInLambdaExpression(), null, padding, paddingChar, typeof(R)));
-            return this;
-
-        }
-        public IFixedLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, string format, Padding padding = Padding.Right, char paddingChar = ' ')
-        {
-            var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingWriteConfiguration(member, startIndex, length, null, format, padding, paddingChar, typeof(R)));
-            return this;
-        }
-
-        public IFixedLengthWriterBuilder<T> DefaultTypeConvert<R>(FuncSpanTIntBool<R> ex)
-        {
-            dic.Add(typeof(R), ex?.WrapInLambdaExpression());
-            return this;
-        }
-
-        public IFixedLengthWriter<T> Build(CultureInfo cultureInfo = null)
-        {
-            var maps = MappingWriteConfiguration.Merge(list, dic);
-            var expression = GetFuncThatSetProperties(maps, cultureInfo);
-
-            return new FixedLengthWriter<T>(expression.Compile());
-        }
-
-        private static Expression<FuncSpanTInt<T>> GetFuncThatSetProperties(IEnumerable<MappingWriteConfiguration> mappedColumns, CultureInfo cultureInfo)
+        public static Expression<FuncSpanTInt<T>> GetFuncThatSetProperties<T>(IEnumerable<MappingWriteConfiguration> mappedColumns, CultureInfo cultureInfo)
         {
             // parameters
             ParameterExpression span = Expression.Variable(typeof(Span<char>), "span");
@@ -117,8 +78,8 @@ namespace RecordParser.BuilderWrite
             void CallPad(MappingWriteConfiguration map)
             {
                 var padFunc = map.padding == Padding.Left
-                    ? nameof(PadLeft)
-                    : nameof(PadRight);
+                    ? nameof(FixedLengthPadWriter.PadLeft)
+                    : nameof(FixedLengthPadWriter.PadRight);
 
                 commands.Add(
                     Expression.Call(typeof(FixedLengthPadWriter), padFunc, Type.EmptyTypes,

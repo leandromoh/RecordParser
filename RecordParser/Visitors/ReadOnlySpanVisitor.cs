@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 
-namespace RecordParser.Generic
+namespace RecordParser.Visitors
 {
     internal struct ReadOnlySpanChar
     {

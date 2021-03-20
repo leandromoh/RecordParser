@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RecordParser.BuilderWrite
+namespace RecordParser.Engines.Writer
 {
     internal class FixedLengthPadWriter
     {

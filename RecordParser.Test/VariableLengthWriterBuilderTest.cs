@@ -1,8 +1,6 @@
 ﻿using FluentAssertions;
-using RecordParser.BuilderWrite;
+using RecordParser.Builders.Writer;
 using System;
-using System.Globalization;
-using System.Linq;
 using Xunit;
 
 namespace RecordParser.Test

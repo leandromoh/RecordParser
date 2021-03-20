@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
-using RecordParser.BuilderWrite;
-using RecordParser.Generic;
+using RecordParser.Builders.Writer;
 using System;
 using System.Linq.Expressions;
 using Xunit;
