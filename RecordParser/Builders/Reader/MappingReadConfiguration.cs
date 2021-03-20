@@ -28,34 +28,13 @@ namespace RecordParser.Generic
         {
             var result = dic.Any() != true
                     ? list
-                    : list.Select((Func<MappingReadConfiguration, MappingReadConfiguration>)(i =>
+                    : list.Select(i =>
                     {
                         if (i.fmask != null || !dic.TryGetValue(i.type, out var fmask))
                             return i;
 
-
-/* Unmerged change from project 'RecordParser (netcoreapp2.1)'
-Before:
-                        return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask);
-After:
-                        return new Generic.MappingConfiguration(i.prop, i.start, i.length, i.type, fmask);
-*/
-
-/* Unmerged change from project 'RecordParser (netcoreapp3.1)'
-Before:
-                        return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask);
-After:
-                        return new Generic.MappingConfiguration(i.prop, i.start, i.length, i.type, fmask);
-*/
-
-/* Unmerged change from project 'RecordParser (netcoreapp5.0)'
-Before:
-                        return new MappingConfiguration(i.prop, i.start, i.length, i.type, fmask);
-After:
-                        return new Generic.MappingConfiguration(i.prop, i.start, i.length, i.type, fmask);
-*/
-                        return (MappingReadConfiguration)new MappingReadConfiguration(i.prop, i.start, i.length, i.type, fmask);
-                    }));
+                        return new MappingReadConfiguration(i.prop, i.start, i.length, i.type, fmask);
+                    });
 
             result = result
                 .OrderBy(x => x.start)
