@@ -191,6 +191,7 @@ namespace RecordParser.Test
                                             Color: Color.LightBlue));
         }
 
+
         [Fact]
         public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
         {
@@ -213,6 +214,60 @@ namespace RecordParser.Test
                     Name = "mother name",
                 }
             });
+        }
+
+        [Fact]
+        public void Given_all_fields_with_quotes()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Model, 1)
+                .Map(x => x.Comment, 2)
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            var result = reader.Parse("\"1997\",\"Ford\",\"Super, luxurious truck\",\"30100.00\"");
+
+            result.Should().BeEquivalentTo((Year: 1997,
+                                            Model: "Ford",
+                                            Comment: "Super, luxurious truck",
+                                            Price: 30100.00));
+        }
+
+        [Fact]
+        public void Given_some_fields_with_quotes()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Model, 1)
+                .Map(x => x.Comment, 2)
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            var result = reader.Parse("1997,Ford,\"Super, luxurious truck\",30100.00");
+
+            result.Should().BeEquivalentTo((Year: 1997,
+                                            Model: "Ford",
+                                            Comment: "Super, luxurious truck",
+                                            Price: 30100.00));
+        }
+
+        [Fact]
+        public void Given_embedded_quotes_escaped_with_double_double_quotes()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Model, 1)
+                .Map(x => x.Comment, 2)
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            var result = reader.Parse("1997,Ford,\"Super, \"\"luxurious\"\" truck\",30100.00");
+
+            result.Should().BeEquivalentTo((Year: 1997,
+                                            Model: "Ford",
+                                            Comment: "Super, \"luxurious\" truck",
+                                            Price: 30100.00));
         }
 
         [Theory]
