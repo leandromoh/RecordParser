@@ -24,8 +24,29 @@ namespace RecordParser.Engines.Reader
         private static (int start, int length) ParseChunk(in ReadOnlySpan<char> line, ref int scanned, ref int position, in ReadOnlySpan<char> delimiter)
         {
             scanned += position + delimiter.Length;
+            var unlook = line.Slice(scanned);
 
-            position = line.Slice(scanned).IndexOf(delimiter);
+            if (unlook.TrimStart().StartsWith("\""))
+            {
+                scanned += unlook.IndexOf("\"") + 1;
+                unlook = line.Slice(scanned);
+                position = 0;
+
+                while (true)
+                {
+                    position += unlook.Slice(position).IndexOf("\"");
+                    position++;
+                    if (unlook.Slice(position).IndexOf("\"") == 0)
+                    {
+                        position++;
+                        continue;
+                    }
+
+                    return (scanned, position - 1);
+                }
+            }
+
+            position = unlook.IndexOf(delimiter);
             if (position < 0)
             {
                 position = line.Length - scanned;
