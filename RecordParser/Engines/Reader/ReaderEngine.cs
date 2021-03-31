@@ -139,8 +139,12 @@ namespace RecordParser.Engines.Reader
 
         public static Expression<FuncSpanT<T>> WrapInLambdaExpression<T>(this FuncSpanT<T> convert)
         {
+            Delegate d = typeof(T) == typeof(string)
+                        ? (convert is FuncSpanT<string> ex ? ex : null).quote()
+                        : convert;
+
             var arg = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
-            var call = Call(convert, arg);
+            var call = Call(d, arg);
             var lambda = Expression.Lambda<FuncSpanT<T>>(call, arg);
 
             return lambda;
