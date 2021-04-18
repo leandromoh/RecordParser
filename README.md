@@ -1,3 +1,4 @@
+[![Fuget](https://www.fuget.org/packages/RecordParser/badge.svg)](https://www.fuget.org/packages/RecordParser)
 [![Nuget](https://img.shields.io/nuget/v/recordparser)](https://www.nuget.org/packages/recordparser)
 ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/leandromoh/RecordParser/Validate%20dotnet/master)
 ![GitHub](https://img.shields.io/github/license/leandromoh/recordparser)
