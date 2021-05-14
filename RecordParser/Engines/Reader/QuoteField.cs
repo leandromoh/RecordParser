@@ -4,6 +4,30 @@ namespace RecordParser.Engines.Reader
 {
     public static class QuoteField
     {
+        public static (int start, int length) ParseQuotedChuck(in ReadOnlySpan<char> line, ref int scanned, ref int position, in ReadOnlySpan<char> delimiter)
+        {
+            const string singleQuote = "\"";
+
+            var unlook = line.Slice(scanned);
+
+            scanned += unlook.IndexOf(singleQuote) + 1;
+            unlook = line.Slice(scanned);
+            position = 0;
+
+            while (true)
+            {
+                position += unlook.Slice(position).IndexOf(singleQuote);
+                position++;
+                if (unlook.Slice(position).IndexOf(singleQuote) == 0)
+                {
+                    position++;
+                    continue;
+                }
+
+                return (scanned, position - 1);
+            }
+        }
+
         public static FuncSpanT<string> quote(this FuncSpanT<string> exp)
         {
             return (span) =>
