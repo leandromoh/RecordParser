@@ -23,7 +23,7 @@ It makes easier for developers to do parsing by automating non-relevant code, al
 10. It is easy configurated with a builder object, thus does not require to define a class each time you want to define a parser
 
 ### Currently there are parsers for 2 record formats: 
-1. Fixed length, common in positional files, e.g. mainframe use, COBOL, etc
+1. Fixed length, common in positional files, e.g. financial services, mainframe use, etc
     * [Reader](#fixed-length-reader)
     * [Writer](#fixed-length-writer)
 3. Variable length, common in delimited files, e.g. CSV, TSV files, etc
