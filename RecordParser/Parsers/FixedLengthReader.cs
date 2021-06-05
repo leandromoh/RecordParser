@@ -1,6 +1,4 @@
-﻿using RecordParser.Builders.Reader;
-using System;
-using System.Collections.Generic;
+﻿using System;
 
 namespace RecordParser.Parsers
 {
@@ -14,7 +12,7 @@ namespace RecordParser.Parsers
     {
         private readonly FuncSpanArrayT<T> parser;
 
-        internal FixedLengthReader(IEnumerable<MappingReadConfiguration> list, FuncSpanArrayT<T> parser)
+        internal FixedLengthReader(FuncSpanArrayT<T> parser)
         {
             this.parser = parser;
         }
