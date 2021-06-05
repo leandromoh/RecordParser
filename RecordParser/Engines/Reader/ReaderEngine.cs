@@ -7,9 +7,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.Engines.ExpressionHelper;
 
-public delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
+internal delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
 public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
-public delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, ReadOnlySpan<(int start, int length)> config);
+internal delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, ReadOnlySpan<(int start, int length)> config);
 
 namespace RecordParser.Engines.Reader
 {

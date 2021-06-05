@@ -13,7 +13,7 @@ namespace RecordParser.Engines.Writer
 {
     internal static class FixedLengthWriterEngine
     {
-        public static Expression<FuncSpanTInt<T>> GetFuncThatSetProperties<T>(IEnumerable<MappingWriteConfiguration> mappedColumns, CultureInfo cultureInfo)
+        public static Expression<FuncSpanTIntBool<T>> GetFuncThatSetProperties<T>(IEnumerable<MappingWriteConfiguration> mappedColumns, CultureInfo cultureInfo)
         {
             // parameters
             var span = Expression.Parameter(typeof(Span<char>), "span");
@@ -64,7 +64,7 @@ namespace RecordParser.Engines.Writer
 
             var blockExpr = Expression.Block(variables, commands);
 
-            var lambda = Expression.Lambda<FuncSpanTInt<T>>(blockExpr, new[] { span, inst });
+            var lambda = Expression.Lambda<FuncSpanTIntBool<T>>(blockExpr, new[] { span, inst });
 
             return lambda;
 
