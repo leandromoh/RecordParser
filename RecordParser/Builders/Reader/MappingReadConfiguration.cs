@@ -31,7 +31,7 @@ namespace RecordParser.Builders.Reader
             IEnumerable<MappingReadConfiguration> list,
             IReadOnlyDictionary<Type, Expression> dic)
         {
-            var result = dic.Any() != true
+            var result = dic.Count is 0
                     ? list
                     : list.Select(i =>
                     {
