@@ -4,12 +4,12 @@
 ![GitHub](https://img.shields.io/github/license/leandromoh/recordparser)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/leandromoh/RecordParser)
 
-# RecordParser - simple, fast, extensible parse for records
+# RecordParser - Simple, Fast, GC friendly & Extensible
 
-RecordParser is a expression tree based parser that helps you to write maintainable, fast and simple parsers.  
+RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance in a simple way.  
 It makes easier for developers to do parsing by automating non-relevant code, allowing the developer to focus on the essentials of mapping.
 
-### RecordParser is a Zero Allocation Writer/Reader Parser for .NET Core
+## RecordParser is a Zero Allocation Writer/Reader Parser for .NET Core
 
 1. It supports .NET Core 2.1, 3.1, 5.0 and .NET Standard 2.1
 2. It has minimal heap allocations because it does intense use of [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a new .NET type designed to have high-performance and reduce memory allocations [(see benchmark)](/Benchmark.md)
@@ -18,7 +18,7 @@ It makes easier for developers to do parsing by automating non-relevant code, al
 5. It is flexible: you can choose the most convenient way to configure each of your parsers: indexed or sequential configuration
 6. It is extensible: you can totally customize your parsing with lambdas/delegates 
 7. It is even more extensible because developers can easily create extension methods with custom maps
-8. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your POCO classes with minimised dependencies and low coupling  
+8. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your classes with minimised dependencies and low coupling  
 9. It provides simple API with 2 familiar methods: Parse and TryParse
 10. It is easy configurated with a builder object, thus does not require to define a class each time you want to define a parser
 
