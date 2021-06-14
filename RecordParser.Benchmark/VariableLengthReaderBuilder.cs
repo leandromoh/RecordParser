@@ -1,5 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using CsvHelper;
+using CsvHelper.Configuration;
 using RecordParser.Builders.Reader;
 using System;
 using System.Buffers;
@@ -8,6 +10,9 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Text;
 using System.Threading.Tasks;
+using TinyCsvParser;
+using TinyCsvParser.Mapping;
+using TinyCsvParser.TypeConverter;
 
 namespace RecordParser.Benchmark
 {
@@ -18,7 +23,7 @@ namespace RecordParser.Benchmark
     {
         [Params(500_000)]
         public int LimitRecord { get; set; }
-        
+
         public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
 
         [Benchmark]
@@ -94,6 +99,67 @@ namespace RecordParser.Benchmark
             });
         }
 
+        public class PersonMap : ClassMap<Person>
+        {
+            public PersonMap()
+            {
+                Map(x => x.id).Index(0);
+                Map(x => x.name).Index(1);
+                Map(x => x.age).Index(2);
+                Map(x => x.birthday).Index(3);
+                Map(x => x.gender).Index(4);
+                Map(x => x.email).Index(5);
+                Map(x => x.children).Index(7);
+            }
+        }
+
+        [Benchmark]
+        public async Task Read_VariableLength_CSVHelper()
+        {
+            using var reader = new StreamReader(PathSampleDataCSV);
+            using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
+            csvReader.Context.RegisterClassMap<PersonMap>();
+
+            var i = 0;
+            while (await csvReader.ReadAsync())
+            {
+                if (i++ == LimitRecord) return;
+
+                var record = csvReader.GetRecord<Person>();
+            }
+        }
+
+        class PersonTinyCsvMapping : CsvMapping<PersonTinyCsvParser>
+        {
+            public PersonTinyCsvMapping() : base()
+            {
+                MapProperty(0, x => x.id);
+                MapProperty(1, x => x.name);
+                MapProperty(2, x => x.age);
+                MapProperty(3, x => x.birthday);
+                MapProperty(4, x => x.gender, new EnumConverter<Gender>());
+                MapProperty(5, x => x.email);
+                MapProperty(7, x => x.children);
+            }
+        }
+
+        [Benchmark]
+        public async Task Read_VariableLength_TinyCsvParser()
+        {
+            var csvParserOptions = new CsvParserOptions(true, ',');
+            var csvParser = new CsvParser<PersonTinyCsvParser>(csvParserOptions, new PersonTinyCsvMapping());
+
+            var records = csvParser.ReadFromFile(PathSampleDataCSV, Encoding.UTF8);
+
+            var i = 0;
+            foreach (var item in records)
+            {
+                if (i++ == LimitRecord) return;
+
+                var record = item.Result;
+            }
+        }
+
         public async Task ProcessFlatFile(FuncSpanT<Person> parser)
         {
             await ProcessFile(parser, PathSampleDataTXT);
@@ -108,7 +174,7 @@ namespace RecordParser.Benchmark
         {
             using var stream = File.OpenRead(filePath);
             PipeReader reader = PipeReader.Create(stream);
-            
+
             var i = 0;
 
             while (true)

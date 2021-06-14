@@ -11,7 +11,7 @@ namespace RecordParser.Benchmark
 #if DEBUG
             await new WriterTestRunner().VariableLength_Write_Span_Builder();
 #else
-            BenchmarkRunner.Run<WriterTestRunner>();
+            BenchmarkRunner.Run<ReaderTestRunner>();
 #endif
             Console.Out.Write("Hit <enter> to exit...");
             Console.In.ReadLine();
@@ -34,5 +34,21 @@ namespace RecordParser.Benchmark
         public Gender gender;
         public string email;
         public bool children;
+    }
+
+    // TinyCsvParser library limits that our type
+    // 1) must be a class
+    // 2) must have properties instead of fields
+
+    public class PersonTinyCsvParser
+    {
+        public char alfa { get; set; }
+        public Guid? id { get; set; }
+        public string name { get; set; }
+        public int age { get; set; }
+        public DateTime birthday { get; set; }
+        public Gender gender { get; set; }
+        public string email { get; set; }
+        public bool children { get; set; }
     }
 }
