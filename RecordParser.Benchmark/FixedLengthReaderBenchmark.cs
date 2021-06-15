@@ -1,19 +1,26 @@
 ﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Jobs;
 using RecordParser.Builders.Reader;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using static RecordParser.Benchmark.Common;
 
 namespace RecordParser.Benchmark
 {
-    public partial class ReaderTestRunner
+    [MemoryDiagnoser]
+    [SimpleJob(RuntimeMoniker.NetCoreApp50)]
+    public class FixedLengthReaderBenchmark
     {
+        [Params(400_000)]
+        public int LimitRecord { get; set; }
+
         public string PathSampleDataTXT => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.txt");
 
         [Benchmark]
-        public async Task FixedLength_String_Raw()
+        public async Task Read_FixedLength_ManualString()
         {
             using var fileStream = File.OpenRead(PathSampleDataTXT);
             using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
@@ -39,7 +46,7 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
-        public async Task FixedLength_Span_Builder()
+        public async Task Read_FixedLength_RecordParser()
         {
             var parser = new FixedLengthReaderBuilder<Person>()
                 .Map(x => x.alfa, 0, 1)
@@ -55,7 +62,7 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
-        public async Task FixedLength_Span_Raw()
+        public async Task Read_FixedLength_ManualSpan()
         {
             await ProcessFlatFile((ReadOnlySpan<char> line) =>
             {
@@ -70,6 +77,11 @@ namespace RecordParser.Benchmark
                     children = bool.Parse(line.Slice(121, 5))
                 };
             });
+        }
+
+        private async Task ProcessFlatFile(FuncSpanT<Person> parser)
+        {
+            await ProcessFile(PathSampleDataTXT, parser, LimitRecord);
         }
     }
 }

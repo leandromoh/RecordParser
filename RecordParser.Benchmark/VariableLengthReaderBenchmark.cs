@@ -4,22 +4,20 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using RecordParser.Builders.Reader;
 using System;
-using System.Buffers;
 using System.Globalization;
 using System.IO;
-using System.IO.Pipelines;
 using System.Text;
 using System.Threading.Tasks;
 using TinyCsvParser;
 using TinyCsvParser.Mapping;
 using TinyCsvParser.TypeConverter;
+using static RecordParser.Benchmark.Common;
 
 namespace RecordParser.Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
     [SimpleJob(RuntimeMoniker.NetCoreApp50)]
-    public partial class ReaderTestRunner
+    public class VariableLengthReaderBenchmark
     {
         [Params(500_000)]
         public int LimitRecord { get; set; }
@@ -27,7 +25,7 @@ namespace RecordParser.Benchmark
         public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
 
         [Benchmark]
-        public async Task VariableLength_String_Raw()
+        public async Task Read_VariableLength_ManualString()
         {
             using var fileStream = File.OpenRead(PathSampleDataCSV);
             using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
@@ -54,7 +52,7 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
-        public async Task VariableLength_Span_Builder()
+        public async Task Read_VariableLength_RecordParser()
         {
             var parser = new VariableLengthReaderBuilder<Person>()
                 .Map(x => x.id, 0)
@@ -70,7 +68,7 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
-        public async Task VariableLength_Span_Raw()
+        public async Task Read_VariableLength_ManualSpan()
         {
             await ProcessCSVFile((ReadOnlySpan<char> line) =>
             {
@@ -144,7 +142,7 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
-        public async Task Read_VariableLength_TinyCsvParser()
+        public void Read_VariableLength_TinyCsvParser()
         {
             var csvParserOptions = new CsvParserOptions(true, ',');
             var csvParser = new CsvParser<PersonTinyCsvParser>(csvParserOptions, new PersonTinyCsvMapping());
@@ -160,97 +158,9 @@ namespace RecordParser.Benchmark
             }
         }
 
-        public async Task ProcessFlatFile(FuncSpanT<Person> parser)
-        {
-            await ProcessFile(parser, PathSampleDataTXT);
-        }
-
         public async Task ProcessCSVFile(FuncSpanT<Person> parser)
         {
-            await ProcessFile(parser, PathSampleDataCSV);
-        }
-
-        public async Task ProcessFile(FuncSpanT<Person> parser, string filePath)
-        {
-            using var stream = File.OpenRead(filePath);
-            PipeReader reader = PipeReader.Create(stream);
-
-            var i = 0;
-
-            while (true)
-            {
-                ReadResult read = await reader.ReadAsync();
-                ReadOnlySequence<byte> buffer = read.Buffer;
-                while (TryReadLine(ref buffer, out ReadOnlySequence<byte> sequence))
-                {
-                    if (i++ == LimitRecord) return;
-
-                    var person = ProcessSequence(sequence, parser);
-                }
-
-                reader.AdvanceTo(buffer.Start, buffer.End);
-                if (read.IsCompleted)
-                {
-                    break;
-                }
-            }
-        }
-
-        static bool TryReadLine(ref ReadOnlySequence<byte> buffer, out ReadOnlySequence<byte> line)
-        {
-            var position = buffer.PositionOf((byte)'\n');
-            if (position == null)
-            {
-                line = default;
-                return false;
-            }
-
-            line = buffer.Slice(0, position.Value);
-            buffer = buffer.Slice(buffer.GetPosition(1, position.Value));
-
-            return true;
-        }
-
-        static T ProcessSequence<T>(ReadOnlySequence<byte> sequence, FuncSpanT<T> parser)
-        {
-            const int LengthLimit = 256;
-
-            if (sequence.IsSingleSegment)
-            {
-                return Parse(sequence.FirstSpan, parser);
-            }
-
-            var length = (int)sequence.Length;
-            if (length > LengthLimit)
-            {
-                throw new ArgumentException($"Line has a length exceeding the limit: {length}");
-            }
-
-            Span<byte> span = stackalloc byte[(int)sequence.Length];
-            sequence.CopyTo(span);
-
-            return Parse(span, parser);
-        }
-
-        static T Parse<T>(ReadOnlySpan<byte> bytes, FuncSpanT<T> parser)
-        {
-            Span<char> chars = stackalloc char[bytes.Length];
-            Encoding.UTF8.GetChars(bytes, chars);
-
-            return parser(chars);
-        }
-
-        static ReadOnlySpan<char> ParseChunk(ref ReadOnlySpan<char> span, ref int scanned, ref int position)
-        {
-            scanned += position + 1;
-
-            position = span.Slice(scanned, span.Length - scanned).IndexOf(',');
-            if (position < 0)
-            {
-                position = span.Slice(scanned, span.Length - scanned).Length;
-            }
-
-            return span.Slice(scanned, position);
+            await ProcessFile(PathSampleDataCSV, parser, LimitRecord);
         }
     }
 }
