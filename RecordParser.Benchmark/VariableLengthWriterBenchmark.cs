@@ -1,8 +1,11 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using CsvHelper;
+using CsvHelper.Configuration;
 using RecordParser.Builders.Writer;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,6 +23,7 @@ namespace RecordParser.Benchmark
         public string DesktopPath => Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         public string WriteString_PathSampleDataCSV => Path.Combine(DesktopPath, "Write-String.csv");
         public string WriteSpan_PathSampleDataCSV => Path.Combine(DesktopPath, "Write-Span.csv");
+        public string WriteCsvHelper_PathSampleDataCSV => Path.Combine(DesktopPath, "Write-CsvHelper.csv");
 
         private static IEnumerable<Person> LoadPeople()
         {
@@ -106,6 +110,41 @@ namespace RecordParser.Benchmark
                         throw new Exception("cannot write object");
 
                     await streamWriter.WriteLineAsync(destination, 0, charsWritten);
+                }
+            }
+        }
+
+        public class PersonMap : ClassMap<Person>
+        {
+            public PersonMap()
+            {
+                Map(x => x.id).Index(0);
+                Map(x => x.name).Index(1);
+                Map(x => x.age).Index(2);
+                Map(x => x.birthday).Index(3);
+                Map(x => x.gender).Index(4);
+                Map(x => x.email).Index(5);
+                Map(x => x.children).Index(6);
+            }
+        }
+
+        [Benchmark]
+        public void Write_VariableLength_CSVHelper()
+        {
+            using var fileStream = File.Create(WriteCsvHelper_PathSampleDataCSV);
+            using var writer = new StreamWriter(fileStream);
+            using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
+            csvWriter.Context.RegisterClassMap<PersonMap>();
+
+            var i = 0;
+
+            while (true)
+            {
+                foreach (var person in _people)
+                {
+                    if (i++ == LimitRecord) return;
+
+                    csvWriter.WriteRecord(person);
                 }
             }
         }

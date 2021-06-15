@@ -11,9 +11,9 @@ namespace RecordParser.Benchmark
 #if DEBUG
             await new WriterTestRunner().VariableLength_Write_Span_Builder();
 #else
-            BenchmarkRunner.Run<FixedLengthReaderBenchmark>();
+            //BenchmarkRunner.Run<FixedLengthReaderBenchmark>();
 
-            //BenchmarkRunner.Run<VariableLengthWriterBenchmark>();
+            BenchmarkRunner.Run<VariableLengthWriterBenchmark>();
             //BenchmarkRunner.Run<VariableLengthReaderBenchmark>();
 
 #endif
