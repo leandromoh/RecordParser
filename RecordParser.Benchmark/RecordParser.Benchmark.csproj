@@ -3,13 +3,16 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.1;netcoreapp5.0</TargetFrameworks>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
     <PackageReference Include="CsvHelper" Version="27.1.0" />
+    <PackageReference Include="SoftCircuits.CsvParser" Version="3.0.0" />
     <PackageReference Include="System.IO.Pipelines" Version="5.0.1" />
     <PackageReference Include="TinyCsvParser" Version="2.6.0" />
+    <PackageReference Include="ZString" Version="2.4.2" />
   </ItemGroup>
 
   <ItemGroup>

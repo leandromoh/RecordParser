@@ -11,7 +11,11 @@ namespace RecordParser.Benchmark
 #if DEBUG
             await new WriterTestRunner().VariableLength_Write_Span_Builder();
 #else
-            BenchmarkRunner.Run<ReaderTestRunner>();
+            //BenchmarkRunner.Run<FixedLengthReaderBenchmark>();
+
+            BenchmarkRunner.Run<VariableLengthWriterBenchmark>();
+            //BenchmarkRunner.Run<VariableLengthReaderBenchmark>();
+
 #endif
             Console.Out.Write("Hit <enter> to exit...");
             Console.In.ReadLine();
@@ -50,5 +54,20 @@ namespace RecordParser.Benchmark
         public Gender gender { get; set; }
         public string email { get; set; }
         public bool children { get; set; }
+    }
+
+    // SoftCircuits.CsvParser library limits that our type
+    // 1) must be a class
+
+    public class PersonSoftCircuitsCsvParser
+    {
+        public char alfa;
+        public Guid? id;
+        public string name;
+        public int age;
+        public DateTime birthday;
+        public Gender gender;
+        public string email;
+        public bool children;
     }
 }
