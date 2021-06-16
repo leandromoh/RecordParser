@@ -55,4 +55,19 @@ namespace RecordParser.Benchmark
         public string email { get; set; }
         public bool children { get; set; }
     }
+
+    // SoftCircuits.CsvParser library limits that our type
+    // 1) must be a class
+
+    public class PersonSoftCircuitsCsvParser
+    {
+        public char alfa;
+        public Guid? id;
+        public string name;
+        public int age;
+        public DateTime birthday;
+        public Gender gender;
+        public string email;
+        public bool children;
+    }
 }
