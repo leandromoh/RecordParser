@@ -4,7 +4,7 @@ namespace RecordParser.Parsers
 {
     public interface IVariableLengthWriter<T>
     {
-        bool Parse(T instance, Span<char> destination, out int charsWritten);
+        bool TryFormat(T instance, Span<char> destination, out int charsWritten);
     }
 
     internal delegate (bool success, int charsWritten) FuncSpanSpanTInt<T>(Span<char> span, ReadOnlySpan<char> delimiter, T inst);
@@ -20,7 +20,7 @@ namespace RecordParser.Parsers
             this.separator = separator;
         }
 
-        public bool Parse(T instance, Span<char> destination, out int charsWritten)
+        public bool TryFormat(T instance, Span<char> destination, out int charsWritten)
         {
             var result = parse(destination, separator, instance);
 

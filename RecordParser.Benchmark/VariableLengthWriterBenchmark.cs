@@ -106,7 +106,7 @@ namespace RecordParser.Benchmark
                 {
                     if (i++ == LimitRecord) return;
 
-                    if (!writer.Parse(person, destination, out charsWritten))
+                    if (!writer.TryFormat(person, destination, out charsWritten))
                         throw new Exception("cannot write object");
 
                     await streamWriter.WriteLineAsync(destination, 0, charsWritten);
