@@ -6,7 +6,7 @@
 
 # RecordParser - Simple, Fast, GC friendly & Extensible
 
-RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance in a simple way.  
+RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance in a simple way. 
 It makes easier for developers to do parsing by automating non-relevant code, allowing the developer to focus on the essentials of mapping.
 
 ## RecordParser is a Zero Allocation Writer/Reader Parser for .NET Core
@@ -17,12 +17,16 @@ It makes easier for developers to do parsing by automating non-relevant code, al
 4. It supports to parse classes and structs types, without doing [boxing](https://docs.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing)
 5. It is flexible: you can choose the most convenient way to configure each of your parsers: indexed or sequential configuration
 6. It is extensible: you can totally customize your parsing with lambdas/delegates 
-7. It is even more extensible because developers can easily create extension methods with custom maps
+7. It is even more extensible because you can easily create extension methods that wraps custom mappings
 8. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your classes with minimised dependencies and low coupling  
-9. It provides simple API with 2 familiar methods: Parse and TryParse
-10. It is easy configurated with a builder object, thus does not require to define a class each time you want to define a parser
+9. It provides clean API with familiar methods: Parse, TryParse and TryFormat
+10. It is easy configurated with a builder object, even programmatically, because does not require to define a class each time you want to define a parser
 
-### Currently there are parsers for 2 record formats: 
+## Benchmark
+
+Check the [benchmark page](/Benchmark.md) to compare RecordParser with other libraries.
+
+## Currently there are parsers for 2 record formats: 
 1. Fixed length, common in positional files, e.g. financial services, mainframe use, etc
     * [Reader](#fixed-length-reader)
     * [Writer](#fixed-length-writer)
@@ -431,8 +435,3 @@ public void Given_specified_custom_parser_for_member_should_have_priority_over_c
     result.Should().Be("15 ; 42 ; 50");
 }
 ```
-
-## Benchmark
-
-Check library benchmark [here](/Benchmark.md)
-
