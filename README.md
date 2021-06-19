@@ -231,7 +231,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     // Act
 
-    var success = writer.Parse(instance, destination, out var charsWritten);
+    var success = writer.TryFormat(instance, destination, out var charsWritten);
 
     // Assert
 
@@ -266,7 +266,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     // Act
 
-    var success = writer.Parse(instance, destination, out var charsWritten);
+    var success = writer.TryFormat(instance, destination, out var charsWritten);
 
     // Assert
 
@@ -307,7 +307,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     // Act
 
-    var success = writer.Parse(instance, destination, out var charsWritten);
+    var success = writer.TryFormat(instance, destination, out var charsWritten);
 
     // Assert
 
@@ -340,7 +340,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     // Act
 
-    var success = writer.Parse(instance, destination, out var charsWritten);
+    var success = writer.TryFormat(instance, destination, out var charsWritten);
 
     // Assert
 
@@ -380,7 +380,7 @@ public void Given_types_with_custom_format_should_allow_define_default_parser_fo
 
     // Act
 
-    var success = writer.Parse(instance, destination, out var charsWritten);
+    var success = writer.TryFormat(instance, destination, out var charsWritten);
 
     // Assert
 
@@ -420,7 +420,7 @@ public void Given_specified_custom_parser_for_member_should_have_priority_over_c
 
     // Act
 
-    var success = writer.Parse(instance, destination, out var charsWritten);
+    var success = writer.TryFormat(instance, destination, out var charsWritten);
 
     // Assert
 
