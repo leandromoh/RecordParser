@@ -17,8 +17,8 @@ namespace RecordParser.Builders.Reader
 
     public class FixedLengthReaderBuilder<T> : IFixedLengthReaderBuilder<T>
     {
-        private readonly List<MappingReadConfiguration> list = new List<MappingReadConfiguration>();
-        private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
+        private readonly List<MappingReadConfiguration> list = new();
+        private readonly Dictionary<Type, Expression> dic = new();
 
         public IFixedLengthReaderBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int startIndex, int length,
@@ -35,7 +35,7 @@ namespace RecordParser.Builders.Reader
             return this;
         }
 
-        public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null) 
+        public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null)
         {
             var map = MappingReadConfiguration.Merge(list, dic);
             var func = ReaderEngine.RecordParserSpan<T>(map);

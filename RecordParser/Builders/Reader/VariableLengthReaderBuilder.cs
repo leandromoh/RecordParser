@@ -18,8 +18,8 @@ namespace RecordParser.Builders.Reader
 
     public class VariableLengthReaderBuilder<T> : IVariableLengthReaderBuilder<T>
     {
-        private readonly Dictionary<int, MappingReadConfiguration> list = new Dictionary<int, MappingReadConfiguration>();
-        private readonly Dictionary<Type, Expression> dic = new Dictionary<Type, Expression>();
+        private readonly Dictionary<int, MappingReadConfiguration> list = new();
+        private readonly Dictionary<Type, Expression> dic = new();
 
         public IVariableLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn,
             FuncSpanT<R> convert = null)
