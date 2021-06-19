@@ -42,7 +42,7 @@ namespace RecordParser.Builders.Writer
             IEnumerable<MappingWriteConfiguration> list,
             IReadOnlyDictionary<Type, Func<Expression, Expression, Expression, Expression>> dic)
         {
-            var result = dic.Any() != true
+            var result = dic.Count is 0
                     ? list
                     : list.Select(i =>
                     {

@@ -15,7 +15,7 @@ namespace RecordParser.Engines.Reader
 
         static PrimitiveTypeReaderEngine()
         {
-            var mapping = new Dictionary<(Type, Type), Func<Type, Expression, Expression>>();
+            var mapping = new Dictionary<(Type from, Type to), Func<Type, Expression, Expression>>();
 
             mapping.AddMapForReadOnlySpan(span => new string(span));
             mapping.AddMapForReadOnlySpan(span => ToChar(span));
