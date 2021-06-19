@@ -76,18 +76,20 @@ namespace RecordParser.Engines.Reader
                 .Cast<object>()
                 .Select(color =>
                 {
-                    var text = Expression.Call(typeof(MemoryExtensions), "CompareTo", Type.EmptyTypes,
-                        StringAsSpan(Expression.Constant(color.ToString())),
+                    var enumText = color.ToString();
+
+                    var compareTo = Expression.Call(typeof(MemoryExtensions), "CompareTo", Type.EmptyTypes,
+                        StringAsSpan(Expression.Constant(enumText)),
                         trim,
                         Expression.Constant(StringComparison.OrdinalIgnoreCase));
 
-                    var textCompare = Expression.Equal(text, Expression.Constant(0));
+                    var textEqual = Expression.Equal(compareTo, Expression.Constant(0));
 
-                    var length = Expression.Equal(
+                    var lengthEqual = Expression.Equal(
                         Expression.PropertyOrField(trim, "Length"),
-                        Expression.Constant(color.ToString().Length));
+                        Expression.Constant(enumText.Length));
 
-                    return (value: color, condition: Expression.AndAlso(length, textCompare));
+                    return (value: color, condition: Expression.AndAlso(lengthEqual, textEqual));
                 })
                 .Reverse()
                 .Aggregate((Expression)Expression.Condition(
