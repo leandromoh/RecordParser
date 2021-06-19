@@ -34,7 +34,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -85,7 +85,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -112,7 +112,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -144,7 +144,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -181,7 +181,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -218,7 +218,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -252,7 +252,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -296,7 +296,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 

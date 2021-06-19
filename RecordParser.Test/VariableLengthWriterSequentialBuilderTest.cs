@@ -27,7 +27,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -59,7 +59,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -92,7 +92,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -126,7 +126,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -199,7 +199,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -234,7 +234,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -270,7 +270,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -304,7 +304,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -342,7 +342,7 @@ namespace RecordParser.Test
                 var expected = value.ToString();
                 var instance = (value, 0);
 
-                var success = writer.Parse(instance, span, out var charsWritten);
+                var success = writer.TryFormat(instance, span, out var charsWritten);
 
                 success.Should().BeTrue();
                 span.Slice(0, charsWritten).ToString().Should().Be(expected);
@@ -365,7 +365,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -400,7 +400,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
@@ -515,7 +515,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var success = writer.Parse(instance, destination, out var charsWritten);
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
 
             // Assert
 
