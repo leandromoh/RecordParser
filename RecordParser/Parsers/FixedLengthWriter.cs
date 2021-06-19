@@ -4,7 +4,7 @@ namespace RecordParser.Parsers
 {
     public interface IFixedLengthWriter<T>
     {
-        bool Parse(T instance, Span<char> destination, out int charsWritten);
+        bool TryFormat(T instance, Span<char> destination, out int charsWritten);
     }
 
     public delegate (bool success, int charsWritten) FuncSpanTIntBool<T>(Span<char> span, T inst);
@@ -18,7 +18,7 @@ namespace RecordParser.Parsers
             this.parse = parse;
         }
 
-        public bool Parse(T instance, Span<char> destination, out int charsWritten)
+        public bool TryFormat(T instance, Span<char> destination, out int charsWritten)
         {
             var result = parse(destination, instance);
 
