@@ -7,7 +7,7 @@
 # RecordParser - Simple, Fast, GC friendly & Extensible
 
 RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance in a simple way.
-It makes easier for developers to do parsing by automating non-relevant code, allowing the developer to focus on the essentials of mapping.
+It makes easier for developers to do parsing by automating non-relevant code, allowing you to focus on the essentials of mapping.
 
 ## RecordParser is a Zero Allocation Writer/Reader Parser for .NET Core
 
@@ -24,7 +24,7 @@ It makes easier for developers to do parsing by automating non-relevant code, al
 
 ## Benchmark
 
-Libraries always say themselves have great perfomance, but how often they show you a benchmark comparing with other libraries?  
+Libraries always say themselves have great perfomance, but how often they show you a benchmark comparing with other libraries? 
 Check the [benchmark page](/Benchmark.md) to see RecordParser comparisons. If you miss some, a PR is welcome.
 
 ## Currently there are parsers for 2 record formats: 
