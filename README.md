@@ -24,7 +24,8 @@ It makes easier for developers to do parsing by automating non-relevant code, al
 
 ## Benchmark
 
-Check the [benchmark page](/Benchmark.md) to compare RecordParser with other libraries.
+Libraries always say themselves have great perfomance, but how often they show you a benchmark comparing with other libraries?  
+Check the [benchmark page](/Benchmark.md) to see RecordParser comparisons. If you miss some, a PR is welcome.
 
 ## Currently there are parsers for 2 record formats: 
 1. Fixed length, common in positional files, e.g. financial services, mainframe use, etc
