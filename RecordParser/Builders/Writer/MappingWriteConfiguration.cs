@@ -7,7 +7,14 @@ namespace RecordParser.Builders.Writer
 {
     public enum Padding
     {
+        /// <summary>
+        /// Pads a text with leading characters to a specified total length.
+        /// </summary>
         Left = 0,
+
+        /// <summary>
+        /// Pads a text with trailing characters to a specified total length.
+        /// </summary>
         Right = 1,
     }
 
