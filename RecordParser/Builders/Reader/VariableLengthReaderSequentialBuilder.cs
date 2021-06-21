@@ -13,8 +13,8 @@ namespace RecordParser.Builders.Reader
         /// <param name="separator">The text (usually a character) that delimits collumns and separate values.</param>
         /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
         /// <remarks>
-        /// If a custom parser function was registered by the user (for member or type), 
-        /// this culture will not be applied. Culture should be manually applied in custom parse functions. 
+        /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
+        /// Culture should be applied manually inside these functions.
         /// </remarks>
         /// <returns>The reader object.</returns>
         IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null);
@@ -100,8 +100,8 @@ namespace RecordParser.Builders.Reader
         /// <param name="separator">The text (usually a character) that delimits collumns and separate values.</param>
         /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
         /// <remarks>
-        /// If a custom parser function was registered by the user (for member or type), 
-        /// this culture will not be applied. Culture should be manually applied in custom parse functions. 
+        /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
+        /// Culture should be applied manually inside these functions.
         /// </remarks>
         /// <returns>The reader object.</returns>
         public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null) 
