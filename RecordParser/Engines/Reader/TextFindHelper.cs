@@ -25,7 +25,14 @@ namespace RecordParser.Engines.Reader
         {
             scanned += position + delimiter.Length;
 
-            position = line.Slice(scanned).IndexOf(delimiter);
+            var unlook = line.Slice(scanned);
+
+            if (unlook.TrimStart().StartsWith("\""))
+            {
+                return QuoteField.ParseQuotedChuck(line, ref scanned, ref position, delimiter);
+            }
+
+            position = unlook.IndexOf(delimiter);
             if (position < 0)
             {
                 position = line.Length - scanned;
