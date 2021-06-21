@@ -25,7 +25,7 @@ namespace RecordParser.Builders.Reader
 
         /// <summary>
         /// Define a default custom function that will be used to parse all properties or fields of type <typeparamref name="R"/>,
-        /// except whose that were configurated with a specific custom function.
+        /// except whose configurated with a specific custom function.
         /// </summary>
         /// <typeparam name="R">The type that will have a default custom function configurated.</typeparam>
         /// <param name="ex">The default custom function for type <typeparamref name="R"/>.</param>
@@ -69,7 +69,7 @@ namespace RecordParser.Builders.Reader
 
         /// <summary>
         /// Define a default custom function that will be used to parse all properties or fields of type <typeparamref name="R"/>,
-        /// except whose that were configurated with a specific custom function.
+        /// except whose configurated with a specific custom function.
         /// </summary>
         /// <typeparam name="R">The type that will have a default custom function configurated.</typeparam>
         /// <param name="ex">The default custom function for type <typeparamref name="R"/>.</param>
