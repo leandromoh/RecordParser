@@ -199,9 +199,9 @@ namespace RecordParser.Engines.Writer
             return blockExpr;
         }
 
-        public static Func<Expression, Expression, Expression, Expression> WrapInLambdaExpression<T>(this FuncSpanTIntBool<T> convert)
+        public static Func<Expression, Expression, Expression, Expression> WrapInLambdaExpression<T>(this FuncSpanTIntBool<T> converter)
         {
-            if (convert == null)
+            if (converter == null)
                 return null;
 
             return (span, inst, offset) =>
@@ -209,7 +209,7 @@ namespace RecordParser.Engines.Writer
                 var result = Expression.Variable(typeof((bool, int)), "temp");
 
                 return Expression.Block(variables: new[] { result },
-                    Expression.Assign(result, Call(convert, span, inst)),
+                    Expression.Assign(result, Call(converter, span, inst)),
                     Expression.Assign(offset, Expression.PropertyOrField(result, "Item2")),
                     Expression.Not(Expression.PropertyOrField(result, "Item1")));
             };

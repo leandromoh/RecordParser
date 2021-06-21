@@ -35,9 +35,9 @@ namespace RecordParser.Builders.Reader
         /// <param name="ex">
         /// An expression that identifies the property or field that will be assigned.
         /// </param>
-        /// <param name="convert">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
+        /// <param name="converter">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
         /// <returns>An object to configure the mapping.</returns>
-        IVariableLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, FuncSpanT<R> convert = null);
+        IVariableLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, FuncSpanT<R> converter = null);
 
         /// <summary>
         /// Advance the current column by the number specified in <paramref name="columnCount"/>.
@@ -59,13 +59,13 @@ namespace RecordParser.Builders.Reader
         /// <param name="ex">
         /// An expression that identifies the property or field that will be assigned.
         /// </param>
-        /// <param name="convert">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
+        /// <param name="converter">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
         /// <returns>An object to configure the mapping.</returns>
         public IVariableLengthReaderSequentialBuilder<T> Map<R>(
             Expression<Func<T, R>> ex,
-            FuncSpanT<R> convert = null)
+            FuncSpanT<R> converter = null)
         {
-            indexed.Map(ex, ++currentIndex, convert);
+            indexed.Map(ex, ++currentIndex, converter);
             return this;
         }
 

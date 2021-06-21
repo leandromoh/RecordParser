@@ -42,9 +42,9 @@ namespace RecordParser.Builders.Reader
         /// An expression that identifies the property or field that will be assigned.
         /// </param>
         /// <param name="length">The number of characters used by the field.</param>
-        /// <param name="convert">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
+        /// <param name="converter">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
         /// <returns>An object to configure the mapping.</returns>
-        IFixedLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, int length, FuncSpanT<R> convert = null);
+        IFixedLengthReaderSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, int length, FuncSpanT<R> converter = null);
     }
 
     public class FixedLengthReaderSequentialBuilder<T> : IFixedLengthReaderSequentialBuilder<T>
@@ -59,13 +59,13 @@ namespace RecordParser.Builders.Reader
         /// An expression that identifies the property or field that will be assigned.
         /// </param>
         /// <param name="length">The number of characters used by the field.</param>
-        /// <param name="convert">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
+        /// <param name="converter">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
         /// <returns>An object to configure the mapping.</returns>
         public IFixedLengthReaderSequentialBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int length,
-            FuncSpanT<R> convert = null)
+            FuncSpanT<R> converter = null)
         {
-            indexed.Map(ex, currentPosition, length, convert);
+            indexed.Map(ex, currentPosition, length, converter);
             currentPosition += length;
             return this;
         }

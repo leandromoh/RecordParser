@@ -38,9 +38,9 @@ namespace RecordParser.Builders.Reader
         /// </param>
         /// <param name="startIndex">The zero-based position where the field starts.</param>
         /// <param name="length">The number of characters used by the field.</param>
-        /// <param name="convert">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
+        /// <param name="converter">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
         /// <returns>An object to configure the mapping.</returns>
-        IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanT<R> convert = null);
+        IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanT<R> converter = null);
     }
 
     public class FixedLengthReaderBuilder<T> : IFixedLengthReaderBuilder<T>
@@ -56,14 +56,14 @@ namespace RecordParser.Builders.Reader
         /// </param>
         /// <param name="startIndex">The zero-based position where the field starts.</param>
         /// <param name="length">The number of characters used by the field.</param>
-        /// <param name="convert">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
+        /// <param name="converter">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
         /// <returns>An object to configure the mapping.</returns>
         public IFixedLengthReaderBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int startIndex, int length,
-            FuncSpanT<R> convert = null)
+            FuncSpanT<R> converter = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingReadConfiguration(member, startIndex, length, typeof(R), convert?.WrapInLambdaExpression()));
+            list.Add(new MappingReadConfiguration(member, startIndex, length, typeof(R), converter?.WrapInLambdaExpression()));
             return this;
         }
 

@@ -137,10 +137,10 @@ namespace RecordParser.Engines.Reader
             throw new InvalidOperationException($"Type '{propertyType.FullName}' does not have a default parse");
         }
 
-        public static Expression<FuncSpanT<T>> WrapInLambdaExpression<T>(this FuncSpanT<T> convert)
+        public static Expression<FuncSpanT<T>> WrapInLambdaExpression<T>(this FuncSpanT<T> converter)
         {
             var arg = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
-            var call = Call(convert, arg);
+            var call = Call(converter, arg);
             var lambda = Expression.Lambda<FuncSpanT<T>>(call, arg);
 
             return lambda;
