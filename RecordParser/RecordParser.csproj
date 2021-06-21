@@ -14,6 +14,7 @@
     <PackageReleaseNotes>
      Include readers and writers for variable-length and fixed-length records.
     </PackageReleaseNotes>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -10,9 +10,37 @@ namespace RecordParser.Builders.Reader
 {
     public interface IFixedLengthReaderBuilder<T>
     {
+        /// <summary>
+        /// Creates the reader object using the registered mappings.
+        /// </summary>
+        /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
+        /// <remarks>
+        /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
+        /// Culture should be applied manually inside these functions.
+        /// </remarks>
+        /// <returns>The reader object.</returns>
         IFixedLengthReader<T> Build(CultureInfo cultureInfo = null);
+
+        /// <summary>
+        /// Define a default custom function that will be used to parse all properties or fields of type <typeparamref name="R"/>,
+        /// except whose configurated with a specific custom function.
+        /// </summary>
+        /// <typeparam name="R">The type that will have a default custom function configurated.</typeparam>
+        /// <param name="ex">The default custom function for type <typeparamref name="R"/>.</param>
+        /// <returns>An object to configure the mapping.</returns>
         IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex);
-        IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanT<R> convert = null);
+
+        /// <summary>
+        /// Customize configuration for individual member.
+        /// </summary>
+        /// <param name="ex">
+        /// An expression that identifies the property or field that will be assigned.
+        /// </param>
+        /// <param name="startIndex">The zero-based position where the field starts.</param>
+        /// <param name="length">The number of characters used by the field.</param>
+        /// <param name="converter">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
+        /// <returns>An object to configure the mapping.</returns>
+        IFixedLengthReaderBuilder<T> Map<R>(Expression<Func<T, R>> ex, int startIndex, int length, FuncSpanT<R> converter = null);
     }
 
     public class FixedLengthReaderBuilder<T> : IFixedLengthReaderBuilder<T>
@@ -20,21 +48,47 @@ namespace RecordParser.Builders.Reader
         private readonly List<MappingReadConfiguration> list = new();
         private readonly Dictionary<Type, Expression> dic = new();
 
+        /// <summary>
+        /// Customize configuration for individual member.
+        /// </summary>
+        /// <param name="ex">
+        /// An expression that identifies the property or field that will be assigned.
+        /// </param>
+        /// <param name="startIndex">The zero-based position where the field starts.</param>
+        /// <param name="length">The number of characters used by the field.</param>
+        /// <param name="converter">Custom function to parse the ReadOnlySpan of char to <typeparamref name="R"/>.</param>
+        /// <returns>An object to configure the mapping.</returns>
         public IFixedLengthReaderBuilder<T> Map<R>(
             Expression<Func<T, R>> ex, int startIndex, int length,
-            FuncSpanT<R> convert = null)
+            FuncSpanT<R> converter = null)
         {
             var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
-            list.Add(new MappingReadConfiguration(member, startIndex, length, typeof(R), convert?.WrapInLambdaExpression()));
+            list.Add(new MappingReadConfiguration(member, startIndex, length, typeof(R), converter?.WrapInLambdaExpression()));
             return this;
         }
 
+        /// <summary>
+        /// Define a default custom function that will be used to parse all properties or fields of type <typeparamref name="R"/>,
+        /// except whose configurated with a specific custom function.
+        /// </summary>
+        /// <typeparam name="R">The type that will have a default custom function configurated.</typeparam>
+        /// <param name="ex">The default custom function for type <typeparamref name="R"/>.</param>
+        /// <returns>An object to configure the mapping.</returns>
         public IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex)
         {
             dic.Add(typeof(R), ex?.WrapInLambdaExpression());
             return this;
         }
 
+        /// <summary>
+        /// Creates the reader object using the registered mappings.
+        /// </summary>
+        /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
+        /// <remarks>
+        /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
+        /// Culture should be applied manually inside these functions.
+        /// </remarks>
+        /// <returns>The reader object.</returns>
         public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null)
         {
             var map = MappingReadConfiguration.Merge(list, dic);
