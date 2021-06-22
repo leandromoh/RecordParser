@@ -2,6 +2,8 @@
 using BenchmarkDotNet.Jobs;
 using CsvHelper.Configuration;
 using Cysharp.Text;
+using FlatFiles;
+using FlatFiles.TypeMapping;
 using RecordParser.Builders.Writer;
 using SoftCircuits.CsvParser;
 using System;
@@ -110,6 +112,37 @@ namespace RecordParser.Benchmark
                         throw new Exception("cannot write object");
 
                     await streamWriter.WriteLineAsync(destination, 0, charsWritten);
+                }
+            }
+        }
+
+        [Benchmark]
+        public async Task Write_VariableLength_FlatFiles()
+        {
+            var mapper = SeparatedValueTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
+
+            mapper.Property(x => x.id);
+            mapper.Property(x => x.name);
+            mapper.Property(x => x.age);
+            mapper.Property(x => x.birthday);
+            mapper.EnumProperty(x => x.gender).Formatter(x => x is Gender.Female ? nameof(Gender.Female) : nameof(Gender.Male));
+            mapper.Property(x => x.email);
+            mapper.Property(x => x.children);
+
+            var options = new SeparatedValueOptions { FormatProvider = CultureInfo.InvariantCulture, Separator = ";" };
+
+            using var fileStream = File.Create(GetFileName());
+            using var streamWriter = new StreamWriter(fileStream);
+            var writer = mapper.GetWriter(streamWriter, options);
+
+            var i = 0;
+            while (true)
+            {
+                foreach (var person in _peopleSoftCircuits)
+                {
+                    if (i++ == LimitRecord) return;
+
+                    await writer.WriteAsync(person);
                 }
             }
         }

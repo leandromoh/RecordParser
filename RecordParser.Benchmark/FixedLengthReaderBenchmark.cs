@@ -1,5 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using FlatFiles;
+using FlatFiles.TypeMapping;
 using RecordParser.Builders.Reader;
 using System;
 using System.Globalization;
@@ -77,6 +79,36 @@ namespace RecordParser.Benchmark
                     children = bool.Parse(line.Slice(121, 5))
                 };
             });
+        }
+
+        [Benchmark]
+        public async Task Read_FixedLength_FlatFiles()
+        {
+            var mapper = FixedLengthTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
+
+            mapper.Property(x => x.alfa, 1);
+            mapper.Ignored(1);
+            mapper.Property(x => x.name, 30);
+            mapper.Property(x => x.age, 2);
+            mapper.Ignored(5);
+            mapper.Property(x => x.birthday, 10).InputFormat("M/d/yyyy");
+            mapper.Ignored(36);
+            mapper.EnumProperty(x => x.gender, 6);
+            mapper.Ignored(1);
+            mapper.Property(x => x.email, 22);
+            mapper.Ignored(7);
+            mapper.Property(x => x.children, 5);
+
+            var options = new FixedLengthOptions { FormatProvider = CultureInfo.InvariantCulture };
+
+            using var fileStream = File.OpenRead(PathSampleDataTXT);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+
+            var i = 0;
+            foreach (var person in mapper.Read(streamReader, options))
+            {
+                if (i++ == LimitRecord) return;
+            }
         }
 
         private async Task ProcessFlatFile(FuncSpanT<Person> parser)

@@ -2,6 +2,8 @@
 using BenchmarkDotNet.Jobs;
 using CsvHelper;
 using CsvHelper.Configuration;
+using FlatFiles;
+using FlatFiles.TypeMapping;
 using RecordParser.Builders.Reader;
 using System;
 using System.Globalization;
@@ -65,6 +67,32 @@ namespace RecordParser.Benchmark
                 .Build(",", CultureInfo.InvariantCulture);
 
             await ProcessCSVFile(parser.Parse);
+        }
+
+        [Benchmark]
+        public async Task Read_VariableLength_FlatFiles()
+        {
+            var mapper = SeparatedValueTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
+
+            mapper.Property(x => x.id);
+            mapper.Property(x => x.name);
+            mapper.Property(x => x.age);
+            mapper.Property(x => x.birthday).InputFormat("M/d/yyyy");
+            mapper.EnumProperty(x => x.gender);
+            mapper.Property(x => x.email);
+            mapper.Ignored();
+            mapper.Property(x => x.children);
+
+            var options = new SeparatedValueOptions { FormatProvider = CultureInfo.InvariantCulture };
+
+            using var fileStream = File.OpenRead(PathSampleDataCSV);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+
+            var i = 0;
+            foreach (var person in mapper.Read(streamReader, options))
+            {
+                if (i++ == LimitRecord) return;
+            }
         }
 
         [Benchmark]
