@@ -1,4 +1,3 @@
-[![Fuget](https://www.fuget.org/packages/RecordParser/badge.svg)](https://www.fuget.org/packages/RecordParser)
 [![Nuget](https://img.shields.io/nuget/v/recordparser)](https://www.nuget.org/packages/recordparser)
 ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/leandromoh/RecordParser/Validate%20dotnet/master)
 ![GitHub](https://img.shields.io/github/license/leandromoh/recordparser)
@@ -6,8 +5,8 @@
 
 # RecordParser - Simple, Fast, GC friendly & Extensible
 
-RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance in a simple way.
-It makes easier for developers to do parsing by automating non-relevant code, allowing you to focus on the essentials of mapping.
+RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance and zero allocations, thanks to Span type.
+It makes easier for developers to do parsing by automating non-relevant code, which allow you to focus on the essentials of mapping.
 
 ## RecordParser is a Zero Allocation Writer/Reader Parser for .NET Core
 
