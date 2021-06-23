@@ -231,7 +231,8 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
                     Birthday: new DateTime(2020, 05, 23),
                     Money: 01234.567M);
 
-    Span<char> destination = new char[50];
+    // create buffer with 50 positions, all set to white space by default
+    Span<char> destination = Enumerable.Repeat(element: ' ', count: 50).ToArray();
 
     // Act
 
@@ -241,7 +242,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     result.Should().Be("foo bar baz 2020.05.23 0123456");
 }
@@ -266,7 +267,8 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
                     Birthday: new DateTime(2020, 05, 23),
                     Money: 01234.567M);
 
-    Span<char> destination = new char[50];
+    // create buffer with 50 positions, all set to white space by default
+    Span<char> destination = Enumerable.Repeat(element: ' ', count: 50).ToArray();
 
     // Act
 
@@ -276,12 +278,9 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
-    // '\0' is the default char. 
-    // which means the position was not setted, because we skip it.
-
-    result.Should().Be("foo bar baz\02020.05.23\00123456");
+    result.Should().Be("foo bar baz 2020.05.23 0123456");
 }
 ```
 
@@ -317,7 +316,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     result.Should().Be("foo bar baz ; 2020.05.23 ; 123.45 ; LightBlue");
 }
@@ -350,7 +349,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     result.Should().Be("foo bar baz ;  ; 2020.05.23 ; 123.45");
 }
@@ -380,7 +379,8 @@ public void Given_types_with_custom_format_should_allow_define_default_parser_fo
                     Date: new DateTime(2020, 05, 23),
                     Debit: 123.45M);
 
-    Span<char> destination = new char[50];
+    // create buffer with 50 positions, all set to white space by default
+    Span<char> destination = Enumerable.Repeat(element: ' ', count: 50).ToArray();
 
     // Act
 
@@ -390,12 +390,9 @@ public void Given_types_with_custom_format_should_allow_define_default_parser_fo
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
-    // '\0' is the default char. 
-    // which means the position was not setted, because we skip it.
-    
-    result.Should().Be("012345678901\023052020\0012345");
+    result.Should().Be("012345678901 23052020 012345");
 }
 ```
 ### Custom Property Convert - Writer
@@ -430,7 +427,7 @@ public void Given_specified_custom_parser_for_member_should_have_priority_over_c
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     result.Should().Be("15 ; 42 ; 50");
 }
