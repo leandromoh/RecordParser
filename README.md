@@ -241,7 +241,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     result.Should().Be("foo bar baz 2020.05.23 0123456");
 }
@@ -276,7 +276,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     // '\0' is the default char. 
     // which means the position was not setted, because we skip it.
@@ -317,7 +317,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     result.Should().Be("foo bar baz ; 2020.05.23 ; 123.45 ; LightBlue");
 }
@@ -350,7 +350,7 @@ public void Given_value_using_standard_format_should_parse_without_extra_configu
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     result.Should().Be("foo bar baz ;  ; 2020.05.23 ; 123.45");
 }
@@ -390,7 +390,7 @@ public void Given_types_with_custom_format_should_allow_define_default_parser_fo
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     // '\0' is the default char. 
     // which means the position was not setted, because we skip it.
@@ -430,7 +430,7 @@ public void Given_specified_custom_parser_for_member_should_have_priority_over_c
 
     success.Should().BeTrue();
 
-    var result = destination.Slice(0, charsWritten).ToString();
+    var result = destination.Slice(0, charsWritten);
 
     result.Should().Be("15 ; 42 ; 50");
 }
