@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using RecordParser.Builders.Writer;
+using RecordParser.Test;
 using System;
 using System.Linq.Expressions;
 using Xunit;
@@ -46,8 +47,8 @@ namespace RecordParser.Test
                 instance.Color.ToString().PadLeft(15, '-'),
             });
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be(expected);
@@ -111,8 +112,8 @@ namespace RecordParser.Test
 
             success.Should().BeFalse();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("2020.05.23");
@@ -142,8 +143,8 @@ namespace RecordParser.Test
 
             success.Should().BeFalse();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("foo bar baz----");
@@ -177,8 +178,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("012345678901\023052020\0012345");
@@ -212,8 +213,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("FOO BAR BAZ 23052020\00123.45\0NICK----");
@@ -246,8 +247,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("30 42 52 ");
@@ -287,8 +288,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("2020.05.23\0son name\01980.01.15\0mother name");

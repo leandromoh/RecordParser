@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using RecordParser.Builders.Writer;
+using RecordParser.Test;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -33,8 +34,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("foo bar baz ; 2020.05.23 ; 123.45 ; LightBlue");
@@ -65,8 +66,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("foo bar baz ; 2020.05.23 ;  ;  ; LightBlue");
@@ -98,8 +99,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be(" ; foo bar baz ; 2020.05.23 ; 123.45 ; LightBlue");
@@ -132,8 +133,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be(" ; foo bar baz ; 2020.05.23 ;  ; 123.45 ; LightBlue");
@@ -205,8 +206,8 @@ namespace RecordParser.Test
 
             success.Should().Be(successfulExpected);
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be(expected);
@@ -240,8 +241,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("12345678901 ; 23052020 ; 12345");
@@ -276,8 +277,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be(" ; FOO BAR BAZ ; 23052020 ; 123.45 ; NICK");
@@ -310,8 +311,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("30 ; 42 ; 52");
@@ -345,7 +346,7 @@ namespace RecordParser.Test
                 var success = writer.TryFormat(instance, span, out var charsWritten);
 
                 success.Should().BeTrue();
-                span.Slice(0, charsWritten).ToString().Should().Be(expected);
+                span.Slice(0, charsWritten).Should().Be(expected);
             }
         }
 
@@ -370,7 +371,7 @@ namespace RecordParser.Test
             // Assert
 
             success.Should().BeTrue();
-            destination.Slice(0, charsWritten).ToString().Should().Be(expected);
+            destination.Slice(0, charsWritten).Should().Be(expected);
         }
 
         [Fact]
@@ -406,8 +407,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("2020.05.23 ; son name ; 1980.01.15 ; mother name");
@@ -521,8 +522,8 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
 
-            var result = destination.Slice(0, charsWritten).ToString();
-            var unwritted = destination.Slice(charsWritten).ToString();
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be(expected);

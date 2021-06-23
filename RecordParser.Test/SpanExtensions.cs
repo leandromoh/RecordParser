@@ -1,4 +1,6 @@
-﻿using System;
+﻿using FluentAssertions;
+using FluentAssertions.Primitives;
+using System;
 
 namespace RecordParser.Test
 {
@@ -17,5 +19,9 @@ namespace RecordParser.Test
             value.ToLowerInvariant(temp);
             return temp.ToString();
         }
+
+        // FluentAssertions does not support Span yet
+        public static StringAssertions Should(this Span<char> value)
+            => value.ToString().Should();
     }
 }
