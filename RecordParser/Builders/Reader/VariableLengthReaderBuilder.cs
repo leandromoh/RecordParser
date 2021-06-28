@@ -16,12 +16,13 @@ namespace RecordParser.Builders.Reader
         /// </summary>
         /// <param name="separator">The text (usually a character) that delimits collumns and separate values.</param>
         /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
+        /// <param name="factory">Function that generates an instance of <typeparamref name="T"/>.</param>
         /// <remarks>
         /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
         /// Culture should be applied manually inside these functions.
         /// </remarks>
         /// <returns>The reader object.</returns>
-        IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null);
+        IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null, Func<T> factory = null);
 
         /// <summary>
         /// Define a default custom function that will be used to parse all properties or fields of type <typeparamref name="R"/>,
@@ -86,15 +87,16 @@ namespace RecordParser.Builders.Reader
         /// </summary>
         /// <param name="separator">The text (usually a character) that delimits collumns and separate values.</param>
         /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
+        /// <param name="factory">Function that generates an instance of <typeparamref name="T"/>.</param>
         /// <remarks>
         /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
         /// Culture should be applied manually inside these functions.
         /// </remarks>
         /// <returns>The reader object.</returns>
-        public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null)
+        public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null, Func<T> factory = null)
         {
             var map = MappingReadConfiguration.Merge(list.Select(x => x.Value), dic);
-            var func = ReaderEngine.RecordParserSpan<T>(map);
+            var func = ReaderEngine.RecordParserSpan(map, factory);
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
 

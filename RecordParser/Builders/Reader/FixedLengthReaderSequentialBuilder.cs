@@ -11,12 +11,13 @@ namespace RecordParser.Builders.Reader
         /// Creates the reader object using the registered mappings.
         /// </summary>
         /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
+        /// <param name="factory">Function that generates an instance of <typeparamref name="T"/>.</param>
         /// <remarks>
         /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
         /// Culture should be applied manually inside these functions.
         /// </remarks>
         /// <returns>The reader object.</returns>
-        IFixedLengthReader<T> Build(CultureInfo cultureInfo = null);
+        IFixedLengthReader<T> Build(CultureInfo cultureInfo = null, Func<T> factory = null);
 
         /// <summary>
         /// Define a default custom function that will be used to parse all properties or fields of type <typeparamref name="R"/>,
@@ -99,12 +100,13 @@ namespace RecordParser.Builders.Reader
         /// Creates the reader object using the registered mappings.
         /// </summary>
         /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
+        /// <param name="factory">Function that generates an instance of <typeparamref name="T"/>.</param>
         /// <remarks>
         /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
         /// Culture should be applied manually inside these functions.
         /// </remarks>
         /// <returns>The reader object.</returns>
-        public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null) 
-            => indexed.Build(cultureInfo);
+        public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null, Func<T> factory = null) 
+            => indexed.Build(cultureInfo, factory);
     }
 }

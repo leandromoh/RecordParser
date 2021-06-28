@@ -15,7 +15,7 @@ namespace RecordParser.Engines.Reader
 {
     internal static class ReaderEngine
     {
-        public static Expression<FuncSpanArrayT<T>> RecordParserSpan<T>(IEnumerable<MappingReadConfiguration> mappedColumns)
+        public static Expression<FuncSpanArrayT<T>> RecordParserSpan<T>(IEnumerable<MappingReadConfiguration> mappedColumns, Func<T> factory)
         {
             // parameters
             var line = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
@@ -45,8 +45,11 @@ namespace RecordParser.Engines.Reader
                     : textValue;
             });
 
-            var getNewInstance = CreateInstanceEngine.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop).OfType<MemberExpression>());
-            var assign = Expression.Assign(instanceVariable, getNewInstance.Body);
+            var getNewInstance = factory != null
+                ? Call(factory)
+                : CreateInstanceEngine.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop).OfType<MemberExpression>()).Body;
+
+            var assign = Expression.Assign(instanceVariable, getNewInstance);
             var body = Expression.Block(
                 typeof(T),
                 variables: blockThatSetProperties.Variables.Prepend(instanceVariable),

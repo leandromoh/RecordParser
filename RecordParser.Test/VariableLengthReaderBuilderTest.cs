@@ -12,6 +12,28 @@ namespace RecordParser.Test
     public class VariableLengthReaderBuilderTest : TestSetup
     {
         [Fact]
+        public void Given_factory_method_should_invoke_it_on_parse()
+        {
+            var called = 0;
+            var date = new DateTime(2020, 05, 23);
+            var color = Color.LightBlue;
+
+            var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, indexColumn: 0)
+                .Map(x => x.Money, 2)
+                .Build(";", factory: () => { called++; return (default, date, default, color); });
+
+            var result = reader.Parse("foo bar baz ; yyyy.MM.dd ; 0123.45; IGNORE ");
+
+            called.Should().Be(1);
+
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
+                                            Birthday: date,
+                                            Money: 123.45M,
+                                            Color: color));
+        }
+
+        [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
         {
             var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
