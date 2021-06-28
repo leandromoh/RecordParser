@@ -348,8 +348,8 @@ namespace RecordParser.Test
         [Fact]
         public void Parse_enum_same_way_framework()
         {
-            var writer = new VariableLengthWriterBuilder<(Color color, int)>()
-                .Map(x => x.color, 0)
+            var writer = new VariableLengthWriterBuilder<Color>()
+                .Map(x => x, 0)
                 .Build(";");
 
             Span<char> destination = stackalloc char[50];
@@ -367,9 +367,8 @@ namespace RecordParser.Test
             void Assert(Color value, Span<char> span)
             {
                 var expected = value.ToString();
-                var instance = (value, 0);
 
-                var success = writer.TryFormat(instance, span, out var charsWritten);
+                var success = writer.TryFormat(value, span, out var charsWritten);
 
                 success.Should().BeTrue();
                 span.Slice(0, charsWritten).Should().Be(expected);
@@ -381,14 +380,14 @@ namespace RecordParser.Test
         {
             // Arrange 
 
-            var writer = new VariableLengthWriterBuilder<(EmptyEnum color, bool _)>()
-                .Map(x => x.color, 0)
+            var writer = new VariableLengthWriterBuilder<EmptyEnum>()
+                .Map(x => x, 0)
                 .Build(";");
 
             Span<char> destination = stackalloc char[50];
 
-            var instance = (color: (EmptyEnum)777, false);
-            var expected = instance.color.ToString();
+            var instance = (EmptyEnum)777;
+            var expected = instance.ToString();
 
             // Act
 
