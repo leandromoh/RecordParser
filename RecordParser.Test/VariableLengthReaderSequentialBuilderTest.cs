@@ -136,10 +136,7 @@ namespace RecordParser.Test
         [Fact]
         public void Given_non_member_expression_on_mapping_should_parse()
         {
-            string name = default;
-            DateTime birthday = default;
-            decimal money = default;
-            Color color = default;
+            (string name, DateTime birthday, decimal money, Color color) = (default, default, default, default);
 
             var reader = new VariableLengthReaderSequentialBuilder<bool>()
                 .Map(_ => name)

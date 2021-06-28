@@ -260,7 +260,8 @@ namespace RecordParser.Test
         {
             // Assert
 
-            var (age, motherAge, fatherAge) = (15, 40, new Func<int>(() => { return 50; })); 
+            var called = 0;
+            var (age, motherAge, fatherAge) = (15, 40, new Func<int>(() => { called++; return 50; })); 
 
             var writer = new FixedLengthWriterBuilder<bool>()
                 .Map(_ => age, 0, 3, (span, value) => ((value * 2).TryFormat(span, out var written), written))
@@ -285,6 +286,8 @@ namespace RecordParser.Test
 
             result.Should().Be("30 42 52 ");
             unwritted.Should().Be(new string(default, freeSpace));
+
+            called.Should().Be(1);
         }
 
         [Fact]
