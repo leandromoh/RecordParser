@@ -7,7 +7,7 @@ namespace RecordParser.Builders.Reader
 {
     internal readonly struct MappingReadConfiguration
     {
-        public MemberExpression prop { get; }
+        public Expression prop { get; }
         public int start { get; }
         public int? length { get; }
         public Expression fmask { get; }
@@ -18,7 +18,7 @@ namespace RecordParser.Builders.Reader
             prop.Type == typeof(char) ||
            (prop.Type == typeof(DateTime) && fmask != null);
 
-        public MappingReadConfiguration(MemberExpression prop, int start, int? length, Type type, Expression fmask)
+        public MappingReadConfiguration(Expression prop, int start, int? length, Type type, Expression fmask)
         {
             this.prop = prop;
             this.start = start;

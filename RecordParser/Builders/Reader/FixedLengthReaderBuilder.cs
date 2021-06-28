@@ -62,7 +62,7 @@ namespace RecordParser.Builders.Reader
             Expression<Func<T, R>> ex, int startIndex, int length,
             FuncSpanT<R> converter = null)
         {
-            var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
+            var member = ex.Body;
             list.Add(new MappingReadConfiguration(member, startIndex, length, typeof(R), converter?.WrapInLambdaExpression()));
             return this;
         }
