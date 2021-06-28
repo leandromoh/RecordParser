@@ -177,6 +177,30 @@ namespace RecordParser.Test
             });
         }
 
+        [Fact]
+        public void Given_non_member_expression_on_mapping_should_parse()
+        {
+            string name = default;
+            DateTime birthday = default;
+            decimal money = default;
+
+            var reader = new FixedLengthReaderSequentialBuilder<bool>()
+                .Map(_ => name, length: 11)
+                .Skip(1)
+                .Map(_ => birthday, 10)
+                .Skip(1)
+                .Map(_ => money, 7)
+                .Build();
+
+            _ = reader.Parse("foo bar baz 2020.05.23 0123.45");
+
+            var result = (name, birthday, money);
+
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
+                                            Birthday: new DateTime(2020, 05, 23),
+                                            Money: 123.45M));
+        }
+
         [Theory]
         [InlineData("pt-BR")]
         [InlineData("en-US")]
