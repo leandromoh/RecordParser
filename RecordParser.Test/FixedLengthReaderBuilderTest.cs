@@ -11,6 +11,25 @@ namespace RecordParser.Test
     public class FixedLengthReaderBuilderTest : TestSetup
     {
         [Fact]
+        public void Given_factory_method_should_invoke_it_on_parse()
+        {
+            var called = 0;
+            var date = new DateTime(2020, 05, 23);
+            var reader = new FixedLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money)>()
+                .Map(x => x.Name, startIndex: 0, length: 11)
+                .Map(x => x.Money, 23, 7)
+                .Build(factory: () => { called++; return (default, date, default); });
+
+            var result = reader.Parse("foo bar baz yyyy.MM.dd 0123.45");
+
+            called.Should().Be(1);
+
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
+                                            Birthday: date,
+                                            Money: 123.45M));
+        }
+
+        [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
         {
             var reader = new FixedLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money)>()
