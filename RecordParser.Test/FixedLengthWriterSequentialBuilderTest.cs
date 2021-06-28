@@ -268,6 +268,41 @@ namespace RecordParser.Test
         }
 
         [Fact]
+        public void Given_non_member_expression_on_mapping_should_parse()
+        {
+            // Assert
+
+            var called = 0;
+            var (age, motherAge, fatherAge) = (15, 40, new Func<int>(() => { called++; return 50; }));
+
+            var writer = new FixedLengthWriterSequentialBuilder<bool>()
+                .Map(_ => age, 3, (span, value) => ((value * 2).TryFormat(span, out var written), written))
+                .Map(_ => motherAge, 3)
+                .Map(_ => fatherAge(), 3)
+                .DefaultTypeConvert<int>((span, value) => ((value + 2).TryFormat(span, out var written), written))
+                .Build();
+
+            Span<char> destination = stackalloc char[50];
+
+            // Act
+
+            var success = writer.TryFormat(default, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
+
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
+            var freeSpace = destination.Length - charsWritten;
+
+            result.Should().Be("30 42 52 ");
+            unwritted.Should().Be(new string(default, freeSpace));
+
+            called.Should().Be(1);
+        }
+
+        [Fact]
         public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
         {
             // Arrange 

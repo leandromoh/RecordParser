@@ -30,6 +30,28 @@ namespace RecordParser.Test
         }
 
         [Fact]
+        public void Given_non_member_expression_on_mapping_should_parse()
+        {
+            (string name, DateTime birthday, decimal money, Color color) = (default, default, default, default);
+
+            var reader = new VariableLengthReaderBuilder<bool>()
+                .Map(_ => name, indexColumn: 0)
+                .Map(_ => birthday, 1)
+                .Map(_ => money, 2)
+                .Map(_ => color, 3)
+                .Build(";");
+
+            _ = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue");
+
+            var result = (name, birthday, money, color);
+
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
+                                            Birthday: new DateTime(2020, 05, 23),
+                                            Money: 123.45M,
+                                            Color: Color.LightBlue));
+        }
+
+        [Fact]
         public void Given_types_with_custom_format_should_allow_define_default_parser_for_type()
         {
             var reader = new VariableLengthReaderBuilder<(decimal Balance, DateTime Date, decimal Debit)>()

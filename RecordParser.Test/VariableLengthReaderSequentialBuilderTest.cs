@@ -133,6 +133,28 @@ namespace RecordParser.Test
                                             Date: new DateTime(2020, 05, 23)));
         }
 
+        [Fact]
+        public void Given_non_member_expression_on_mapping_should_parse()
+        {
+            (string name, DateTime birthday, decimal money, Color color) = (default, default, default, default);
+
+            var reader = new VariableLengthReaderSequentialBuilder<bool>()
+                .Map(_ => name)
+                .Map(_ => birthday)
+                .Map(_ => money)
+                .Map(_ => color)
+                .Build(";");
+
+            _ = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue");
+
+            var result = (name, birthday, money, color);
+
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
+                                            Birthday: new DateTime(2020, 05, 23),
+                                            Money: 123.45M,
+                                            Color: Color.LightBlue));
+        }
+
         [Theory]
         [InlineData("pt-BR")]
         [InlineData("en-US")]

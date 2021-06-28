@@ -45,7 +45,7 @@ namespace RecordParser.Engines.Reader
                     : textValue;
             });
 
-            var getNewInstance = CreateInstanceEngine.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop));
+            var getNewInstance = CreateInstanceEngine.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop).OfType<MemberExpression>());
             var assign = Expression.Assign(instanceVariable, getNewInstance.Body);
             var body = Expression.Block(
                 typeof(T),
