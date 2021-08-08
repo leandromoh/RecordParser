@@ -36,7 +36,9 @@ namespace RecordParser.Engines.Reader
             {
                 const string quote = "\"\"";
 
-                if (span.IndexOf(quote) == -1)
+                var pos = span.IndexOf(quote);
+
+                if (pos == -1)
                 {
                     return exp is null
                       ? new string(span)
@@ -46,9 +48,8 @@ namespace RecordParser.Engines.Reader
                 Span<char> resp = stackalloc char[span.Length];
                 Span<char> e = resp;
 
-                while (true)
+                do
                 {
-                    var pos = span.IndexOf(quote);
                     if (pos != -1)
                     {
                         var temp = span.Slice(0, pos + 1);
@@ -62,7 +63,10 @@ namespace RecordParser.Engines.Reader
                         e = e.Slice(span.Length);
                         break;
                     }
-                }
+
+                    pos = span.IndexOf(quote);
+
+                } while (true);
 
                 resp = resp.Slice(0, resp.Length - e.Length);
 
