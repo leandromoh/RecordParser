@@ -6,7 +6,7 @@ namespace RecordParser.Engines.Reader
     {
         public static (int start, int length) ParseQuotedChuck(in ReadOnlySpan<char> line, ref int scanned, ref int position, in ReadOnlySpan<char> delimiter)
         {
-            const string singleQuote = "\"";
+            const char singleQuote = '"';
 
             var unlook = line.Slice(scanned);
 
@@ -18,7 +18,9 @@ namespace RecordParser.Engines.Reader
             {
                 position += unlook.Slice(position).IndexOf(singleQuote);
                 position++;
-                if (unlook.Slice(position).IndexOf(singleQuote) == 0)
+                if (unlook.Slice(position) is var temp
+                    && temp.IsEmpty == false
+                    && temp[0] == singleQuote)
                 {
                     position++;
                     continue;
