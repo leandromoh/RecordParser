@@ -95,15 +95,23 @@ namespace RecordParser.Builders.Reader
         /// <returns>The reader object.</returns>
         public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null, Func<T> factory = null)
         {
-            if (dic.ContainsKey(typeof(string)) == false)
-                dic[typeof(string)] = ReaderEngine.WrapInLambdaExpression<string>(null);
-
             var map = MappingReadConfiguration.Merge(list.Select(x => x.Value), dic);
-            var func = ReaderEngine.RecordParserSpan(map, factory);
+
+            var map2 = map.Select(i =>
+            {
+                if (i.type != typeof(string))
+                    return i;
+
+                var fmask = ((FuncSpanT<string>)i.fmask).quote();
+
+                return new MappingReadConfiguration(i.prop, i.start, i.length, i.type, fmask);
+            });
+
+            var func = ReaderEngine.RecordParserSpan(map2, factory);
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
 
-            return new VariableLengthReader<T>(map, func.Compile(), separator);
+            return new VariableLengthReader<T>(map2, func.Compile(), separator);
         }
     }
 }
