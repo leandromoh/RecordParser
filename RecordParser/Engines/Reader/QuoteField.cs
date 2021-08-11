@@ -34,16 +34,21 @@ namespace RecordParser.Engines.Reader
         {
             return (span) =>
             {
+                if (span[0] != '"')
+                {
+                    return done(exp, span);
+                }
+                else
+                {
+                    span = span.Slice(1, span.Length - 2);
+                }
+
                 const string quote = "\"\"";
 
                 var pos = span.IndexOf(quote);
 
                 if (pos == -1)
-                {
-                    return exp is null
-                      ? new string(span)
-                      : exp(span);
-                }
+                    return done(exp, span);
 
                 Span<char> resp = stackalloc char[span.Length];
                 Span<char> e = resp;
@@ -70,10 +75,15 @@ namespace RecordParser.Engines.Reader
 
                 resp = resp.Slice(0, resp.Length - e.Length);
 
+                return done(exp, resp);
+            };
+
+            static string done(FuncSpanT<string> exp, ReadOnlySpan<char> resp)
+            {
                 return exp is null
                        ? new string(resp)
                        : exp(resp);
-            };
+            }
         }
     }
 }
