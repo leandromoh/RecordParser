@@ -47,7 +47,7 @@ namespace RecordParser.Builders.Reader
     public class FixedLengthReaderBuilder<T> : IFixedLengthReaderBuilder<T>
     {
         private readonly List<MappingReadConfiguration> list = new();
-        private readonly Dictionary<Type, Expression> dic = new();
+        private readonly Dictionary<Type, Delegate> dic = new();
 
         /// <summary>
         /// Customize configuration for individual member.
@@ -64,7 +64,7 @@ namespace RecordParser.Builders.Reader
             FuncSpanT<R> converter = null)
         {
             var member = ex.Body;
-            list.Add(new MappingReadConfiguration(member, startIndex, length, typeof(R), converter?.WrapInLambdaExpression()));
+            list.Add(new MappingReadConfiguration(member, startIndex, length, typeof(R), converter));
             return this;
         }
 
@@ -77,7 +77,7 @@ namespace RecordParser.Builders.Reader
         /// <returns>An object to configure the mapping.</returns>
         public IFixedLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex)
         {
-            dic.Add(typeof(R), ex?.WrapInLambdaExpression());
+            dic.Add(typeof(R), ex);
             return this;
         }
 
