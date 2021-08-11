@@ -191,7 +191,6 @@ namespace RecordParser.Test
                                             Color: Color.LightBlue));
         }
 
-
         [Fact]
         public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
         {
