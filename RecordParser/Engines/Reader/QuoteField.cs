@@ -34,7 +34,7 @@ namespace RecordParser.Engines.Reader
         {
             return (span) =>
             {
-                if (span[0] != '"')
+                if (span.IsEmpty || span[0] != '"')
                 {
                     return done(exp, span);
                 }
