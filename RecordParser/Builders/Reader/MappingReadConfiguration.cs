@@ -10,7 +10,7 @@ namespace RecordParser.Builders.Reader
         public Expression prop { get; }
         public int start { get; }
         public int? length { get; }
-        public Expression fmask { get; }
+        public Delegate fmask { get; }
         public Type type { get; }
 
         public bool ShouldTrim =>
@@ -18,7 +18,7 @@ namespace RecordParser.Builders.Reader
             prop.Type == typeof(char) ||
            (prop.Type == typeof(DateTime) && fmask != null);
 
-        public MappingReadConfiguration(Expression prop, int start, int? length, Type type, Expression fmask)
+        public MappingReadConfiguration(Expression prop, int start, int? length, Type type, Delegate fmask)
         {
             this.prop = prop;
             this.start = start;
@@ -29,7 +29,7 @@ namespace RecordParser.Builders.Reader
 
         public static IEnumerable<MappingReadConfiguration> Merge(
             IEnumerable<MappingReadConfiguration> list,
-            IReadOnlyDictionary<Type, Expression> dic)
+            IReadOnlyDictionary<Type, Delegate> dic)
         {
             var result = dic.Count is 0
                     ? list

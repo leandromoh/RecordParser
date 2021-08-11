@@ -124,13 +124,10 @@ namespace RecordParser.Engines.Reader
             return blockExpr;
         }
 
-        private static Expression GetValueToBeSetExpression(Type propertyType, Expression valueText, Expression func)
+        private static Expression GetValueToBeSetExpression(Type propertyType, Expression valueText, Delegate func)
         {
             if (func != null)
-                if (func is LambdaExpression lamb)
-                    return new ParameterReplacerVisitor(valueText).Visit(lamb.Body);
-                else
-                    return Expression.Invoke(func, valueText);
+                return Call(func, valueText);
 
             var targetType = propertyType.IsEnum ? typeof(Enum) : propertyType;
 
@@ -138,15 +135,6 @@ namespace RecordParser.Engines.Reader
                 return expF(propertyType, valueText);
 
             throw new InvalidOperationException($"Type '{propertyType.FullName}' does not have a default parse");
-        }
-
-        public static Expression<FuncSpanT<T>> WrapInLambdaExpression<T>(this FuncSpanT<T> converter)
-        {
-            var arg = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
-            var call = Call(converter, arg);
-            var lambda = Expression.Lambda<FuncSpanT<T>>(call, arg);
-
-            return lambda;
         }
     }
 }

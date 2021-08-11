@@ -48,7 +48,7 @@ namespace RecordParser.Builders.Reader
     public class VariableLengthReaderBuilder<T> : IVariableLengthReaderBuilder<T>
     {
         private readonly Dictionary<int, MappingReadConfiguration> list = new();
-        private readonly Dictionary<Type, Expression> dic = new();
+        private readonly Dictionary<Type, Delegate> dic = new();
 
         /// <summary>
         /// Customize configuration for individual member.
@@ -63,7 +63,7 @@ namespace RecordParser.Builders.Reader
             FuncSpanT<R> convert = null)
         {
             var member = ex.Body;
-            var config = new MappingReadConfiguration(member, indexColumn, null, typeof(R), convert?.WrapInLambdaExpression());
+            var config = new MappingReadConfiguration(member, indexColumn, null, typeof(R), convert);
             list.Add(indexColumn, config);
             return this;
         }
@@ -77,7 +77,7 @@ namespace RecordParser.Builders.Reader
         /// <returns>An object to configure the mapping.</returns>
         public IVariableLengthReaderBuilder<T> DefaultTypeConvert<R>(FuncSpanT<R> ex)
         {
-            dic.Add(typeof(R), ex?.WrapInLambdaExpression());
+            dic.Add(typeof(R), ex);
             return this;
         }
 
