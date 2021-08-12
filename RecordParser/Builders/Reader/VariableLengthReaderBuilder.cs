@@ -97,15 +97,23 @@ namespace RecordParser.Builders.Reader
         {
             var map = MappingReadConfiguration.Merge(list.Select(x => x.Value), dic);
 
+            var fnull = QuoteField.quote(null);
+            var fmaks = new Dictionary<Delegate, Delegate>();
+
+            foreach (var x in map)
+                if (x.fmask is FuncSpanT<string> f)
+                    fmaks[x.fmask] = f.quote();
+
             var map2 = map.Select(i =>
             {
                 if (i.type != typeof(string))
                     return i;
 
-                var fmask = ((FuncSpanT<string>)i.fmask).quote();
+                var fmask = i.fmask is null ? fnull : fmaks[i.fmask];
 
                 return new MappingReadConfiguration(i.prop, i.start, i.length, i.type, fmask);
-            });
+            })
+                .ToList();
 
             var func = ReaderEngine.RecordParserSpan(map2, factory);
 

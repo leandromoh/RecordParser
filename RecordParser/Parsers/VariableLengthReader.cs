@@ -39,17 +39,7 @@ namespace RecordParser.Parsers
         public T Parse(ReadOnlySpan<char> line)
         {
             Span<(int start, int length)> positions = stackalloc (int, int)[config.Length];
-            TextFindHelper.SetStartLengthPositions(line, delimiter, config.Span, maxColumnIndex, in positions);
-
-            var s = stringFields.Span;
-            for (var i = 0; i < s.Length; i++)
-            {
-                var index = s[i];
-                var position = positions[index];
-
-                if (position.start != 0 && line[position.start - 1] == '"' && line[position.start + position.length] == '"')
-                    positions[index] = (position.start - 1, position.length + 2);
-            }
+            TextFindHelper.SetStartLengthPositions(stringFields.Span, line, delimiter, config.Span, maxColumnIndex, in positions);
 
             return parser(line, positions);
         }

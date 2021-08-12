@@ -2,9 +2,9 @@
 
 namespace RecordParser.Engines.Reader
 {
-    public static class QuoteField
+    internal static class QuoteField
     {
-        public static (int start, int length) ParseQuotedChuck(in ReadOnlySpan<char> line, ref int scanned, ref int position, in ReadOnlySpan<char> delimiter)
+        public static (int start, int length) ParseQuotedChuck(bool isStr, in ReadOnlySpan<char> line, ref int scanned, ref int position, in ReadOnlySpan<char> delimiter)
         {
             const char singleQuote = '"';
 
@@ -26,7 +26,9 @@ namespace RecordParser.Engines.Reader
                     continue;
                 }
 
-                return (scanned, position - 1);
+                return isStr 
+                    ? (scanned - 1, position + 1)
+                    : (scanned, position - 1);
             }
         }
 
