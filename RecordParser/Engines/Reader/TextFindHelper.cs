@@ -2,36 +2,54 @@
 
 namespace RecordParser.Engines.Reader
 {
-    internal static class TextFindHelper
+    internal ref struct TextFindHelper
     {
-        public static void SetStartLengthPositions(ReadOnlySpan<char> line, ReadOnlySpan<char> delimiter, ReadOnlySpan<int> config, int maxColumnIndex, in Span<(int start, int length)> csv)
+        private readonly ReadOnlySpan<char> source;
+        private readonly string delimiter;
+
+        private int scanned;
+        private int position;
+        private int current;
+
+        public TextFindHelper(ReadOnlySpan<char> source, string delimiter)
         {
-            var scanned = -delimiter.Length;
-            var position = 0;
+            this.source = source;
+            this.delimiter = delimiter;
 
-            for (int i = 0, j = 0; i <= maxColumnIndex && j < config.Length; i++)
-            {
-                var range = ParseChunk(in line, ref scanned, ref position, in delimiter);
-
-                if (i == config[j])
-                {
-                    csv[j] = range;
-                    j++;
-                }
-            }
+            scanned = -delimiter.Length;
+            position = 0;
+            current = 0;
         }
 
-        private static (int start, int length) ParseChunk(in ReadOnlySpan<char> line, ref int scanned, ref int position, in ReadOnlySpan<char> delimiter)
+        public ReadOnlySpan<char> getValue(int index)
+        {
+            if (index < current)
+                throw new Exception("can only be fowarrd");
+
+            while (current <= index)
+            {
+                var range = ParseChunk();
+
+                if (index == current++)
+                {
+                    return range;
+                }
+            }
+
+            throw new Exception("invalid index for line");
+        }
+
+        private ReadOnlySpan<char> ParseChunk()
         {
             scanned += position + delimiter.Length;
 
-            position = line.Slice(scanned).IndexOf(delimiter);
+            position = source.Slice(scanned).IndexOf(delimiter);
             if (position < 0)
             {
-                position = line.Length - scanned;
+                position = source.Length - scanned;
             }
 
-            return (scanned, position);
+            return source.Slice(scanned, position);
         }
     }
 }
