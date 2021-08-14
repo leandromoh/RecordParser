@@ -100,7 +100,7 @@ namespace RecordParser.Builders.Reader
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
 
-            return new VariableLengthReader<T>(map, func.Compile(), separator);
+            return new VariableLengthReader<T>(func.Compile(), separator);
         }
     }
 }
