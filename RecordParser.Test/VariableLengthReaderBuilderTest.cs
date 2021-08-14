@@ -252,7 +252,40 @@ namespace RecordParser.Test
         }
 
         [Fact]
-        public void Given_embedded_quotes_escaped_with_double_double_quotes()
+        public void Given_fields_missing_end_quote()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Model, 1)
+                .Map(x => x.Comment, 2)
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            Action result = () => reader.Parse("1997,Ford,\"Super, luxurious truck,30100.00");
+
+            result.Should().Throw<Exception>().WithMessage("quoted field missing end quote");
+        }
+
+        [Fact]
+        public void Given_unquoted_fields_which_contains_quotes_should_interpret_as_is()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Model, 1)
+                .Map(x => x.Comment, 2)
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            var result = reader.Parse("1997,TV 47\", Super \"luxurious\" truck,30100.00");
+
+            result.Should().BeEquivalentTo((Year: 1997,
+                                            Model: "TV 47\"",
+                                            Comment: "Super \"luxurious\" truck",
+                                            Price: 30100.00));
+        }
+
+        [Fact]
+        public void Given_embedded_quotes_escaped_with_two_double_quotes()
         {
             var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
                 .Map(x => x.Year, 0)

@@ -12,24 +12,33 @@ namespace RecordParser.Engines.Reader
 
             scanned += unlook.IndexOf(singleQuote) + 1;
             unlook = line.Slice(scanned);
-            position = 0;
+            position = unlook.IndexOf(singleQuote);
 
-            while (true)
+            if (position == -1)
+                throw new Exception("quoted field missing end quote");
+
+            position++;
+
+            do
             {
-                position += unlook.Slice(position).IndexOf(singleQuote);
-                position++;
+
                 if (unlook.Slice(position) is var temp
                     && temp.IsEmpty == false
                     && temp[0] == singleQuote)
                 {
                     position++;
-                    continue;
+                }
+                else
+                {
+                    return isStr
+                        ? (scanned - 1, position + 1)
+                        : (scanned, position - 1);
                 }
 
-                return isStr 
-                    ? (scanned - 1, position + 1)
-                    : (scanned, position - 1);
-            }
+                position += unlook.Slice(position).IndexOf(singleQuote);
+                position++;
+
+            } while (true);
         }
 
         public static FuncSpanT<string> quote(this FuncSpanT<string> exp)
