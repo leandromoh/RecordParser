@@ -10,16 +10,16 @@ namespace RecordParser.Parsers
 
     internal class FixedLengthReader<T> : IFixedLengthReader<T>
     {
-        private readonly FuncSpanArrayT<T> parser;
+        private readonly FuncSpanT<T> parser;
 
-        internal FixedLengthReader(FuncSpanArrayT<T> parser)
+        internal FixedLengthReader(FuncSpanT<T> parser)
         {
             this.parser = parser;
         }
 
         public T Parse(ReadOnlySpan<char> line)
         {
-            return parser(line, default);
+            return parser(line);
         }
 
         public bool TryParse(ReadOnlySpan<char> line, out T result)

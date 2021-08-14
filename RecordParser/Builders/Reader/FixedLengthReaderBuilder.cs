@@ -94,7 +94,7 @@ namespace RecordParser.Builders.Reader
         public IFixedLengthReader<T> Build(CultureInfo cultureInfo = null, Func<T> factory = null)
         {
             var map = MappingReadConfiguration.Merge(list, dic);
-            var func = ReaderEngine.RecordParserSpan(map, factory);
+            var func = ReaderEngine.RecordParserSpanFlat(map, factory);
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
 
