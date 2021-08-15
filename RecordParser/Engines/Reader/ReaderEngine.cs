@@ -10,7 +10,7 @@ using static RecordParser.Engines.ExpressionHelper;
 
 internal delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
 public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
-internal delegate T FuncSpanArrayT<T>(TextFindHelper finder);
+internal delegate T FuncSpanArrayT<T>(in TextFindHelper finder);
 
 namespace RecordParser.Engines.Reader
 {
@@ -19,7 +19,7 @@ namespace RecordParser.Engines.Reader
         public static Expression<FuncSpanArrayT<T>> RecordParserSpanCSV<T>(IEnumerable<MappingReadConfiguration> mappedColumns, Func<T> factory)
         {
             // parameters
-            var configParameter = Expression.Parameter(typeof(TextFindHelper), "config");
+            var configParameter = Expression.Parameter(typeof(TextFindHelper).MakeByRefType(), "config");
 
             // variables
             var instanceVariable = Expression.Variable(typeof(T), "inst");
