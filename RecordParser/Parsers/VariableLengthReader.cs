@@ -1,9 +1,5 @@
-﻿using RecordParser.Builders.Reader;
-using RecordParser.Engines.Reader;
+﻿using RecordParser.Engines.Reader;
 using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace RecordParser.Parsers
@@ -32,7 +28,14 @@ namespace RecordParser.Parsers
         {
             var finder = new TextFindHelper(line, delimiter);
 
-            return parser(finder);
+            try
+            {
+                return parser(in finder);
+            }
+            finally
+            {
+                finder.Dispose();
+            }
         }
 
         public bool TryParse(ReadOnlySpan<char> line, out T result)
