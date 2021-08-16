@@ -161,6 +161,24 @@ namespace RecordParser.Test
                                             Owner: owner));
         }
 
+        [Fact]
+        public void Given_fields_with_new_line_character_interpret_as_is()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Model, 1)
+                .Map(x => x.Comment, 2)
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            var result = reader.Parse("\n1997,Ford \n Model, Super \"luxu\nrious\" truck,30100.99\n");
+
+            result.Should().BeEquivalentTo((Year: 1997,
+                                            Model: "Ford \n Model",
+                                            Comment: "Super \"luxu\nrious\" truck",
+                                            Price: 30100.99));
+        }
+
         public static string NormalizeQuotedField(string text) =>
             text.Trim('"').Replace("\"\"", "\"");
     }
