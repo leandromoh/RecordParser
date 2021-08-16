@@ -21,12 +21,12 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("\"1997\",\"Ford\",\"Super, luxurious truck\",\"30100.00\"");
+            var result = reader.Parse("\"1997\",\"Ford\",\"Super, luxurious truck\",\"30100.99\"");
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford",
                                             Comment: "Super, luxurious truck",
-                                            Price: 30100.00));
+                                            Price: 30100.99));
         }
 
         [Fact]
@@ -39,16 +39,35 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("1997,Ford,\"Super, luxurious truck\",30100.00");
+            var result = reader.Parse("1997,Ford,\"Super, luxurious truck\",30100.99");
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford",
                                             Comment: "Super, luxurious truck",
-                                            Price: 30100.00));
+                                            Price: 30100.99));
         }
 
         [Fact]
-        public void Given_fields_missing_end_quote()
+        public void Given_skip_quoted_field()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Model, 1)
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            var result = reader.Parse("1997,Ford,\"Super, luxurious truck\",30100.99");
+
+            result.Should().BeEquivalentTo((Year: 1997,
+                                            Model: "Ford",
+                                            Comment: (string) null,
+                                            Price: 30100.99));
+        }
+
+        [Theory]
+        [InlineData("1997,Ford,\"Super, luxurious truck,30100.99")]
+        [InlineData("1997,Ford,\"Super, \"\"luxurious truck\"\",30100.99")]
+        public void Given_fields_missing_end_quote(string line)
         {
             var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
                 .Map(x => x.Year, 0)
@@ -57,7 +76,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            Action result = () => reader.Parse("1997,Ford,\"Super, luxurious truck,30100.00");
+            Action result = () => reader.Parse(line);
 
             result.Should().Throw<Exception>().WithMessage("quoted field missing end quote");
         }
@@ -72,12 +91,12 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("1997,TV 47\", Super \"luxurious\" truck,30100.00");
+            var result = reader.Parse("1997,TV 47\", Super \"luxurious\" truck,30100.99");
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "TV 47\"",
                                             Comment: "Super \"luxurious\" truck",
-                                            Price: 30100.00));
+                                            Price: 30100.99));
         }
 
         [Fact]
@@ -90,12 +109,12 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("1997,Ford,\"Super, \"\"luxurious\"\" truck\",30100.00");
+            var result = reader.Parse("1997,Ford,\"Super, \"\"luxurious\"\" truck\",30100.99");
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford",
                                             Comment: "Super, \"luxurious\" truck",
-                                            Price: 30100.00));
+                                            Price: 30100.99));
         }
 
         [Fact]

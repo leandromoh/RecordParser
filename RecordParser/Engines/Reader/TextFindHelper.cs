@@ -41,9 +41,10 @@ namespace RecordParser.Engines.Reader
 
             while (current <= index)
             {
-                var range = ParseChunk();
+                var match = index == current++;
+                var range = ParseChunk(match);
 
-                if (index == current++)
+                if (match)
                 {
                     return range;
                 }
@@ -52,7 +53,7 @@ namespace RecordParser.Engines.Reader
             throw new Exception("invalid index for line");
         }
 
-        private ReadOnlySpan<char> ParseChunk()
+        private ReadOnlySpan<char> ParseChunk(bool match)
         {
             scanned += position + delimiter.Length;
 
@@ -61,7 +62,7 @@ namespace RecordParser.Engines.Reader
 
             if (isQuotedField)
             {
-                return ParseQuotedChuck();
+                return ParseQuotedChuck(match);
             }
 
             position = unlook.IndexOf(delimiter);
@@ -73,7 +74,7 @@ namespace RecordParser.Engines.Reader
             return source.Slice(scanned, position);
         }
 
-        private ReadOnlySpan<char> ParseQuotedChuck()
+        private ReadOnlySpan<char> ParseQuotedChuck(bool match)
         {
             const char singleQuote = '"';
             var unlook = source.Slice(scanned);
@@ -81,42 +82,76 @@ namespace RecordParser.Engines.Reader
             unlook = source.Slice(scanned);
             position = 0;
 
-            buffer ??= ArrayPool<char>.Shared.Rent(unlook.Length);
-            Span<char> resp = buffer;
-
-            for (int i = 0, j = 0; i < unlook.Length; i++)
+            if (match)
             {
-                var c = unlook[i];
+                buffer ??= ArrayPool<char>.Shared.Rent(unlook.Length);
+                Span<char> resp = buffer;
 
-                switch (c)
+                for (int i = 0, j = 0; i < unlook.Length; i++)
                 {
-                    case '"':
-                        var next = unlook.Slice(i + 1);
-                        if (next.IsEmpty)
-                        {
-                            position += i;
-                            return resp.Slice(0, j);
-                        }
-                        if (next[0] == '"')
-                        {
-                            resp[j++] = '"';
-                            i++;
+                    var c = unlook[i];
+
+                    switch (c)
+                    {
+                        case '"':
+                            var next = unlook.Slice(i + 1);
+                            if (next.IsEmpty)
+                            {
+                                position += i;
+                                return resp.Slice(0, j);
+                            }
+                            if (next[0] == '"')
+                            {
+                                resp[j++] = '"';
+                                i++;
+                                continue;
+                            }
+                            if (next.StartsWith(delimiter))
+                            {
+                                position += i + 1;
+                                return resp.Slice(0, j);
+                            }
+
+                            throw new Exception("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
+
+                        default:
+                            resp[j++] = c;
                             continue;
-                        }
-                        if (next.StartsWith(delimiter))
-                        {
-                            position += i + 1;
-                            return resp.Slice(0, j);
-                        }
-
-                        throw new Exception("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
-
-                    default:
-                        resp[j++] = c;
-                        continue;
+                    }
                 }
             }
+            else
+            {
+                for (int i = 0; i < unlook.Length; i++)
+                {
+                    switch (unlook[i])
+                    {
+                        case '"':
+                            var next = unlook.Slice(i + 1);
+                            if (next.IsEmpty)
+                            {
+                                position += i;
+                                return default;
+                            }
+                            if (next[0] == '"')
+                            {
+                                i++;
+                                continue;
+                            }
+                            if (next.StartsWith(delimiter))
+                            {
+                                position += i + 1;
+                                return default;
+                            }
 
+                            throw new Exception("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
+
+                        default:
+                            continue;
+                    }
+                }
+            }
+            
             throw new Exception("quoted field missing end quote");
         }
     }
