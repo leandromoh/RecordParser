@@ -9,7 +9,7 @@ namespace RecordParser.Benchmark
         static async Task Main(string[] args)
         {
 #if DEBUG
-            await new WriterTestRunner().VariableLength_Write_Span_Builder();
+          //  await new WriterTestRunner().VariableLength_Write_Span_Builder();
 #else
             //BenchmarkRunner.Run<FixedLengthReaderBenchmark>();
 

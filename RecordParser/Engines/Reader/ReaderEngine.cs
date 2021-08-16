@@ -15,7 +15,7 @@ namespace RecordParser.Engines.Reader
 {
     internal static class ReaderEngine
     {
-        public static Expression<FuncSpanArrayT<T>> RecordParserSpan<T>(IEnumerable<MappingReadConfiguration> mappedColumns, Func<T> factory)
+        public static Expression<FuncSpanArrayT<T>> RecordParserSpanCSV<T>(IEnumerable<MappingReadConfiguration> mappedColumns, Func<T> factory)
         {
             // parameters
             var line = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
@@ -26,25 +26,42 @@ namespace RecordParser.Engines.Reader
 
             var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
             {
-                (Expression startIndex, Expression length) = (null, null);
-
-                if (mapConfig.length.HasValue)
-                {
-                    (startIndex, length) = (Expression.Constant(mapConfig.start), Expression.Constant(mapConfig.length.Value));
-                }
-                else
-                {
-                    var arrayIndex = ReadOnlySpanIndex<(int, int)>(configParameter, Expression.Constant(i));
-                    (startIndex, length) = (Expression.Field(arrayIndex, "Item1"), Expression.Field(arrayIndex, "Item2"));
-                }
-
-                var textValue = Slice(line, startIndex, length);
-
-                return mapConfig.ShouldTrim
-                    ? Trim(textValue)
-                    : textValue;
+                var arrayIndex = ReadOnlySpanIndex<(int, int)>(configParameter, Expression.Constant(i));
+                var (startIndex, length) = (Expression.Field(arrayIndex, "Item1"), Expression.Field(arrayIndex, "Item2"));
+                return Slice(line, startIndex, length);
             });
 
+            var body = MountBody(instanceVariable, blockThatSetProperties, mappedColumns, factory);
+            var result = Expression.Lambda<FuncSpanArrayT<T>>(body, line, configParameter);
+
+            return result;
+        }
+
+        public static Expression<FuncSpanT<T>> RecordParserSpanFlat<T>(IEnumerable<MappingReadConfiguration> mappedColumns, Func<T> factory)
+        {
+            // parameters
+            var line = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
+
+            // variables
+            var instanceVariable = Expression.Variable(typeof(T), "inst");
+
+            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
+            {
+                return Slice(line, Expression.Constant(mapConfig.start), Expression.Constant(mapConfig.length.Value));
+            });
+
+            var body = MountBody(instanceVariable, blockThatSetProperties, mappedColumns, factory);
+            var result = Expression.Lambda<FuncSpanT<T>>(body, line);
+
+            return result;
+        }
+
+        private static BlockExpression MountBody<T>(
+            ParameterExpression instanceVariable, 
+            BlockExpression blockThatSetProperties, 
+            IEnumerable<MappingReadConfiguration> mappedColumns, 
+            Func<T> factory)
+        {
             var getNewInstance = factory != null
                 ? Call(factory)
                 : CreateInstanceEngine.GetInstanceGenerator<T>(mappedColumns.Select(x => x.prop).OfType<MemberExpression>()).Body;
@@ -55,9 +72,7 @@ namespace RecordParser.Engines.Reader
                 variables: blockThatSetProperties.Variables.Prepend(instanceVariable),
                 expressions: blockThatSetProperties.Expressions.Prepend(assign));
 
-            var result = Expression.Lambda<FuncSpanArrayT<T>>(body, line, configParameter);
-
-            return result;
+            return body;
         }
 
         private static Expression ReadOnlySpanIndex<T>(params Expression[] args)
@@ -88,6 +103,9 @@ namespace RecordParser.Engines.Reader
                     continue;
 
                 Expression textValue = getTextValue(i, x);
+
+                if (x.ShouldTrim)
+                    textValue = Trim(textValue);
 
                 var propertyType = x.prop.Type;
                 var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
