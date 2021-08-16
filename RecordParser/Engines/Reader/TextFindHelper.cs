@@ -52,7 +52,28 @@ namespace RecordParser.Engines.Reader
             throw new Exception("invalid index for line");
         }
 
-        public ReadOnlySpan<char> ParseQuotedChuck()
+        private ReadOnlySpan<char> ParseChunk()
+        {
+            scanned += position + delimiter.Length;
+
+            var unlook = source.Slice(scanned);
+            var isQuotedField = unlook.TrimStart().StartsWith("\"");
+
+            if (isQuotedField)
+            {
+                return ParseQuotedChuck();
+            }
+
+            position = unlook.IndexOf(delimiter);
+            if (position < 0)
+            {
+                position = source.Length - scanned;
+            }
+
+            return source.Slice(scanned, position);
+        }
+
+        private ReadOnlySpan<char> ParseQuotedChuck()
         {
             const char singleQuote = '"';
             var unlook = source.Slice(scanned);
@@ -97,26 +118,6 @@ namespace RecordParser.Engines.Reader
             }
 
             throw new Exception("quoted field missing end quote");
-        }
-
-        private ReadOnlySpan<char> ParseChunk()
-        {
-            scanned += position + delimiter.Length;
-
-            var unlook = source.Slice(scanned);
-
-            if (unlook.TrimStart().StartsWith("\""))
-            {
-                return ParseQuotedChuck();
-            }
-
-            position = unlook.IndexOf(delimiter);
-            if (position < 0)
-            {
-                position = source.Length - scanned;
-            }
-
-            return source.Slice(scanned, position);
         }
     }
 }
