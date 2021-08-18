@@ -174,8 +174,8 @@ namespace RecordParser.Test
         [InlineData(15, false, " ; foo bar baz")]
         [InlineData(14, false, " ; foo bar baz")]
 
-        [InlineData(13, false, " ; ")]
-        [InlineData(04, false, " ; ")]
+        [InlineData(13, false, " ; foo bar ba")]
+        [InlineData(04, false, " ; f")]
         [InlineData(03, false, " ; ")]
 
         [InlineData(02, false, "")]

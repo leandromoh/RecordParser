@@ -47,6 +47,12 @@ namespace RecordParser.Engines.Writer
 
             if (prop.Type == typeof(string))
             {
+                if (map.IsVariableLength)
+                {
+                    var tryFormat = Expression.Call(typeof(WriteEngine), "TryFormat", Type.EmptyTypes, prop, temp, charsWritten);
+                    return Expression.IfThen(Expression.Not(tryFormat), gotoReturn);
+                }
+
                 var strSpan = StringAsSpan(prop);
 
                 var toLarge = Expression.GreaterThan(
@@ -80,6 +86,30 @@ namespace RecordParser.Engines.Writer
             }
         }
 
+        /// <summary>
+        /// Write a string into span replacing two double quotes chars by one
+        /// Used for variable length
+        /// </summary>
+        public static bool TryFormat(this string value, Span<char> span, out int written)
+        {
+            char quote = '"';
+            var length = value.Length;
+            int i = 0, j = 0;
+
+            for (; i < length && j < span.Length; i++, j++)
+            {
+                span[j] = value[i];
+
+                if (i + 1 != length && value[i] == quote && value[i + 1] == quote)
+                {
+                    i++;
+                }
+            }
+
+            written = j;
+
+            return i == length;
+        }
 
         public static bool TryFormat(this char c, Span<char> span, out int written)
         {
