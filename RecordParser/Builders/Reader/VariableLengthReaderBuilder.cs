@@ -3,6 +3,7 @@ using RecordParser.Parsers;
 using RecordParser.Visitors;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -102,5 +103,106 @@ namespace RecordParser.Builders.Reader
 
             return new VariableLengthReader<T>(func.Compile(), separator);
         }
+
+
+        /// <summary>
+        /// Write a string into span as quoted field when
+        /// 1) the string contains one or more quote character
+        /// 2) the string contains the column delimiter
+        /// </summary> 
+
+        private static bool Quote(string text, Span<char> span, out int written)
+        {
+            if (text.Length > span.Length)
+            {
+                written = 0;
+                return false;
+            }
+
+            char quote = '"';
+            ReadOnlySpan<char> separator = " , ";
+
+            var value = text.AsSpan();
+            var length = value.Length;
+            int i = 0;
+
+            var quoteFounds = 0;
+            var containsSeparator = false;
+
+            for (; i < length; i++)
+            {
+                if (value[i] == quote)
+                {
+                    quoteFounds++;
+                    continue;
+                }
+
+                if (containsSeparator == false && value.Slice(i).StartsWith(separator))
+                {
+                    containsSeparator = true;
+                }
+            }
+
+            if (quoteFounds == 0)
+            {
+                if (containsSeparator)
+                {
+                    if (text.Length + 2 > span.Length)
+                    {
+                        written = 0;
+                        return false;
+                    }
+                    else
+                    {
+                        span[0] = quote;
+                        value.CopyTo(span.Slice(1));
+                        span[value.Length + 1] = quote;
+
+                        written = text.Length + 2;
+                        return true;
+                    }
+                }
+                else
+                {
+                    value.CopyTo(span);
+                    written = value.Length;
+                    return true;
+                }
+            }
+            else
+            {
+                var newLengh = text.Length + quoteFounds + 2;
+
+                if (newLengh > span.Length)
+                {
+                    written = 0;
+                    return false;
+                }
+                else
+                {
+                    var j = 0;
+
+                    span[++j] = quote;
+
+                    for (i = 0; i < length; i++, j++)
+                    {
+                        span[j] = value[i];
+
+                        if (value[i] == quote)
+                        {
+                            span[++j] = quote;
+                        }
+                    }
+
+                    span[j] = quote;
+
+                    Debug.Assert(j == newLengh);
+
+                    written = newLengh;
+                    return true;
+                }
+            }
+        }
+
     }
 }
