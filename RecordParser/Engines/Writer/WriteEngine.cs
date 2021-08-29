@@ -16,7 +16,13 @@ namespace RecordParser.Engines.Writer
         {
             if (map.converter != null)
             {
-                var toLarge = map.converter(temp, prop, charsWritten);
+                var result = Expression.Variable(typeof((bool, int)), "temp");
+
+                var toLarge = Expression.Block(variables: new[] { result },
+                    Expression.Assign(result, Call(map.converter, temp, prop)),
+                    Expression.Assign(charsWritten, Expression.PropertyOrField(result, "Item2")),
+                    Expression.Not(Expression.PropertyOrField(result, "Item1")));
+
                 return Expression.IfThen(toLarge, gotoReturn);
             }
 
@@ -79,7 +85,6 @@ namespace RecordParser.Engines.Writer
                 return Expression.IfThen(Expression.Not(tryFormat), gotoReturn);
             }
         }
-
 
         public static bool TryFormat(this char c, Span<char> span, out int written)
         {
@@ -197,22 +202,6 @@ namespace RecordParser.Engines.Writer
                                 expressions: body);
 
             return blockExpr;
-        }
-
-        public static Func<Expression, Expression, Expression, Expression> WrapInLambdaExpression<T>(this FuncSpanTIntBool<T> converter)
-        {
-            if (converter == null)
-                return null;
-
-            return (span, inst, offset) =>
-            {
-                var result = Expression.Variable(typeof((bool, int)), "temp");
-
-                return Expression.Block(variables: new[] { result },
-                    Expression.Assign(result, Call(converter, span, inst)),
-                    Expression.Assign(offset, Expression.PropertyOrField(result, "Item2")),
-                    Expression.Not(Expression.PropertyOrField(result, "Item1")));
-            };
         }
     }
 }
