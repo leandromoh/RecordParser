@@ -1,6 +1,7 @@
 ﻿using RecordParser.Engines.Writer;
 using RecordParser.Parsers;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -60,6 +61,8 @@ namespace RecordParser.Builders.Writer
         /// </param>
         /// <returns>An object to configure the mapping.</returns>
         IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null);
+
+        IVariableLengthWriterBuilder<T> Map(Expression<Func<T, string>> ex, int indexColumn, FuncSpanTIntBool converter = null);
     }
 
     public class VariableLengthWriterBuilder<T> : IVariableLengthWriterBuilder<T>
@@ -89,19 +92,13 @@ namespace RecordParser.Builders.Writer
             return this;
         }
 
-        //public IVariableLengthWriterBuilder<T> Map(Expression<Func<T, string>> ex, int indexColumn, FuncSpanTIntBool converter)
-        //{
-        //    var member = ex.Body;
-        //    var config = new MappingWriteConfiguration(member, indexColumn, null, converter == null ? null : new FuncSpanTIntBool<string>(
-        //        (span, int) =>
-        //        {
-
-
-
-        //        }).WrapInLambdaExpression(), null, default, default, typeof(string));
-        //    list.Add(indexColumn, config);
-        //    return this;
-        //}
+        public IVariableLengthWriterBuilder<T> Map(Expression<Func<T, string>> ex, int indexColumn, FuncSpanTIntBool converter = null)
+        {
+            var member = ex.Body;
+            var config = new MappingWriteConfiguration(member, indexColumn, null, converter, null, default, default, typeof(ReadOnlySpan<char>));
+            list.Add(indexColumn, config);
+            return this;
+        }
 
         /// <summary>
         /// Customize configuration for individual member.
@@ -147,44 +144,86 @@ namespace RecordParser.Builders.Writer
         /// <returns>The writer object.</returns>
         public IVariableLengthWriter<T> Build(string separator, CultureInfo cultureInfo = null)
         {
+            var quote = '"';
+
             var maps = MappingWriteConfiguration.Merge(list.Select(x => x.Value), dic);
-            var expression = VariableLengthWriterEngine.GetFuncThatSetProperties<T>(maps, cultureInfo);
+
+            var fmaks = new Dictionary<Delegate, Delegate>();
+
+            var fnull = Quote(quote, separator);
+
+            foreach (var x in maps)
+                if (x.converter is FuncSpanTIntBool f)
+                    fmaks[x.converter] = new FuncSpanTIntBool(
+#if NET6_0
+        [SkipLocalsInit]
+#endif
+                    (Span<char> span, ReadOnlySpan<char> text) =>
+                    {
+                        char[] array = null;
+                        try
+                        {
+                            var newLengh = MinLengthToQuote(text, separator, quote);
+
+                            Span<char> temp = newLengh > 128
+                                                ? array = ArrayPool<char>.Shared.Rent(newLengh)
+                                                : stackalloc char[newLengh];
+
+                            var (success, written) = TryFormat(text, temp, quote, newLengh);
+                            Debug.Assert(success);
+                            return f(span, temp.Slice(0, written));
+                        }
+                        finally
+                        {
+                            if (array != null)
+                                ArrayPool<char>.Shared.Return(array);
+                        }
+                    });
+
+            var map2 = maps.Select(i =>
+            {
+                if (i.type != typeof(ReadOnlySpan<char>))
+                    return i;
+
+                var fmask = i.converter is null ? fnull : fmaks[i.converter];
+
+                return new MappingWriteConfiguration(i.prop, i.start, null, fmask, null, default, default, i.type);
+            });
+
+            var expression = VariableLengthWriterEngine.GetFuncThatSetProperties<T>(map2, cultureInfo);
 
             return new VariableLengthWriter<T>(expression.Compile(), separator);
         }
 
-        /// <summary>
-        /// Write a string into span as quoted field when
-        /// 1) the string contains one or more quote character
-        /// 2) the string contains the column delimiter
-        /// </summary> 
-        private static bool Quote(string text, Span<char> span, out int written)
+        private static FuncSpanTIntBool Quote(char quote, string separator)
         {
-            if (text.Length > span.Length)
+            return (Span<char> span, ReadOnlySpan<char> text) =>
             {
-                written = 0;
-                return false;
-            }
+                if (text.Length > span.Length)
+                {
+                    return (false, 0);
+                }
 
-            char quote = '"';
-            ReadOnlySpan<char> separator = " , ";
+                var newLengh = MinLengthToQuote(text, separator, quote);
 
-            var value = text.AsSpan();
-            var length = value.Length;
-            int i = 0;
+                return TryFormat(text, span, quote, newLengh);
+            };
+        }
 
+        private static int MinLengthToQuote(ReadOnlySpan<char> text, ReadOnlySpan<char> separator, char quote)
+        {
             var quoteFounds = 0;
             var containsSeparator = false;
 
-            for (; i < length; i++)
+            for (var i = 0; i < text.Length; i++)
             {
-                if (value[i] == quote)
+                if (text[i] == quote)
                 {
                     quoteFounds++;
                     continue;
                 }
 
-                if (containsSeparator == false && value.Slice(i).StartsWith(separator))
+                if (containsSeparator == false && text.Slice(i).StartsWith(separator))
                 {
                     containsSeparator = true;
                 }
@@ -192,62 +231,56 @@ namespace RecordParser.Builders.Writer
 
             if (quoteFounds == 0)
             {
-                if (containsSeparator)
-                {
-                    if (text.Length + 2 > span.Length)
-                    {
-                        written = 0;
-                        return false;
-                    }
-                    else
-                    {
-                        span[0] = quote;
-                        value.CopyTo(span.Slice(1));
-                        span[value.Length + 1] = quote;
-
-                        written = text.Length + 2;
-                        return true;
-                    }
-                }
-                else
-                {
-                    value.CopyTo(span);
-                    written = value.Length;
-                    return true;
-                }
+                return containsSeparator ? text.Length + 2 : text.Length;
             }
             else
             {
-                var newLengh = text.Length + quoteFounds + 2;
+                return text.Length + quoteFounds + 2;
+            }
+        }
 
-                if (newLengh > span.Length)
+        private static (bool, int) TryFormat(ReadOnlySpan<char> text, Span<char> span, char quote, int newLengh)
+        {
+            if (newLengh > span.Length)
+            {
+                return (false, 0);
+            }
+
+            if (newLengh == text.Length)
+            {
+                text.CopyTo(span);
+                return (true, newLengh);
+            }
+
+            if (newLengh == text.Length + 2)
+            {
+                span[0] = quote;
+                text.CopyTo(span.Slice(1));
+                span[text.Length + 1] = quote;
+                return (true, newLengh);
+            }
+
+            else
+            {
+                var j = 0;
+
+                span[j++] = quote;
+
+                for (var i = 0; i < text.Length; i++, j++)
                 {
-                    written = 0;
-                    return false;
-                }
-                else
-                {
-                    var j = 0;
+                    span[j] = text[i];
 
-                    span[++j] = quote;
-
-                    for (i = 0; i < length; i++, j++)
+                    if (text[i] == quote)
                     {
-                        span[j] = value[i];
-
-                        if (value[i] == quote)
-                        {
-                            span[++j] = quote;
-                        }
+                        span[++j] = quote;
                     }
-
-                    span[j] = quote;
-
-                    Debug.Assert(j == newLengh);
-
-                    written = newLengh;
-                    return true;
                 }
+
+                span[j++] = quote;
+
+                Debug.Assert(j == newLengh);
+
+                return (true, newLengh);
             }
         }
     }
