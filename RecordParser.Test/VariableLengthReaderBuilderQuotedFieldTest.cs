@@ -63,6 +63,27 @@ namespace RecordParser.Test
         }
 
         [Fact]
+<<<<<<< HEAD
+=======
+        public void Given_quoted_field_with_property_convert()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Model, 1, value => value.ToUpper())
+                .Map(x => x.Comment, 2, value => value.ToUpper())
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            var result = reader.Parse("1997,Ford,\"\"\"It is fast\"\"\",30100.99");
+
+            result.Should().BeEquivalentTo((Year: 1997,
+                                            Model: "FORD",
+                                            Comment: "\"IT IS FAST\"",
+                                            Price: 30100.99));
+        }
+
+        [Fact]
+>>>>>>> 70f7a8b... add test for CSV reader quoted field custom map
         public void Given_skip_quoted_field()
         {
             var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
