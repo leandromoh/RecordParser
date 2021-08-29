@@ -85,7 +85,6 @@ namespace RecordParser.Engines.Writer
             }
         }
 
-
         public static bool TryFormat(this char c, Span<char> span, out int written)
         {
             if (span.Length > 0)
