@@ -1,9 +1,7 @@
 ﻿using RecordParser.Engines.Writer;
 using RecordParser.Parsers;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -148,140 +146,11 @@ namespace RecordParser.Builders.Writer
 
             var maps = MappingWriteConfiguration.Merge(list.Select(x => x.Value), dic);
 
-            var fmaks = new Dictionary<Delegate, Delegate>();
+            maps = maps.MagicQuote(quote, separator);
 
-            var fnull = Quote(quote, separator);
-
-            foreach (var x in maps)
-                if (x.converter is FuncSpanTIntBool f)
-                    fmaks[x.converter] = new FuncSpanTIntBool(
-#if NET6_0
-        [SkipLocalsInit]
-#endif
-                    (Span<char> span, ReadOnlySpan<char> text) =>
-                    {
-                        char[] array = null;
-                        try
-                        {
-                            var newLengh = MinLengthToQuote(text, separator, quote);
-
-                            Span<char> temp = newLengh > 128
-                                                ? array = ArrayPool<char>.Shared.Rent(newLengh)
-                                                : stackalloc char[newLengh];
-
-                            var (success, written) = TryFormat(text, temp, quote, newLengh);
-                            Debug.Assert(success);
-                            return f(span, temp.Slice(0, written));
-                        }
-                        finally
-                        {
-                            if (array != null)
-                                ArrayPool<char>.Shared.Return(array);
-                        }
-                    });
-
-            var map2 = maps.Select(i =>
-            {
-                if (i.type != typeof(ReadOnlySpan<char>))
-                    return i;
-
-                var fmask = i.converter is null ? fnull : fmaks[i.converter];
-
-                return new MappingWriteConfiguration(i.prop, i.start, null, fmask, null, default, default, i.type);
-            });
-
-            var expression = VariableLengthWriterEngine.GetFuncThatSetProperties<T>(map2, cultureInfo);
+            var expression = VariableLengthWriterEngine.GetFuncThatSetProperties<T>(maps, cultureInfo);
 
             return new VariableLengthWriter<T>(expression.Compile(), separator);
-        }
-
-        private static FuncSpanTIntBool Quote(char quote, string separator)
-        {
-            return (Span<char> span, ReadOnlySpan<char> text) =>
-            {
-                if (text.Length > span.Length)
-                {
-                    return (false, 0);
-                }
-
-                var newLengh = MinLengthToQuote(text, separator, quote);
-
-                return TryFormat(text, span, quote, newLengh);
-            };
-        }
-
-        private static int MinLengthToQuote(ReadOnlySpan<char> text, ReadOnlySpan<char> separator, char quote)
-        {
-            var quoteFounds = 0;
-            var containsSeparator = false;
-
-            for (var i = 0; i < text.Length; i++)
-            {
-                if (text[i] == quote)
-                {
-                    quoteFounds++;
-                    continue;
-                }
-
-                if (containsSeparator == false && text.Slice(i).StartsWith(separator))
-                {
-                    containsSeparator = true;
-                }
-            }
-
-            if (quoteFounds == 0)
-            {
-                return containsSeparator ? text.Length + 2 : text.Length;
-            }
-            else
-            {
-                return text.Length + quoteFounds + 2;
-            }
-        }
-
-        private static (bool, int) TryFormat(ReadOnlySpan<char> text, Span<char> span, char quote, int newLengh)
-        {
-            if (newLengh > span.Length)
-            {
-                return (false, 0);
-            }
-
-            if (newLengh == text.Length)
-            {
-                text.CopyTo(span);
-                return (true, newLengh);
-            }
-
-            if (newLengh == text.Length + 2)
-            {
-                span[0] = quote;
-                text.CopyTo(span.Slice(1));
-                span[text.Length + 1] = quote;
-                return (true, newLengh);
-            }
-
-            else
-            {
-                var j = 0;
-
-                span[j++] = quote;
-
-                for (var i = 0; i < text.Length; i++, j++)
-                {
-                    span[j] = text[i];
-
-                    if (text[i] == quote)
-                    {
-                        span[++j] = quote;
-                    }
-                }
-
-                span[j++] = quote;
-
-                Debug.Assert(j == newLengh);
-
-                return (true, newLengh);
-            }
         }
     }
 }
