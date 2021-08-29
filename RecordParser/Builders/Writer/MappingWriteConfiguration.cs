@@ -31,8 +31,7 @@ namespace RecordParser.Builders.Writer
         public Padding padding { get; }
         public char paddingChar { get; }
 
-        public bool UseTryPattern => converter != null || prop.Type != typeof(string) || IsVariableLength;
-        public bool IsVariableLength => length == null;
+        public bool UseTryPattern => converter != null || prop.Type != typeof(string);
 
         public MappingWriteConfiguration(Expression prop, int start, int? length, Func<Expression, Expression, Expression, Expression> converter, string format, Padding padding, char paddingChar, Type type)
         {
