@@ -6,7 +6,7 @@ using Xunit;
 
 namespace RecordParser.Test
 {
-    public class VariableLengthWriterBuilderTest : TestSetup
+    public partial class VariableLengthWriterBuilderTest : TestSetup
     {
         [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
