@@ -63,8 +63,6 @@ namespace RecordParser.Test
         }
 
         [Fact]
-<<<<<<< HEAD
-=======
         public void Given_quoted_field_with_property_convert()
         {
             var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
@@ -83,7 +81,6 @@ namespace RecordParser.Test
         }
 
         [Fact]
->>>>>>> 70f7a8b... add test for CSV reader quoted field custom map
         public void Given_skip_quoted_field()
         {
             var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
