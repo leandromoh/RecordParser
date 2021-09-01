@@ -24,8 +24,7 @@ namespace RecordParser.Builders.Writer
         public int start { get; }
         public int? length { get; }
 
-        // span, value, offset -> bool
-        public Func<Expression, Expression, Expression, Expression> converter { get; }
+        public Delegate converter { get; }
         public string format { get; }
         public Type type { get; }
         public Padding padding { get; }
@@ -33,7 +32,7 @@ namespace RecordParser.Builders.Writer
 
         public bool UseTryPattern => converter != null || prop.Type != typeof(string);
 
-        public MappingWriteConfiguration(Expression prop, int start, int? length, Func<Expression, Expression, Expression, Expression> converter, string format, Padding padding, char paddingChar, Type type)
+        public MappingWriteConfiguration(Expression prop, int start, int? length, Delegate converter, string format, Padding padding, char paddingChar, Type type)
         {
             this.prop = prop;
             this.start = start;
@@ -47,7 +46,7 @@ namespace RecordParser.Builders.Writer
 
         public static IEnumerable<MappingWriteConfiguration> Merge(
             IEnumerable<MappingWriteConfiguration> list,
-            IReadOnlyDictionary<Type, Func<Expression, Expression, Expression, Expression>> dic)
+            IReadOnlyDictionary<Type, Delegate> dic)
         {
             var result = dic.Count is 0
                     ? list

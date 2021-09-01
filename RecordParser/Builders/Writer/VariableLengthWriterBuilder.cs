@@ -64,7 +64,7 @@ namespace RecordParser.Builders.Writer
     public class VariableLengthWriterBuilder<T> : IVariableLengthWriterBuilder<T>
     {
         private readonly Dictionary<int, MappingWriteConfiguration> list = new();
-        private readonly Dictionary<Type, Func<Expression, Expression, Expression, Expression>> dic = new();
+        private readonly Dictionary<Type, Delegate> dic = new();
 
         /// <summary>
         /// Customize configuration for individual member.
@@ -83,7 +83,7 @@ namespace RecordParser.Builders.Writer
         public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null)
         {
             var member = ex.Body;
-            var config = new MappingWriteConfiguration(member, indexColumn, null, converter.WrapInLambdaExpression(), null, default, default, typeof(R));
+            var config = new MappingWriteConfiguration(member, indexColumn, null, converter, null, default, default, typeof(R));
             list.Add(indexColumn, config);
             return this;
         }
@@ -116,7 +116,7 @@ namespace RecordParser.Builders.Writer
         /// <returns>An object to configure the mapping.</returns>
         public IVariableLengthWriterBuilder<T> DefaultTypeConvert<R>(FuncSpanTIntBool<R> ex)
         {
-            dic.Add(typeof(R), ex?.WrapInLambdaExpression());
+            dic.Add(typeof(R), ex);
             return this;
         }
 
