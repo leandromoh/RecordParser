@@ -5,7 +5,7 @@ namespace RecordParser.Engines.Reader
 {
     internal ref struct TextFindHelper
     {
-        private readonly ReadOnlySpan<char> source;
+        private readonly ReadOnlySpan<char> line;
         private readonly string delimiter;
 
         private int scanned;
@@ -16,7 +16,7 @@ namespace RecordParser.Engines.Reader
 
         public TextFindHelper(ReadOnlySpan<char> source, string delimiter)
         {
-            this.source = source;
+            this.line = source;
             this.delimiter = delimiter;
 
             scanned = -delimiter.Length;
@@ -57,7 +57,7 @@ namespace RecordParser.Engines.Reader
         {
             scanned += position + delimiter.Length;
 
-            var unlook = source.Slice(scanned);
+            var unlook = line.Slice(scanned);
             var isQuotedField = unlook.TrimStart().StartsWith("\"");
 
             if (isQuotedField)
@@ -68,18 +68,18 @@ namespace RecordParser.Engines.Reader
             position = unlook.IndexOf(delimiter);
             if (position < 0)
             {
-                position = source.Length - scanned;
+                position = line.Length - scanned;
             }
 
-            return source.Slice(scanned, position);
+            return line.Slice(scanned, position);
         }
 
         private ReadOnlySpan<char> ParseQuotedChuck(bool match)
         {
             const char singleQuote = '"';
-            var unlook = source.Slice(scanned);
+            var unlook = line.Slice(scanned);
             scanned += unlook.IndexOf(singleQuote) + 1;
-            unlook = source.Slice(scanned);
+            unlook = line.Slice(scanned);
             position = 0;
 
             if (match)
