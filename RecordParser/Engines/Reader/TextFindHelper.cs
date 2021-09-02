@@ -7,6 +7,7 @@ namespace RecordParser.Engines.Reader
     {
         private readonly ReadOnlySpan<char> line;
         private readonly string delimiter;
+        private readonly (char ch, string str) quote;
 
         private int scanned;
         private int position;
@@ -14,10 +15,11 @@ namespace RecordParser.Engines.Reader
 
         private char[] buffer;
 
-        public TextFindHelper(ReadOnlySpan<char> source, string delimiter)
+        public TextFindHelper(ReadOnlySpan<char> source, string delimiter, (char ch, string str) quote)
         {
             this.line = source;
             this.delimiter = delimiter;
+            this.quote = quote;
 
             scanned = -delimiter.Length;
             position = 0;
@@ -58,7 +60,7 @@ namespace RecordParser.Engines.Reader
             scanned += position + delimiter.Length;
 
             var unlook = line.Slice(scanned);
-            var isQuotedField = unlook.TrimStart().StartsWith("\"");
+            var isQuotedField = unlook.TrimStart().StartsWith(quote.str);
 
             if (isQuotedField)
             {
@@ -76,9 +78,8 @@ namespace RecordParser.Engines.Reader
 
         private ReadOnlySpan<char> ParseQuotedChuck(bool match)
         {
-            const char singleQuote = '"';
             var unlook = line.Slice(scanned);
-            scanned += unlook.IndexOf(singleQuote) + 1;
+            scanned += unlook.IndexOf(quote.ch) + 1;
             unlook = line.Slice(scanned);
             position = 0;
 
@@ -91,40 +92,41 @@ namespace RecordParser.Engines.Reader
                 {
                     var c = unlook[i];
 
-                    switch (c)
+                    if (c == quote.ch)
                     {
-                        case '"':
-                            var next = unlook.Slice(i + 1);
-                            if (next.TrimStart().IsEmpty)
-                            {
-                                position += i;
-                                return resp.Slice(0, j);
-                            }
-                            if (next[0] == '"')
-                            {
-                                resp[j++] = '"';
-                                i++;
-                                continue;
-                            }
-                            if (next.StartsWith(delimiter))
-                            {
-                                position += i + 1;
-                                return resp.Slice(0, j);
-                            }
-
-                            var t = 0;
-                            for (; t < next.Length && char.IsWhiteSpace(next[t]); t++);
-                            if (next.Slice(t).StartsWith(delimiter))
-                            {
-                                position += i + 1 + t;
-                                return resp.Slice(0, j);
-                            }
-
-                            throw new Exception("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
-
-                        default:
-                            resp[j++] = c;
+                        var next = unlook.Slice(i + 1);
+                        if (next.TrimStart().IsEmpty)
+                        {
+                            position += i;
+                            return resp.Slice(0, j);
+                        }
+                        if (next[0] == quote.ch)
+                        {
+                            resp[j++] = quote.ch;
+                            i++;
                             continue;
+                        }
+                        if (next.StartsWith(delimiter))
+                        {
+                            position += i + 1;
+                            return resp.Slice(0, j);
+                        }
+
+                        var t = 0;
+                        for (; t < next.Length && char.IsWhiteSpace(next[t]); t++);
+                        if (next.Slice(t).StartsWith(delimiter))
+                        {
+                            position += i + 1 + t;
+                            return resp.Slice(0, j);
+                        }
+
+                        throw new Exception("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
+
+                    }
+                    else
+                    {
+                        resp[j++] = c;
+                        continue;
                     }
                 }
             }
@@ -132,38 +134,39 @@ namespace RecordParser.Engines.Reader
             {
                 for (int i = 0; i < unlook.Length; i++)
                 {
-                    switch (unlook[i])
+                    if (unlook[i] == quote.ch)
                     {
-                        case '"':
-                            var next = unlook.Slice(i + 1);
-                            if (next.TrimStart().IsEmpty)
-                            {
-                                position += i;
-                                return default;
-                            }
-                            if (next[0] == '"')
-                            {
-                                i++;
-                                continue;
-                            }
-                            if (next.StartsWith(delimiter))
-                            {
-                                position += i + 1;
-                                return default;
-                            }
-
-                            var t = 0;
-                            for (; t < next.Length && char.IsWhiteSpace(next[t]); t++) ;
-                            if (next.Slice(t).StartsWith(delimiter))
-                            {
-                                position += i + 1 + t;
-                                return default;
-                            }
-
-                            throw new Exception("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
-
-                        default:
+                        var next = unlook.Slice(i + 1);
+                        if (next.TrimStart().IsEmpty)
+                        {
+                            position += i;
+                            return default;
+                        }
+                        if (next[0] == quote.ch)
+                        {
+                            i++;
                             continue;
+                        }
+                        if (next.StartsWith(delimiter))
+                        {
+                            position += i + 1;
+                            return default;
+                        }
+
+                        var t = 0;
+                        for (; t < next.Length && char.IsWhiteSpace(next[t]); t++) ;
+                        if (next.Slice(t).StartsWith(delimiter))
+                        {
+                            position += i + 1 + t;
+                            return default;
+                        }
+
+                        throw new Exception("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
+
+                    }
+                    else
+                    {
+                        continue;
                     }
                 }
             }
