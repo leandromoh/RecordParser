@@ -95,7 +95,7 @@ namespace RecordParser.Engines.Reader
                     {
                         case '"':
                             var next = unlook.Slice(i + 1);
-                            if (next.IsEmpty)
+                            if (next.TrimStart().IsEmpty)
                             {
                                 position += i;
                                 return resp.Slice(0, j);
@@ -109,6 +109,14 @@ namespace RecordParser.Engines.Reader
                             if (next.StartsWith(delimiter))
                             {
                                 position += i + 1;
+                                return resp.Slice(0, j);
+                            }
+
+                            var t = 0;
+                            for (; t < next.Length && char.IsWhiteSpace(next[t]); t++);
+                            if (next.Slice(t).StartsWith(delimiter))
+                            {
+                                position += i + 1 + t;
                                 return resp.Slice(0, j);
                             }
 
@@ -128,7 +136,7 @@ namespace RecordParser.Engines.Reader
                     {
                         case '"':
                             var next = unlook.Slice(i + 1);
-                            if (next.IsEmpty)
+                            if (next.TrimStart().IsEmpty)
                             {
                                 position += i;
                                 return default;
@@ -144,6 +152,14 @@ namespace RecordParser.Engines.Reader
                                 return default;
                             }
 
+                            var t = 0;
+                            for (; t < next.Length && char.IsWhiteSpace(next[t]); t++) ;
+                            if (next.Slice(t).StartsWith(delimiter))
+                            {
+                                position += i + 1 + t;
+                                return default;
+                            }
+
                             throw new Exception("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
 
                         default:
@@ -151,7 +167,7 @@ namespace RecordParser.Engines.Reader
                     }
                 }
             }
-            
+
             throw new Exception("quoted field missing end quote");
         }
     }

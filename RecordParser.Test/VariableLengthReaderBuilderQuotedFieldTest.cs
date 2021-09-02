@@ -27,6 +27,55 @@ namespace RecordParser.Test
         }
 
         [Fact]
+        public void Given_all_fields_with_quotes_and_spaces_between_field_and_quote()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Model, 1)
+                .Map(x => x.Comment, 2)
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ");
+
+            result.Should().BeEquivalentTo((Year: 1997,
+                                            Model: "Ford",
+                                            Comment: "Super, \"luxurious\" truck",
+                                            Price: 30100.99));
+        }
+
+
+        [Fact]
+        public void Given_all_fields_with_quotes_and_spaces_between_field_and_quote_ignored()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Comment, 2)
+                .Build(",");
+
+            var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ");
+
+            result.Should().BeEquivalentTo((Year: default(int),
+                                            Model: default(string),
+                                            Comment: "Super, \"luxurious\" truck",
+                                            Price: default(decimal)));
+        }
+
+        [Fact]
+        public void Given_all_fields_with_quotes_and_spaces_between_field_and_quote_ignored_last()
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ");
+
+            result.Should().BeEquivalentTo((Year: default(int),
+                                            Model: default(string),
+                                            Comment: default(string),
+                                            Price: 30100.99));
+        }
+
+        [Fact]
         public void Given_some_fields_with_quotes()
         {
             var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
