@@ -163,6 +163,22 @@ namespace RecordParser.Test
             result.Should().Throw<Exception>().WithMessage("quoted field missing end quote");
         }
 
+        [Theory]
+        [InlineData("1997,Ford,\"Super, luxurious\" truck,30100.99")]
+        [InlineData("1997,\"Ford,\"Super, \"\"luxurious\"\" truck\",30100.99")]
+        public void Given_extra_data_after_a_quoted_field(string line)
+        {
+            var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
+                .Map(x => x.Year, 0)
+                .Map(x => x.Comment, 2)
+                .Map(x => x.Price, 3)
+                .Build(",");
+
+            Action result = () => reader.Parse(line);
+
+            result.Should().Throw<Exception>().WithMessage("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
+        }
+
         [Fact]
         public void Given_unquoted_fields_which_contains_quotes_should_interpret_as_is()
         {
