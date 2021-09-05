@@ -22,7 +22,7 @@ namespace RecordParser.Builders.Reader
         /// Culture should be applied manually inside these functions.
         /// </remarks>
         /// <returns>The reader object.</returns>
-        IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null, Func<T> factory = null, char quote = '"');
+        IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null, Func<T> factory = null);
 
         /// <summary>
         /// Define a default custom function that will be used to parse all properties or fields of type <typeparamref name="R"/>,
@@ -93,10 +93,12 @@ namespace RecordParser.Builders.Reader
         /// Culture should be applied manually inside these functions.
         /// </remarks>
         /// <returns>The reader object.</returns>
-        public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null, Func<T> factory = null, char quote = '"')
+        public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null, Func<T> factory = null)
         {
+            const char quote = '"';
+
             if (separator.Contains(quote))
-                throw new ArgumentException("Separator must not contain quote char");
+                throw new ArgumentException("Separator must not contain quote char", nameof(separator));
 
             var map = MappingReadConfiguration.Merge(list.Select(x => x.Value), dic);
             var func = ReaderEngine.RecordParserSpanCSV(map, factory);
