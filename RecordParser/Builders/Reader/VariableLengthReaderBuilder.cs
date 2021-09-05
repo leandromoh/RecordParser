@@ -3,7 +3,6 @@ using RecordParser.Parsers;
 using RecordParser.Visitors;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
