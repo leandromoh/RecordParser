@@ -108,19 +108,17 @@ namespace RecordParser.Engines.Reader
                             i++;
                             continue;
                         }
-                        if (next.StartsWith(delimiter))
-                        {
-                            position += i + 1;
-                            return resp.Slice(0, j);
-                        }
 
-                        var t = 0;
-                        for (; t < next.Length && char.IsWhiteSpace(next[t]); t++);
-                        if (next.Slice(t).StartsWith(delimiter))
-                        {
-                            position += i + 1 + t;
-                            return resp.Slice(0, j);
-                        }
+                        for (var t = 0; t < next.Length; t++)
+                            if (next.Slice(t).StartsWith(delimiter))
+                            {
+                                position += i + 1 + t;
+                                return resp.Slice(0, j);
+                            }
+                            else if (char.IsWhiteSpace(next[t]) is false)
+                            {
+                                break;
+                            }
 
                         throw new Exception(corruptFieldError);
 
@@ -149,19 +147,17 @@ namespace RecordParser.Engines.Reader
                             i++;
                             continue;
                         }
-                        if (next.StartsWith(delimiter))
-                        {
-                            position += i + 1;
-                            return default;
-                        }
 
-                        var t = 0;
-                        for (; t < next.Length && char.IsWhiteSpace(next[t]); t++) ;
-                        if (next.Slice(t).StartsWith(delimiter))
-                        {
-                            position += i + 1 + t;
-                            return default;
-                        }
+                        for (var t = 0; t < next.Length; t++)
+                            if (next.Slice(t).StartsWith(delimiter))
+                            {
+                                position += i + 1 + t;
+                                return default;
+                            }
+                            else if (char.IsWhiteSpace(next[t]) is false)
+                            {
+                                break;
+                            }
 
                         throw new Exception(corruptFieldError);
 

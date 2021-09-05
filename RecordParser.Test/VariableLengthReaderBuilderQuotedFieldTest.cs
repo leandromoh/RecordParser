@@ -26,15 +26,17 @@ namespace RecordParser.Test
                                             Price: 30100.99));
         }
 
-        [Fact]
-        public void Given_all_fields_with_quotes_and_spaces_between_field_and_quote()
+        [Theory]
+        [InlineData(",")]
+        [InlineData(" , ")]
+        public void Given_all_fields_with_quotes_and_spaces_between_field_and_quote(string separator)
         {
             var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
                 .Map(x => x.Year, 0)
                 .Map(x => x.Model, 1)
                 .Map(x => x.Comment, 2)
                 .Map(x => x.Price, 3)
-                .Build(",");
+                .Build(separator);
 
             var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ");
 
@@ -45,12 +47,14 @@ namespace RecordParser.Test
         }
 
 
-        [Fact]
-        public void Given_all_fields_with_quotes_and_spaces_between_field_and_quote_ignored()
+        [Theory]
+        [InlineData(",")]
+        [InlineData(" , ")]
+        public void Given_all_fields_with_quotes_and_spaces_between_field_and_quote_ignored(string separator)
         {
             var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
                 .Map(x => x.Comment, 2)
-                .Build(",");
+                .Build(separator);
 
             var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ");
 
@@ -60,12 +64,14 @@ namespace RecordParser.Test
                                             Price: default(decimal)));
         }
 
-        [Fact]
-        public void Given_all_fields_with_quotes_and_spaces_between_field_and_quote_ignored_last()
+        [Theory]
+        [InlineData(",")]
+        [InlineData(" , ")]
+        public void Given_all_fields_with_quotes_and_spaces_between_field_and_quote_ignored_last(string separator)
         {
             var reader = new VariableLengthReaderBuilder<(int Year, string Model, string Comment, decimal Price)>()
                 .Map(x => x.Price, 3)
-                .Build(",");
+                .Build(separator);
 
             var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ");
 
