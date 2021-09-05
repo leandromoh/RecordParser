@@ -260,7 +260,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("\n1997,Ford \n Model, Super \"luxu\nrious\" truck,30100.99\n");
+            var result = reader.Parse("\"\n1997\",Ford \n Model, Super \"luxu\nrious\" truck,30100.99\n");
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford \n Model",
