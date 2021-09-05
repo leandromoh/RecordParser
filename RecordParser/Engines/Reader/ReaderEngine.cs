@@ -1,4 +1,5 @@
 ﻿using RecordParser.Builders.Reader;
+using RecordParser.Engines.Reader;
 using RecordParser.Visitors;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using static RecordParser.Engines.ExpressionHelper;
 
 internal delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
 public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
-internal delegate T FuncSpanArrayT<T>(ReadOnlySpan<char> line, ReadOnlySpan<(int start, int length)> config);
+internal delegate T FuncSpanArrayT<T>(in TextFindHelper finder);
 
 namespace RecordParser.Engines.Reader
 {
@@ -18,21 +19,18 @@ namespace RecordParser.Engines.Reader
         public static Expression<FuncSpanArrayT<T>> RecordParserSpanCSV<T>(IEnumerable<MappingReadConfiguration> mappedColumns, Func<T> factory)
         {
             // parameters
-            var line = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
-            var configParameter = Expression.Parameter(typeof(ReadOnlySpan<(int start, int length)>), "config");
+            var configParameter = Expression.Parameter(typeof(TextFindHelper).MakeByRefType(), "config");
 
             // variables
             var instanceVariable = Expression.Variable(typeof(T), "inst");
 
             var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
             {
-                var arrayIndex = ReadOnlySpanIndex<(int, int)>(configParameter, Expression.Constant(i));
-                var (startIndex, length) = (Expression.Field(arrayIndex, "Item1"), Expression.Field(arrayIndex, "Item2"));
-                return Slice(line, startIndex, length);
+                return Expression.Call(configParameter, nameof(TextFindHelper.getValue), Type.EmptyTypes, Expression.Constant(mapConfig.start));
             });
 
             var body = MountBody(instanceVariable, blockThatSetProperties, mappedColumns, factory);
-            var result = Expression.Lambda<FuncSpanArrayT<T>>(body, line, configParameter);
+            var result = Expression.Lambda<FuncSpanArrayT<T>>(body, configParameter);
 
             return result;
         }

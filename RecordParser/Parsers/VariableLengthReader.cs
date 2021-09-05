@@ -1,9 +1,5 @@
-﻿using RecordParser.Builders.Reader;
-using RecordParser.Engines.Reader;
+﻿using RecordParser.Engines.Reader;
 using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace RecordParser.Parsers
@@ -17,18 +13,14 @@ namespace RecordParser.Parsers
     internal class VariableLengthReader<T> : IVariableLengthReader<T>
     {
         private readonly FuncSpanArrayT<T> parser;
-        private readonly ReadOnlyMemory<int> config;
-        private readonly int maxColumnIndex;
         private readonly string delimiter;
+        private readonly (char ch, string str) quote;
 
-        internal VariableLengthReader(IEnumerable<MappingReadConfiguration> list, FuncSpanArrayT<T> parser, string separator)
+        internal VariableLengthReader(FuncSpanArrayT<T> parser, string separator, char quote)
         {
-            var temp = list.Select(x => x.start).ToArray();
-
-            config = temp;
-            maxColumnIndex = temp.Max();
             this.parser = parser;
             delimiter = separator;
+            this.quote = (quote, quote.ToString());
         }
 
 #if NET5_0
@@ -36,10 +28,16 @@ namespace RecordParser.Parsers
 #endif
         public T Parse(ReadOnlySpan<char> line)
         {
-            Span<(int start, int length)> positions = stackalloc (int, int)[config.Length];
-            TextFindHelper.SetStartLengthPositions(line, delimiter, config.Span, maxColumnIndex, in positions);
+            var finder = new TextFindHelper(line, delimiter, quote);
 
-            return parser(line, positions);
+            try
+            {
+                return parser(in finder);
+            }
+            finally
+            {
+                finder.Dispose();
+            }
         }
 
         public bool TryParse(ReadOnlySpan<char> line, out T result)

@@ -95,12 +95,17 @@ namespace RecordParser.Builders.Reader
         /// <returns>The reader object.</returns>
         public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null, Func<T> factory = null)
         {
+            const char quote = '"';
+
+            if (separator.Contains(quote))
+                throw new ArgumentException("Separator must not contain quote char", nameof(separator));
+
             var map = MappingReadConfiguration.Merge(list.Select(x => x.Value), dic);
             var func = ReaderEngine.RecordParserSpanCSV(map, factory);
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
 
-            return new VariableLengthReader<T>(map, func.Compile(), separator);
+            return new VariableLengthReader<T>(func.Compile(), separator, quote);
         }
     }
 }

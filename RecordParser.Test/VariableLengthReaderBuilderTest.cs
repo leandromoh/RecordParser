@@ -9,7 +9,7 @@ using Xunit;
 
 namespace RecordParser.Test
 {
-    public class VariableLengthReaderBuilderTest : TestSetup
+    public partial class VariableLengthReaderBuilderTest : TestSetup
     {
         [Fact]
         public void Given_factory_method_should_invoke_it_on_parse()
