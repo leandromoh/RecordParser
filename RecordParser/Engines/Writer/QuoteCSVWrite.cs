@@ -83,8 +83,11 @@ namespace RecordParser.Engines.Writer
 
         private static int MinLengthToQuote(ReadOnlySpan<char> text, ReadOnlySpan<char> separator, char quote)
         {
+            if (text.IsEmpty)
+                return 0;
+
             var quoteFounds = 0;
-            var containsSeparator = false;
+            var needQuoteAround = char.IsWhiteSpace(text[0]) || char.IsWhiteSpace(text[text.Length - 1]);
 
             for (var i = 0; i < text.Length; i++)
             {
@@ -94,15 +97,18 @@ namespace RecordParser.Engines.Writer
                     continue;
                 }
 
-                if (containsSeparator == false && text.Slice(i).StartsWith(separator))
+                if (needQuoteAround == false && (text.Slice(i).StartsWith(separator) || 
+                                                 text[i] == ',' ||
+                                                 text[i] == '\r' ||
+                                                 text[i] == '\n'))
                 {
-                    containsSeparator = true;
+                    needQuoteAround = true;
                 }
             }
 
             if (quoteFounds == 0)
             {
-                return containsSeparator ? text.Length + 2 : text.Length;
+                return needQuoteAround ? text.Length + 2 : text.Length;
             }
             else
             {
