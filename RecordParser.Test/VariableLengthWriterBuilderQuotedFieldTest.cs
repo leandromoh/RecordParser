@@ -317,5 +317,34 @@ namespace RecordParser.Test
             result.Should().Be($"\"FOO {special} BAZ\"");
             unwritted.Should().Be(new string(default, freeSpace));
         }
+
+        [Fact]
+        public void Given_text_using_quote_map_with_custom_without_special_char_then_custom_should_receive_text_as_is()
+        {
+            // Arrange 
+
+            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, 0, (span, text) => (text.ToUpperInvariant(span) is var written && written == text.Length, Math.Max(0, written)))
+                .Build(";");
+
+            var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
+
+            Span<char> destination = stackalloc char[20];
+
+            // Act
+
+            var success = writer.TryFormat(instance, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
+
+            var result = destination.Slice(0, charsWritten);
+            var unwritted = destination.Slice(charsWritten);
+            var freeSpace = destination.Length - charsWritten;
+
+            result.Should().Be("FOO BAR BAZ");
+            unwritted.Should().Be(new string(default, freeSpace));
+        }
     }
 }

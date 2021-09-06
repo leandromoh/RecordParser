@@ -56,21 +56,25 @@ namespace RecordParser.Engines.Writer
 #endif
                 (Span<char> span, ReadOnlySpan<char> text) =>
                 {
+                    var newLengh = MinLengthToQuote(text, separator, quote);
+
+                    if (newLengh == text.Length)
+                        return f(span, text);
+
                     char[] array = null;
+
                     try
                     {
-                        var newLengh = MinLengthToQuote(text, separator, quote);
-
                         Span<char> temp = (newLengh > 128
                                             ? array = ArrayPool<char>.Shared.Rent(newLengh)
                                             : stackalloc char[newLengh])
                                           .Slice(0, newLengh);
 
                         var (success, written) = TryFormat(text, temp, quote, newLengh);
-                        
+
                         Debug.Assert(success);
                         Debug.Assert(written == newLengh);
-                        
+
                         return f(span, temp);
                     }
                     finally
@@ -97,7 +101,7 @@ namespace RecordParser.Engines.Writer
                     continue;
                 }
 
-                if (needQuoteAround == false && (text.Slice(i).StartsWith(separator) || 
+                if (needQuoteAround == false && (text.Slice(i).StartsWith(separator) ||
                                                  text[i] == ',' ||
                                                  text[i] == '\r' ||
                                                  text[i] == '\n'))
