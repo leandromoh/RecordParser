@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using FluentAssertions.Primitives;
+using RecordParser.Parsers;
 using System;
 
 namespace RecordParser.Test
@@ -23,5 +24,12 @@ namespace RecordParser.Test
         // FluentAssertions does not support Span yet
         public static StringAssertions Should(this Span<char> value)
             => value.ToString().Should();
+
+
+        public static readonly FuncSpanTIntBool ToUpperInvariant = (Span<char> span, ReadOnlySpan<char> text) =>
+            (text.ToUpperInvariant(span) is var written && written == text.Length, Math.Max(0, written));
+
+        public static readonly FuncSpanTIntBool ToLowerInvariant = (Span<char> span, ReadOnlySpan<char> text) =>
+            (text.ToLowerInvariant(span) is var written && written == text.Length, Math.Max(0, written));
     }
 }

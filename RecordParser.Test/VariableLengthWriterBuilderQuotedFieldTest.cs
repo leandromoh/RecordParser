@@ -2,6 +2,7 @@
 using RecordParser.Builders.Writer;
 using System;
 using Xunit;
+using RecordParser.Test;
 
 namespace RecordParser.Test
 {
@@ -45,7 +46,7 @@ namespace RecordParser.Test
             // Arrange 
 
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0, (Span<char> span, string text) => (text.AsSpan().ToUpperInvariant(span) is var written && written == text.Length, written))
+                .Map(x => x.Name, 0, StringExtensions.ToUpperInvariant)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
@@ -109,11 +110,11 @@ namespace RecordParser.Test
             // Arrange 
 
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, string Comment, Color Color, string Owner)>()
-                .Map(x => x.Name, 0, (span, text) => (text.ToUpperInvariant(span) is var written && written == text.Length, written))
+                .Map(x => x.Name, 0, SpanExtensions.ToUpperInvariant)
                 .Map(x => x.Birthday, 1, "yyyy.MM.dd")
                 .Map(x => x.Comment, 2)
                 .Map(x => x.Color, 3)
-                .Map(x => x.Owner, 4, (span, text) => (text.ToLowerInvariant(span) is var written && written == text.Length, written))
+                .Map(x => x.Owner, 4, SpanExtensions.ToLowerInvariant)
                 .Build(" ; ");
 
             var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), "\"It Is Fast\"", Color.LightBlue, "ANA BOB");
@@ -229,7 +230,7 @@ namespace RecordParser.Test
             // Arrange 
 
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0, (span, text) => (text.ToUpperInvariant(span) is var written && written == text.Length, Math.Max(0, written)))
+                .Map(x => x.Name, 0, SpanExtensions.ToUpperInvariant)
                 .Build(" ; ");
 
             var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
@@ -295,7 +296,7 @@ namespace RecordParser.Test
             // Arrange 
 
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0, (span, text) => (text.ToUpperInvariant(span) is var written && written == text.Length, Math.Max(0, written)))
+                .Map(x => x.Name, 0, SpanExtensions.ToUpperInvariant)
                 .Build(";");
 
             var instance = ($"foo {special} baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
@@ -324,7 +325,7 @@ namespace RecordParser.Test
             // Arrange 
 
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0, (span, text) => (text.ToUpperInvariant(span) is var written && written == text.Length, Math.Max(0, written)))
+                .Map(x => x.Name, 0, SpanExtensions.ToUpperInvariant)
                 .Build(";");
 
             var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
