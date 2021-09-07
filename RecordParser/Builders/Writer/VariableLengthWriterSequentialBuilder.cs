@@ -62,6 +62,8 @@ namespace RecordParser.Builders.Writer
         /// </param>
         /// <returns>An object to configure the mapping.</returns>
         IVariableLengthWriterSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, FuncSpanTIntBool<R> converter = null);
+
+        IVariableLengthWriterSequentialBuilder<T> Map(Expression<Func<T, string>> ex, FuncSpanTIntBool converter = null);
     }
 
     public class VariableLengthWriterSequentialBuilder<T> : IVariableLengthWriterSequentialBuilder<T>
@@ -125,6 +127,12 @@ namespace RecordParser.Builders.Writer
         /// </param>
         /// <returns>An object to configure the mapping.</returns>
         public IVariableLengthWriterSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, FuncSpanTIntBool<R> converter = null)
+        {
+            indexed.Map(ex, ++currentIndex, converter);
+            return this;
+        }
+
+        public IVariableLengthWriterSequentialBuilder<T> Map(Expression<Func<T, string>> ex, FuncSpanTIntBool converter = null)
         {
             indexed.Map(ex, ++currentIndex, converter);
             return this;
