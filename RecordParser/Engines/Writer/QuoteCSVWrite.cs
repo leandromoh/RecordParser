@@ -16,17 +16,24 @@ namespace RecordParser.Engines.Writer
             var fnull = Quote(quote, separator);
 
             foreach (var x in maps)
+            {
                 if (x.converter is FuncSpanTIntBool f)
                     fmaks[x.converter] = f.Quote(quote, separator);
 
+                else if (x.converter is FuncSpanTIntBool<string> s)
+                    fmaks[x.converter] = s.Quote(quote, separator);
+            }
+
             var map2 = maps.Select(i =>
             {
-                if (i.type != typeof(ReadOnlySpan<char>))
+                if (i.type != typeof(ReadOnlySpan<char>) && i.type != typeof(string))
                     return i;
 
-                var fmask = i.converter is null ? fnull : fmaks[i.converter];
+                var (fmask, type) = i.converter is null 
+                                    ? (fnull, typeof(ReadOnlySpan<char>)) 
+                                    : (fmaks[i.converter], i.type);
 
-                return new MappingWriteConfiguration(i.prop, i.start, i.length, fmask, i.format, i.padding, i.paddingChar, i.type);
+                return new MappingWriteConfiguration(i.prop, i.start, i.length, fmask, i.format, i.padding, i.paddingChar, type);
             })
                 .ToList();
 
@@ -76,6 +83,43 @@ namespace RecordParser.Engines.Writer
                         Debug.Assert(written == newLengh);
 
                         return f(span, temp);
+                    }
+                    finally
+                    {
+                        if (array != null)
+                            ArrayPool<char>.Shared.Return(array);
+                    }
+                };
+        }
+
+        private static FuncSpanTIntBool<string> Quote(this FuncSpanTIntBool<string> f, char quote, string separator)
+        {
+            return
+#if NET6_0
+        [SkipLocalsInit]
+#endif
+                (Span<char> span, string text) =>
+                {
+                    var newLengh = MinLengthToQuote(text, separator, quote);
+
+                    if (newLengh == text.Length)
+                        return f(span, text);
+
+                    char[] array = null;
+
+                    try
+                    {
+                        Span<char> temp = (newLengh > 128
+                                            ? array = ArrayPool<char>.Shared.Rent(newLengh)
+                                            : stackalloc char[newLengh])
+                                          .Slice(0, newLengh);
+
+                        var (success, written) = TryFormat(text, temp, quote, newLengh);
+
+                        Debug.Assert(success);
+                        Debug.Assert(written == newLengh);
+
+                        return f(span, new string(temp));
                     }
                     finally
                     {
