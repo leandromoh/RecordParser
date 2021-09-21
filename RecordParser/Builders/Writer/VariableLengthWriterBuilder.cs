@@ -101,7 +101,7 @@ namespace RecordParser.Builders.Writer
         /// <returns>An object to configure the mapping.</returns>
         public IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, string format)
         {
-            var member = ex.Body as MemberExpression ?? throw new ArgumentException("Must be member expression", nameof(ex));
+            var member = ex.Body;
             var config = new MappingWriteConfiguration(member, indexColumn, null, null, format, default, default, typeof(R));
             list.Add(indexColumn, config);
             return this;
