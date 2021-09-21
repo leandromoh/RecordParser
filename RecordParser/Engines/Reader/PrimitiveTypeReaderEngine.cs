@@ -11,7 +11,7 @@ namespace RecordParser.Engines.Reader
 {
     internal static class PrimitiveTypeReaderEngine
     {
-        public static readonly IReadOnlyDictionary<(Type, Type), Func<Type, Expression, Expression>> dic;
+        public static readonly IReadOnlyDictionary<(Type from, Type to), Func<Type, Expression, Expression>> dic;
 
         static PrimitiveTypeReaderEngine()
         {
