@@ -73,17 +73,6 @@ namespace RecordParser.Engines.Reader
             return body;
         }
 
-        private static Expression ReadOnlySpanIndex<T>(params Expression[] args)
-        {
-            Debug.Assert(args.Length == 2);
-            Debug.Assert(args[0].Type == typeof(ReadOnlySpan<T>));
-            Debug.Assert(args[1].Type == typeof(int));
-
-            return Call((FuncSpanIntT<T>)GetItem, args);
-        }
-
-        private static T GetItem<T>(this ReadOnlySpan<T> span, int i) => span[i];
-
         private static BlockExpression MountSetProperties(
             ParameterExpression objectParameter,
             IEnumerable<MappingReadConfiguration> mappedColumns,
@@ -96,9 +85,6 @@ namespace RecordParser.Engines.Reader
             foreach (var x in mappedColumns)
             {
                 i++;
-
-                if (x.prop is null)
-                    continue;
 
                 Expression textValue = getTextValue(i, x);
 

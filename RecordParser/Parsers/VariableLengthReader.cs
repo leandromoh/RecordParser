@@ -23,9 +23,6 @@ namespace RecordParser.Parsers
             this.quote = (quote, quote.ToString());
         }
 
-#if NET5_0
-        [SkipLocalsInit]
-#endif
         public T Parse(ReadOnlySpan<char> line)
         {
             var finder = new TextFindHelper(line, delimiter, quote);
