@@ -39,16 +39,17 @@ namespace RecordParser.Test
         {
             // Arrange 
 
-            var writer = new VariableLengthWriterBuilder<(string FirstName, string LastName, string NickName, string Address)>()
+            var writer = new VariableLengthWriterBuilder<(string FirstName, string LastName, string NickName, string Address, string Id)>()
                 .Map(x => x.FirstName, 0, (FuncSpanTIntBool<string>)null)
                 .Map(x => x.LastName, 1, (FuncSpanTIntBool)null)
                 .Map(x => x.NickName, 2, StringExtensions.ToUpperInvariant)
                 .Map(x => x.Address, 3, SpanExtensions.ToLowerInvariant)
+                .Map(x => x.Id, 4)
                 .Build(separator);
 
-            var instance = (value, value, value, value);
+            var instance = (value, value, value, value, value);
             var quoted = value.Quote(separator);
-            var expectedValues = new[] { quoted, quoted, quoted.ToUpperInvariant(), quoted.ToLowerInvariant() };
+            var expectedValues = new[] { quoted, quoted, quoted.ToUpperInvariant(), quoted.ToLowerInvariant(), quoted };
             var expected = string.Join(separator, expectedValues);
 
             Span<char> destination = stackalloc char[100];
@@ -104,6 +105,10 @@ namespace RecordParser.Test
 
             switch (mapType)
             {
+                case MapTextType.None:
+                    builder.Map(x => x.Text, 0);
+                    break;
+
                 case MapTextType.StringWithoutCustom:
                     builder.Map(x => x.Text, 0, (FuncSpanTIntBool<string>)null);
                     break;
@@ -146,6 +151,8 @@ namespace RecordParser.Test
 
         public enum MapTextType
         {
+            None,
+
             StringWithCustom,
             StringWithoutCustom,
 
