@@ -164,25 +164,25 @@ namespace RecordParser.Engines.Writer
             }
         }
 
-        private static (bool, int) TryFormat(ReadOnlySpan<char> text, Span<char> span, char quote, int newLengh)
+        private static (bool, int) TryFormat(ReadOnlySpan<char> text, Span<char> span, char quote, int newLength)
         {
-            if (newLengh > span.Length)
+            if (newLength > span.Length)
             {
                 return (false, 0);
             }
 
-            if (newLengh == text.Length)
+            if (newLength == text.Length)
             {
                 text.CopyTo(span);
-                return (true, newLengh);
+                return (true, newLength);
             }
 
-            if (newLengh == text.Length + 2)
+            if (newLength == text.Length + 2)
             {
                 span[0] = quote;
                 text.CopyTo(span.Slice(1));
                 span[text.Length + 1] = quote;
-                return (true, newLengh);
+                return (true, newLength);
             }
 
             else
@@ -203,9 +203,9 @@ namespace RecordParser.Engines.Writer
 
                 span[j++] = quote;
 
-                Debug.Assert(j == newLengh);
+                Debug.Assert(j == newLength);
 
-                return (true, newLengh);
+                return (true, newLength);
             }
         }
     }
