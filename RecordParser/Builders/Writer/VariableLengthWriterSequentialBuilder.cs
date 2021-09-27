@@ -64,14 +64,6 @@ namespace RecordParser.Builders.Writer
         IVariableLengthWriterSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, FuncSpanTIntBool<R> converter = null);
 
         IVariableLengthWriterSequentialBuilder<T> Map(Expression<Func<T, string>> ex, FuncSpanTIntBool converter = null);
-
-        /// <summary>
-        /// Define a default custom function that will be used to parse the quoted version of a string,
-        /// except whose configurated with a specific custom function.
-        /// </summary>
-        /// <param name="ex">The default custom function for quoted string.</param>
-        /// <returns>An object to configure the mapping.</returns>
-        IVariableLengthWriterSequentialBuilder<T> DefaultTypeConvert(FuncSpanTIntBool ex);
     }
 
     public class VariableLengthWriterSequentialBuilder<T> : IVariableLengthWriterSequentialBuilder<T>
@@ -158,10 +150,5 @@ namespace RecordParser.Builders.Writer
             return this;
         }
 
-        public IVariableLengthWriterSequentialBuilder<T> DefaultTypeConvert(FuncSpanTIntBool ex)
-        {
-            indexed.DefaultTypeConvert(ex);
-            return this;
-        }
     }
 }

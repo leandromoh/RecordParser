@@ -61,15 +61,6 @@ namespace RecordParser.Builders.Writer
         IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null);
 
         IVariableLengthWriterBuilder<T> Map(Expression<Func<T, string>> ex, int indexColumn, FuncSpanTIntBool converter = null);
-
-
-        /// <summary>
-        /// Define a default custom function that will be used to parse the quoted version of a string,
-        /// except whose configurated with a specific custom function.
-        /// </summary>
-        /// <param name="ex">The default custom function for quoted string.</param>
-        /// <returns>An object to configure the mapping.</returns>
-        IVariableLengthWriterBuilder<T> DefaultTypeConvert(FuncSpanTIntBool ex);
     }
 
     public class VariableLengthWriterBuilder<T> : IVariableLengthWriterBuilder<T>
@@ -136,19 +127,6 @@ namespace RecordParser.Builders.Writer
         public IVariableLengthWriterBuilder<T> DefaultTypeConvert<R>(FuncSpanTIntBool<R> ex)
         {
             dic.Add(typeof(R), ex);
-            return this;
-        }
-
-
-        /// <summary>
-        /// Define a default custom function that will be used to parse the quoted version of a string,
-        /// except whose configurated with a specific custom function.
-        /// </summary>
-        /// <param name="ex">The default custom function for quoted string.</param>
-        /// <returns>An object to configure the mapping.</returns>
-        public IVariableLengthWriterBuilder<T> DefaultTypeConvert(FuncSpanTIntBool ex)
-        {
-            dic.Add(typeof(ReadOnlySpan<char>), ex);
             return this;
         }
 
