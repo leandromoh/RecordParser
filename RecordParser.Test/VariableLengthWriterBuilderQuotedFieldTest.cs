@@ -3,272 +3,55 @@ using RecordParser.Builders.Writer;
 using System;
 using Xunit;
 using RecordParser.Test;
+using RecordParser.Parsers;
+using System.Linq.Expressions;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace RecordParser.Test
 {
     public partial class VariableLengthWriterBuilderTest
     {
-        [Fact]
-        public void Given_text_using_normal_map_without_custom_should_write_as_is()
+        public const string separator = " ; ";
+
+        public static IEnumerable<object[]> Given_text_mapped_should_write_quoted_properly_theory()
         {
-            // Arrange 
+            var basic = new[]
+            {
+                "foo bar baz",
+                "FOO BAR BAZ",
+                "foo \"bar\" baz",
+                "\"It Is Fast\""
+            };
 
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map<string>(x => x.Name, 0)
-                .Map(x => x.Birthday, 1, "yyyy.MM.dd")
-                .Map(x => x.Money, 2)
-                .Map(x => x.Color, 3)
-                .Build(" ; ");
+            var specialChars = new[] { ",", "\"", "\r", "\n", separator };
 
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
+            var special = specialChars.Select(x => $"foo {x} BAZ");
 
-            Span<char> destination = stackalloc char[100];
+            var result = basic.Concat(special).ToArray();
 
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeTrue();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().Be("foo \"bar\" baz ; 2020.05.23 ; 123.45 ; LightBlue");
-            unwritted.Should().Be(new string(default, freeSpace));
-        }
-
-        [Fact]
-        public void Given_text_using_normal_map_with_custom_should_write_as_is()
-        {
-            // Arrange 
-
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0, StringExtensions.ToUpperInvariant)
-                .Map(x => x.Birthday, 1, "yyyy.MM.dd")
-                .Map(x => x.Money, 2)
-                .Map(x => x.Color, 3)
-                .Build(" ; ");
-
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
-
-            Span<char> destination = stackalloc char[100];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeTrue();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().Be("FOO \"BAR\" BAZ ; 2020.05.23 ; 123.45 ; LightBlue");
-            unwritted.Should().Be(new string(default, freeSpace));
-        }
-
-        [Fact]
-        public void Given_text_using_quote_map_without_custom_should_write_quoted()
-        {
-            // Arrange 
-
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0)
-                .Map(x => x.Birthday, 1, "yyyy.MM.dd")
-                .Map(x => x.Money, 2)
-                .Map(x => x.Color, 3)
-                .Build(" ; ");
-
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
-
-            Span<char> destination = stackalloc char[100];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeTrue();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().Be("\"foo \"\"bar\"\" baz\" ; 2020.05.23 ; 123.45 ; LightBlue");
-            unwritted.Should().Be(new string(default, freeSpace));
-        }
-
-        [Fact]
-        public void Given_text_using_quote_map_with_custom_should_write_quoted()
-        {
-            // Arrange 
-
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, string Comment, Color Color, string Owner)>()
-                .Map(x => x.Name, 0, SpanExtensions.ToUpperInvariant)
-                .Map(x => x.Birthday, 1, "yyyy.MM.dd")
-                .Map(x => x.Comment, 2)
-                .Map(x => x.Color, 3)
-                .Map(x => x.Owner, 4, SpanExtensions.ToLowerInvariant)
-                .Build(" ; ");
-
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), "\"It Is Fast\"", Color.LightBlue, "ANA BOB");
-
-            Span<char> destination = stackalloc char[100];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeTrue();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().Be("\"FOO \"\"BAR\"\" BAZ\" ; 2020.05.23 ; \"\"\"It Is Fast\"\"\" ; LightBlue ; ana bob");
-            unwritted.Should().Be(new string(default, freeSpace));
-        }
-
-        [Fact]
-        public void Given_text_using_normal_map_with_shorter_destination_should_not_write()
-        {
-            // Arrange 
-
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map<string>(x => x.Name, 0)
-                .Build(" ; ");
-
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
-
-            Span<char> destination = stackalloc char[11];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeFalse();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().BeEmpty();
-            unwritted.Should().Be(new string(default, freeSpace));
-        }
-
-        [Fact]
-        public void Given_text_using_quote_map_without_custom_and_shorter_destination_than_unquoted_version_should_not_write()
-        {
-            // Arrange 
-
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0)
-                .Build(" ; ");
-
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
-
-            Span<char> destination = stackalloc char[5];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeFalse();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().BeEmpty();
-            unwritted.Should().Be(new string(default, freeSpace));
-        }
-
-        [Fact]
-        public void Given_text_using_quote_map_without_custom_and_shorter_destination_than_quoted_version_should_not_write()
-        {
-            // Arrange 
-
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0)
-                .Build(" ; ");
-
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
-
-            Span<char> destination = stackalloc char[15];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeFalse();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().BeEmpty();
-            unwritted.Should().Be(new string(default, freeSpace));
-        }
-
-        [Fact]
-        public void Given_text_using_quote_map_with_custom_and_shorter_destination_than_quoted_version_should_not_write()
-        {
-            // Arrange 
-
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0, SpanExtensions.ToUpperInvariant)
-                .Build(" ; ");
-
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
-
-            Span<char> destination = stackalloc char[16];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeFalse();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().BeEmpty();
-            unwritted.Should().Be(new string(default, freeSpace));
+            return result.Select(x => new object[] { x });
         }
 
         [Theory]
-        [InlineData(';')]
-        [InlineData(',')]
-        [InlineData('\n')]
-        [InlineData('\r')]
-        public void Given_text_using_quote_map_without_custom_and_contains_special_char(char special)
+        [MemberData(nameof(Given_text_mapped_should_write_quoted_properly_theory))]
+        public void Given_text_mapped_should_write_quoted_properly(string value)
         {
             // Arrange 
 
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0)
-                .Build(";");
+            var writer = new VariableLengthWriterBuilder<(string FirstName, string LastName, string NickName, string Address)>()
+                .Map(x => x.FirstName, 0, (FuncSpanTIntBool<string>)null)
+                .Map(x => x.LastName, 1, (FuncSpanTIntBool)null)
+                .Map(x => x.NickName, 2, StringExtensions.ToUpperInvariant)
+                .Map(x => x.Address, 3, SpanExtensions.ToLowerInvariant)
+                .Build(separator);
 
-            var instance = ($"foo {special} baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
+            var instance = (value, value, value, value);
+            var quoted = value.Quote(separator);
+            var expectedValues = new[] { quoted, quoted, quoted.ToUpperInvariant(), quoted.ToLowerInvariant() };
+            var expected = string.Join(separator, expectedValues);
 
-            Span<char> destination = stackalloc char[20];
+            Span<char> destination = stackalloc char[100];
 
             // Act
 
@@ -282,26 +65,68 @@ namespace RecordParser.Test
             var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
-            result.Should().Be($"\"foo {special} baz\"");
+            result.Should().Be(expected);
             unwritted.Should().Be(new string(default, freeSpace));
+        }
+
+        public static IEnumerable<object[]> Given_text_shorter_than_destination_should_not_write_theory()
+        {
+            var situations = new[]
+            {
+                // raw shorter than destination
+                ("Foo", 2, "", false),
+                ("F\no", 2, "", false),
+                // quoted shorter than destination
+                ("F\no", 4, "", false),
+                // quoted same length original text
+                ("Foo", 3, "Foo", true),
+                ("Foo", 5, "Foo", true),
+                // quoted around only
+                ("F\no", 5, "\"F\no\"", true),
+                ("F\no", 6, "\"F\no\"", true),
+                // quoted around and inside only
+                ("F\"o", 6, "\"F\"\"o\"", true),
+                ("F\"o", 7, "\"F\"\"o\"", true)
+            };
+
+            foreach (MapTextType mapType in Enum.GetValues(typeof(MapTextType)))
+                foreach (var (value, size, expected, sucess) in situations)
+                    yield return new object[] { value, size, expected, sucess, mapType };
         }
 
         [Theory]
-        [InlineData(';')]
-        [InlineData(',')]
-        [InlineData('\n')]
-        [InlineData('\r')]
-        public void Given_text_using_quote_map_with_custom_and_contains_special_char(char special)
+        [MemberData(nameof(Given_text_shorter_than_destination_should_not_write_theory))]
+        public void Given_text_shorter_than_destination_should_not_write(string value, int size, string expected, bool expectedSuccess, MapTextType mapType)
         {
             // Arrange 
 
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0, SpanExtensions.ToUpperInvariant)
-                .Build(";");
+            var builder = new VariableLengthWriterBuilder<(string Text, bool _)>();
 
-            var instance = ($"foo {special} baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
+            switch (mapType)
+            {
+                case MapTextType.StringWithoutCustom:
+                    builder.Map(x => x.Text, 0, (FuncSpanTIntBool<string>)null);
+                    break;
 
-            Span<char> destination = stackalloc char[20];
+                case MapTextType.SpanWithoutCustom:
+                    builder.Map(x => x.Text, 0, (FuncSpanTIntBool)null);
+                    break;
+
+                case MapTextType.StringWithCustom:
+                    builder.Map(x => x.Text, 0, StringExtensions.ToUpperInvariant);
+                    expected = expected.ToUpperInvariant();
+                    break;
+
+                case MapTextType.SpanWithCustom:
+                    builder.Map(x => x.Text, 0, SpanExtensions.ToLowerInvariant);
+                    expected = expected.ToLowerInvariant();
+                    break;
+            }
+
+            var writer = builder.Build(separator);
+            var instance = (value, false);
+
+            Span<char> destination = stackalloc char[size];
 
             // Act
 
@@ -309,111 +134,23 @@ namespace RecordParser.Test
 
             // Assert
 
-            success.Should().BeTrue();
+            success.Should().Be(expectedSuccess);
 
             var result = destination.Slice(0, charsWritten);
             var unwritted = destination.Slice(charsWritten);
             var freeSpace = destination.Length - charsWritten;
 
-            result.Should().Be($"\"FOO {special} BAZ\"");
+            result.Should().Be(expected);
             unwritted.Should().Be(new string(default, freeSpace));
         }
 
-        [Fact]
-        public void Given_text_using_quote_map_with_custom_without_special_char_then_custom_should_receive_text_as_is()
+        public enum MapTextType
         {
-            // Arrange 
+            StringWithCustom,
+            StringWithoutCustom,
 
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 0, SpanExtensions.ToUpperInvariant)
-                .Build(";");
-
-            var instance = ("foo bar baz", new DateTime(2020, 05, 23), 0123.45M, Color.LightBlue);
-
-            Span<char> destination = stackalloc char[20];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeTrue();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().Be("FOO BAR BAZ");
-            unwritted.Should().Be(new string(default, freeSpace));
-        }
-
-        [Fact]
-        public void Given_indexed_builder_text_using_quote_default_converter_should_write_quoted()
-        {
-            // Arrange 
-
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, string Comment, Color Color, string Owner)>()
-                .Map(x => x.Name, 0)
-                .Map(x => x.Birthday, 1, "yyyy.MM.dd")
-                .Map(x => x.Comment, 2)
-                .Map(x => x.Color, 3)
-                .Map(x => x.Owner, 4)
-                .DefaultTypeConvert(SpanExtensions.ToUpperInvariant)
-                .Build(" ; ");
-
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), "\"It Is Fast\"", Color.LightBlue, "ANA BOB");
-
-            Span<char> destination = stackalloc char[100];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeTrue();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().Be("\"FOO \"\"BAR\"\" BAZ\" ; 2020.05.23 ; \"\"\"IT IS FAST\"\"\" ; LightBlue ; ANA BOB");
-            unwritted.Should().Be(new string(default, freeSpace));
-        }
-
-        [Fact]
-        public void Given_sequential_builder_text_using_quote_default_converter_should_write_quoted()
-        {
-            // Arrange 
-
-            var writer = new VariableLengthWriterSequentialBuilder<(string Name, DateTime Birthday, string Comment, Color Color, string Owner)>()
-                .Map(x => x.Name)
-                .Map(x => x.Birthday, "yyyy.MM.dd")
-                .Map(x => x.Comment)
-                .Map(x => x.Color)
-                .Map(x => x.Owner)
-                .DefaultTypeConvert(SpanExtensions.ToUpperInvariant)
-                .Build(" ; ");
-
-            var instance = ("foo \"bar\" baz", new DateTime(2020, 05, 23), "\"It Is Fast\"", Color.LightBlue, "ANA BOB");
-
-            Span<char> destination = stackalloc char[100];
-
-            // Act
-
-            var success = writer.TryFormat(instance, destination, out var charsWritten);
-
-            // Assert
-
-            success.Should().BeTrue();
-
-            var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
-
-            result.Should().Be("\"FOO \"\"BAR\"\" BAZ\" ; 2020.05.23 ; \"\"\"IT IS FAST\"\"\" ; LightBlue ; ANA BOB");
-            unwritted.Should().Be(new string(default, freeSpace));
+            SpanWithCustom,
+            SpanWithoutCustom,
         }
     }
 }

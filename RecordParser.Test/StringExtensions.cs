@@ -10,5 +10,25 @@ namespace RecordParser.Test
 
         public static readonly FuncSpanTIntBool<string> ToLowerInvariant = (Span<char> span, string text) =>
             (text.AsSpan().ToLowerInvariant(span) is var written && written == text.Length, Math.Max(0, written));
+
+        public static string Quote(this string value, string separator, bool trim = true)
+        {
+            if (trim)
+                value = value?.Trim();
+
+            if (value == null)
+            {
+                return string.Empty;
+            }
+
+            if (value.IndexOfAny(new[] { ',', '"', '\r', '\n' }) > -1 || value.Contains(separator))
+            {
+                return '"' + value.Replace("\"", "\"\"") + '"';
+            }
+            else
+            {
+                return value;
+            }
+        }
     }
 }
