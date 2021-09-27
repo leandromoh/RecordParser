@@ -15,6 +15,11 @@ namespace RecordParser.Engines.Writer
         {
             if (map.converter != null)
             {
+                if (map.type == typeof(ReadOnlySpan<char>))
+                {
+                    prop = StringAsSpan(prop);
+                }
+
                 var result = Expression.Variable(typeof((bool, int)), "temp");
 
                 var toLarge = Expression.Block(variables: new[] { result },
@@ -84,7 +89,6 @@ namespace RecordParser.Engines.Writer
                 return Expression.IfThen(Expression.Not(tryFormat), gotoReturn);
             }
         }
-
 
         public static bool TryFormat(this char c, Span<char> span, out int written)
         {

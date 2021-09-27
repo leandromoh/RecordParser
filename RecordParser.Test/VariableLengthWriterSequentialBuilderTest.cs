@@ -256,10 +256,10 @@ namespace RecordParser.Test
 
             var writer = new VariableLengthWriterSequentialBuilder<(string Name, DateTime Birthday, decimal Money, string Nickname)>()
                 .Skip(1)
-                .Map(x => x.Name, (span, text) => (true, text.AsSpan().ToUpperInvariant(span)))
+                .Map(x => x.Name, SpanExtensions.ToUpperInvariant)
                 .Map(x => x.Birthday, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy"), written))
                 .Map(x => x.Money)
-                .Map(x => x.Nickname, (span, text) => (true, text.AsSpan().Slice(0, 4).ToUpperInvariant(span)))
+                .Map(x => x.Nickname, (span, text) => SpanExtensions.ToUpperInvariant(span, text.Slice(0, 4)))
                 .Build(" ; ");
 
             var instance = (Name: "foo bar baz",

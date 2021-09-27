@@ -59,6 +59,8 @@ namespace RecordParser.Builders.Writer
         /// </param>
         /// <returns>An object to configure the mapping.</returns>
         IVariableLengthWriterBuilder<T> Map<R>(Expression<Func<T, R>> ex, int indexColumn, FuncSpanTIntBool<R> converter = null);
+
+        IVariableLengthWriterBuilder<T> Map(Expression<Func<T, string>> ex, int indexColumn, FuncSpanTIntBool converter = null);
     }
 
     public class VariableLengthWriterBuilder<T> : IVariableLengthWriterBuilder<T>
@@ -84,6 +86,14 @@ namespace RecordParser.Builders.Writer
         {
             var member = ex.Body;
             var config = new MappingWriteConfiguration(member, indexColumn, null, converter, null, default, default, typeof(R));
+            list.Add(indexColumn, config);
+            return this;
+        }
+
+        public IVariableLengthWriterBuilder<T> Map(Expression<Func<T, string>> ex, int indexColumn, FuncSpanTIntBool converter = null)
+        {
+            var member = ex.Body;
+            var config = new MappingWriteConfiguration(member, indexColumn, null, converter, null, default, default, typeof(ReadOnlySpan<char>));
             list.Add(indexColumn, config);
             return this;
         }
@@ -132,7 +142,12 @@ namespace RecordParser.Builders.Writer
         /// <returns>The writer object.</returns>
         public IVariableLengthWriter<T> Build(string separator, CultureInfo cultureInfo = null)
         {
+            var quote = '"';
+
             var maps = MappingWriteConfiguration.Merge(list.Select(x => x.Value), dic);
+
+            maps = maps.MagicQuote(quote, separator);
+
             var expression = VariableLengthWriterEngine.GetFuncThatSetProperties<T>(maps, cultureInfo);
 
             return new VariableLengthWriter<T>(expression.Compile(), separator);

@@ -6,7 +6,7 @@ using Xunit;
 
 namespace RecordParser.Test
 {
-    public class VariableLengthWriterBuilderTest : TestSetup
+    public partial class VariableLengthWriterBuilderTest : TestSetup
     {
         [Fact]
         public void Given_value_using_standard_format_should_parse_without_extra_configuration()
@@ -247,10 +247,10 @@ namespace RecordParser.Test
             // Arrange
 
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, string Nickname)>()
-                .Map(x => x.Name, 1, (span, text) => (true, text.AsSpan().ToUpperInvariant(span)))
+                .Map(x => x.Name, 1, SpanExtensions.ToUpperInvariant)
                 .Map(x => x.Birthday, 2, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy"), written))
                 .Map(x => x.Money, 3)
-                .Map(x => x.Nickname, 4, (span, text) => (true, text.AsSpan().Slice(0, 4).ToUpperInvariant(span)))
+                .Map(x => x.Nickname, 4, (span, text) => SpanExtensions.ToUpperInvariant(span, text.Slice(0, 4)))
                 .Build(" ; ");
 
             var instance = (Name: "foo bar baz",

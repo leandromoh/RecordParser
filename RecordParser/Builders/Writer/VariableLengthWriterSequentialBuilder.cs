@@ -62,6 +62,8 @@ namespace RecordParser.Builders.Writer
         /// </param>
         /// <returns>An object to configure the mapping.</returns>
         IVariableLengthWriterSequentialBuilder<T> Map<R>(Expression<Func<T, R>> ex, FuncSpanTIntBool<R> converter = null);
+
+        IVariableLengthWriterSequentialBuilder<T> Map(Expression<Func<T, string>> ex, FuncSpanTIntBool converter = null);
     }
 
     public class VariableLengthWriterSequentialBuilder<T> : IVariableLengthWriterSequentialBuilder<T>
@@ -130,6 +132,12 @@ namespace RecordParser.Builders.Writer
             return this;
         }
 
+        public IVariableLengthWriterSequentialBuilder<T> Map(Expression<Func<T, string>> ex, FuncSpanTIntBool converter = null)
+        {
+            indexed.Map(ex, ++currentIndex, converter);
+            return this;
+        }
+
         /// <summary>
         /// Advance the current column by the number specified in <paramref name="columnCount"/>.
         /// The skipped columns will be ignored and not mapped.
@@ -141,5 +149,6 @@ namespace RecordParser.Builders.Writer
             currentIndex += columnCount;
             return this;
         }
+
     }
 }

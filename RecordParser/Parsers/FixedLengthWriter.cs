@@ -20,6 +20,7 @@ namespace RecordParser.Parsers
     /// For charsWritten tuple element: When this method returns, the number of characters that were written in <paramref name="span"/>.
     /// </returns>
     public delegate (bool success, int charsWritten) FuncSpanTIntBool<T>(Span<char> span, T inst);
+    public delegate (bool success, int charsWritten) FuncSpanTIntBool(Span<char> span, ReadOnlySpan<char> quoted);
 
     internal class FixedLengthWriter<T> : IFixedLengthWriter<T>
     {
