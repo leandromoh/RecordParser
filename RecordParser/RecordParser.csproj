@@ -1,9 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <PackageId>RecordParser</PackageId>
-    <TargetFrameworks>netstandard2.1;netcoreapp2.1;netcoreapp3.1;netcoreapp5.0</TargetFrameworks>
-    <LangVersion>9</LangVersion>
+    <TargetFrameworks>netstandard2.1;netcoreapp2.1;netcoreapp3.1;netcoreapp5.0;net6.0</TargetFrameworks>
+    <LangVersion>10</LangVersion>
     <Authors>Leandro Fernandes Vieira (leandromoh)</Authors>
     <Description>
 	RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance and zero allocations, thanks to Span type.  
@@ -29,12 +29,10 @@
       <None Include="..\LICENSE.md" Pack="true" PackagePath="LICENSE.md"/>
   </ItemGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp5.0|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp5.0|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
+	<PropertyGroup Condition=" 
+		( '$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release') AND
+		( '$(TargetFramework)' == 'netcoreapp5.0' OR '$(TargetFramework)' == 'net6.0') AND
+		( '$(Platform)' == 'AnyCPU') ">
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 </Project>
