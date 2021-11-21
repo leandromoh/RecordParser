@@ -72,6 +72,9 @@ namespace RecordParser.Engines.Reader
             var trim = Expression.Variable(typeof(ReadOnlySpan<char>), "trim");
             var number = Expression.Variable(under, "number");
 
+#if NET6_0_OR_GREATER
+            return Expression.Call(typeof(Enum), "Parse", new[] { type }, span, Expression.Constant(true));
+#endif
             var body = Enum.GetValues(type)
                 .Cast<object>()
                 .Select(color =>
