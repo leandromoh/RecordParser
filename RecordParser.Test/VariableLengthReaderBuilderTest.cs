@@ -275,9 +275,10 @@ namespace RecordParser.Test
             reader.Parse("777").Should().Be((Color)777);
 
             // text NOT present in enum
-            Action act = () => reader.Parse("foo");
+            var actualEx = AssertionExtensions.Should(() => reader.Parse("foo")).Throw<ArgumentException>().Which;
+            var expectedEx = AssertionExtensions.Should(() => Enum.Parse<Color>("foo", true)).Throw<ArgumentException>().Which;
 
-            act.Should().Throw<ArgumentException>().WithMessage("value foo not present in enum Color");
+            actualEx.Should().BeEquivalentTo(expectedEx, cfg => cfg.Excluding(x => x.StackTrace));
         }
 
         [Fact]
