@@ -56,7 +56,7 @@ namespace RecordParser.Engines.Reader
                     (
                         x =>
                             x.IsOptional
-                                ? Expression.Convert(Expression.Constant(x.DefaultValue), x.ParameterType)
+                                ? Expression.Constant(x.DefaultValue, x.ParameterType)
                                 : (Expression)GetNewExpressionFor(x.ParameterType)
                     )
                 );
