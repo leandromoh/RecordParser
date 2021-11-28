@@ -64,7 +64,7 @@ namespace RecordParser.Engines.Reader
 
         internal class Node
         {
-            public readonly IDictionary<string, Node> PropertiesToInitialize = new Dictionary<string, Node>();
+            public readonly Dictionary<string, Node> PropertiesToInitialize = new ();
 
             public Node(Type path) => MemberType = path;
             public Node(MemberExpression prop) : this(prop.Type)
@@ -77,35 +77,22 @@ namespace RecordParser.Engines.Reader
 
             public void AddPath(MemberExpression path)
             {
-                // Parse into a sequence of parts.
                 var parts = path.GetNested();
 
-                // The current node.  Start with this.
                 Node current = this;
 
-                // Iterate through the parts.
                 foreach (var part in parts)
                 {
-                    // The child node.
-                    Node child;
-
-                    // Does the part exist in the current node?  If
-                    // not, then add.
-                    if (!current.PropertiesToInitialize.TryGetValue(part.Member.Name, out child))
+                    if (current.PropertiesToInitialize.TryGetValue(part.Member.Name, out Node child) is false)
                     {
                         var childType = part.Type;//.GetUnderlyingType();
 
                         if (childType.IsValueType || childType == typeof(string))
                             return;
 
-                        // Add the child.
-                        child = new Node(part);
-
-                        // Add to the dictionary.
-                        current.PropertiesToInitialize[part.Member.Name] = child;
+                        current.PropertiesToInitialize[part.Member.Name] = child = new Node(part);
                     }
 
-                    // Set the current to the child.
                     current = child;
                 }
             }
@@ -116,15 +103,13 @@ namespace RecordParser.Engines.Reader
     {
         public static IEnumerable<MemberExpression> GetNested(this MemberExpression ex)
         {
-            var q = new List<MemberExpression>();
+            var q = new Stack<MemberExpression>();
 
             while (ex?.Expression != null)
             {
-                q.Add(ex);
+                q.Push(ex);
                 ex = ex.Expression as MemberExpression;
             }
-
-            q.Reverse();
 
             return q;
         }
