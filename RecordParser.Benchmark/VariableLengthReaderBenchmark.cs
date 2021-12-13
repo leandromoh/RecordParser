@@ -2,6 +2,7 @@
 using BenchmarkDotNet.Jobs;
 using CsvHelper;
 using CsvHelper.Configuration;
+using Cursively;
 using FlatFiles;
 using FlatFiles.TypeMapping;
 using RecordParser.Builders.Reader;
@@ -183,6 +184,57 @@ namespace RecordParser.Benchmark
                 if (i++ == LimitRecord) return;
 
                 var record = item.Result;
+            }
+        }
+
+        private sealed class AllDoneException : Exception { }
+
+        [Benchmark]
+        public async Task Read_VariableLength_Cursively_Async()
+        {
+            using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan | FileOptions.Asynchronous);
+
+            int i = 0;
+            CursivelyPersonVisitor visitor = new(OnPersonVisited);
+            try
+            {
+                await CsvAsyncInput
+                    .ForStream(fileStream)
+                    .ProcessAsync(visitor)
+                    .ConfigureAwait(false);
+            }
+            catch (AllDoneException)
+            {
+            }
+
+            void OnPersonVisited(in Person person)
+            {
+                if (i++ == LimitRecord) { throw new AllDoneException(); }
+
+                // this is where we would do any actual processing.
+            }
+        }
+
+        [Benchmark]
+        public void Read_VariableLength_Cursively_Sync()
+        {
+            int i = 0;
+            CursivelyPersonVisitor visitor = new(OnPersonVisited);
+            try
+            {
+                CsvSyncInput
+                    .ForMemoryMappedFile(PathSampleDataCSV)
+                    .Process(visitor);
+            }
+            catch (AllDoneException)
+            {
+            }
+
+            void OnPersonVisited(in Person person)
+            {
+                if (i++ == LimitRecord) { throw new AllDoneException(); }
+
+                // this is where we would do any actual processing.
             }
         }
 
