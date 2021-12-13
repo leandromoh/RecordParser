@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers.Text;
+using System.Globalization;
 using System.Text;
 
 using Cursively;
@@ -20,22 +21,7 @@ namespace RecordParser.Benchmark
 
         private Person _person;
 
-#if NET6_0_OR_GREATER
-        private static readonly int MaxValidGenderLength = GetMaxEnumNameLength<Gender>();
-
-        private readonly char[] _genderBuf = new char[MaxValidGenderLength];
-        
-        private static int GetMaxEnumNameLength<TEnum>() where TEnum : Enum
-        {
-            int maxSoFar = 0;
-            foreach (string name in Enum.GetNames(typeof(TEnum)))
-            {
-                maxSoFar = Math.Max(maxSoFar, name.Length);
-            }
-
-            return maxSoFar;
-        }
-#endif
+        private readonly char[] _decodeBuf = new char[1024];
 
         public CursivelyPersonVisitor(VisitPersonCallback callback)
         {
@@ -67,12 +53,15 @@ namespace RecordParser.Benchmark
                     break;
 
                 case 3:
-                    _ = Utf8Parser.TryParse(chunk, out _person.birthday, out _);
+                    // M/d/yyyy format is not supported by this for some reason.
+                    ////_ = Utf8Parser.TryParse(chunk, out _person.birthday, out _);
+                    Span<char> birthdayChars = _decodeBuf.AsSpan(..Encoding.UTF8.GetChars(chunk, _decodeBuf));
+                    _person.birthday = DateTime.Parse(birthdayChars, DateTimeFormatInfo.InvariantInfo);
                     break;
 
                 case 4:
 #if NET6_0_OR_GREATER
-                    Span<char> genderChars = _genderBuf.AsSpan(..Encoding.UTF8.GetChars(chunk, _genderBuf));
+                    Span<char> genderChars = _decodeBuf.AsSpan(..Encoding.UTF8.GetChars(chunk, _decodeBuf));
                     _person.gender = Enum.Parse<Gender>(genderChars);
 #else
                     // N.B.: there are ways to improve the efficiency of this for earlier
