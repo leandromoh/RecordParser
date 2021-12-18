@@ -2,7 +2,7 @@
 
 namespace RecordParser.Test
 {
-    internal enum Color
+    public enum Color
     {
         Black,
         White,
@@ -13,6 +13,18 @@ namespace RecordParser.Test
     public enum EmptyEnum
     {
 
+    }
+
+    [Flags]
+    public enum FlaggedEnum
+    {
+        Some = 1,
+
+        Other = 2,
+
+        Another = 4,
+
+        None = 8
     }
 
     internal class Person

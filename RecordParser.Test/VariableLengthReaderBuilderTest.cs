@@ -252,32 +252,54 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo(expected);
         }
 
-        [Fact]
-        public void Parse_enum_same_way_framework()
+        [Theory]
+        // text as is
+        [InlineData("Black", Color.Black)]
+        // text uppercase
+        [InlineData("WHITE", Color.White)]
+        // text lowercase
+        [InlineData("yellow", Color.Yellow)]
+        // numeric value present in enum
+        [InlineData("3", Color.LightBlue)]
+        // numeric value NOT present in enum
+        [InlineData("777", (Color)777)]
+        public void Parse_enum_same_way_framework(string text, Color expected)
         {
             var reader = new VariableLengthReaderBuilder<Color>()
                 .Map(x => x, 0)
                 .Build(";");
 
-            // text as is
-            reader.Parse("Black").Should().Be(Color.Black);
+            reader.Parse(text).Should().Be(expected);
+        }
 
-            // text uppercase
-            reader.Parse("WHITE").Should().Be(Color.White);
+        [Theory]
+        [InlineData(FlaggedEnum.Some)]
+        [InlineData(FlaggedEnum.Another)]
+        [InlineData(FlaggedEnum.Other | FlaggedEnum.Some)]
+        [InlineData(FlaggedEnum.None | FlaggedEnum.Another)]
+        [InlineData((FlaggedEnum)777)]
+        public void Parse_flag_enum_same_way_framework(FlaggedEnum expected)
+        {
+            var reader = new VariableLengthReaderBuilder<FlaggedEnum>()
+                .Map(x => x, 0)
+                .Build(";");
 
-            // text lowercase
-            reader.Parse("yellow").Should().Be(Color.Yellow);
+            var text = expected.ToString();
 
-            // numeric value present in enum
-            reader.Parse("3").Should().Be(Color.LightBlue);
+            reader.Parse(text).Should().Be(expected);
+        }
 
-            // numeric value NOT present in enum
-            reader.Parse("777").Should().Be((Color)777);
+        [Fact]
+        public void Parse_enum_with_text_not_present_in_enum_should_be_same_way_framework()
+        {
+            var reader = new VariableLengthReaderBuilder<Color>()
+                .Map(x => x, 0)
+                .Build(";");
 
-            // text NOT present in enum
-            Action act = () => reader.Parse("foo");
+            var actualEx = AssertionExtensions.Should(() => reader.Parse("foo")).Throw<ArgumentException>().Which;
+            var expectedEx = AssertionExtensions.Should(() => Enum.Parse<Color>("foo")).Throw<ArgumentException>().Which;
 
-            act.Should().Throw<ArgumentException>().WithMessage("value foo not present in enum Color");
+            actualEx.Should().BeEquivalentTo(expectedEx, cfg => cfg.Excluding(x => x.StackTrace));
         }
 
         [Fact]

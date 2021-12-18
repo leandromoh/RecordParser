@@ -11,6 +11,9 @@ namespace RecordParser.Engines
         public static Expression StringAsSpan(Expression str) =>
             Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);
 
+        public static Expression SpanAsString(Expression span) =>
+            Expression.Call(span, "ToString", Type.EmptyTypes);
+
         public static Expression Trim(Expression str) =>
             Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, str);
 
