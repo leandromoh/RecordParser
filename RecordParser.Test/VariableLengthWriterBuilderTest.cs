@@ -345,34 +345,60 @@ namespace RecordParser.Test
             called.Should().Be(1);
         }
 
-        [Fact]
-        public void Parse_enum_same_way_framework()
+        [Theory]
+        [InlineData(Color.Black)]
+        [InlineData(Color.White)]
+        [InlineData(Color.Yellow)]
+        [InlineData(Color.LightBlue)]
+        [InlineData((Color)777)]
+        public void Parse_enum_same_way_framework(Color value)
         {
+            // Arrange 
+
             var writer = new VariableLengthWriterBuilder<Color>()
                 .Map(x => x, 0)
                 .Build(";");
 
-            Span<char> destination = stackalloc char[50];
+            var expected = value.ToString();
 
-            // values present in enum
+            Span<char> destination = stackalloc char[expected.Length];
 
-            Assert(Color.Black, destination);
-            Assert(Color.White, destination);
-            Assert(Color.Yellow, destination);
-            Assert(Color.LightBlue, destination);
+            // Act
 
-            // value NOT present in enum
-            Assert((Color)777, destination);
+            var success = writer.TryFormat(value, destination, out var charsWritten);
 
-            void Assert(Color value, Span<char> span)
-            {
-                var expected = value.ToString();
+            // Assert
 
-                var success = writer.TryFormat(value, span, out var charsWritten);
+            success.Should().BeTrue();
+            destination.Slice(0, charsWritten).Should().Be(expected);
+        }
 
-                success.Should().BeTrue();
-                span.Slice(0, charsWritten).Should().Be(expected);
-            }
+        [Theory]
+        [InlineData(FlaggedEnum.Some)]
+        [InlineData(FlaggedEnum.Another)]
+        [InlineData(FlaggedEnum.Other | FlaggedEnum.Some)]
+        [InlineData(FlaggedEnum.None | FlaggedEnum.Another)]
+        [InlineData((FlaggedEnum)777)]
+        public void Parse_flag_enum_same_way_framework(FlaggedEnum value)
+        {
+            // Arrange 
+
+            var writer = new VariableLengthWriterBuilder<FlaggedEnum>()
+                .Map(x => x, 0)
+                .Build(";");
+
+            var expected = value.ToString();
+
+            Span<char> destination = stackalloc char[expected.Length];
+
+            // Act
+
+            var success = writer.TryFormat(value, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
+            destination.Slice(0, charsWritten).Should().Be(expected);
         }
 
         [Fact]
@@ -384,10 +410,10 @@ namespace RecordParser.Test
                 .Map(x => x, 0)
                 .Build(";");
 
-            Span<char> destination = stackalloc char[50];
-
             var instance = (EmptyEnum)777;
             var expected = instance.ToString();
+
+            Span<char> destination = stackalloc char[expected.Length];
 
             // Act
 
