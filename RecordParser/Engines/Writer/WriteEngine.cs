@@ -193,7 +193,7 @@ namespace RecordParser.Engines.Writer
                                Expression.Convert(enumValue, under), "TryFormat", Type.EmptyTypes, span, charsWritten,
                                 Expression.Default(typeof(ReadOnlySpan<char>)), Expression.Constant(null, typeof(CultureInfo))),
                         ifTrue: CreateTuple(true, charsWritten),
-                        ifFalse: CreateTuple(false, charsWritten)),
+                        ifFalse: Expression.Call(typeof(WriteEngine), nameof(TryFormatEnumFallback), new[] { type }, enumValue, span)),
 
                             (acc, item) =>
                                 Expression.Condition(
@@ -206,6 +206,20 @@ namespace RecordParser.Engines.Writer
                                 expressions: body);
 
             return blockExpr;
+        }
+
+        private static (bool success, int charsWritten) TryFormatEnumFallback<TEnum>(TEnum value, Span<char> destination)
+            where TEnum : struct, Enum
+        {
+            var text = value.ToString();
+
+            if (text.Length <= destination.Length)
+            {
+                text.AsSpan().CopyTo(destination);
+                return (true, text.Length);
+            }
+
+            return (false, 0);
         }
     }
 }
