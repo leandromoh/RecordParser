@@ -79,7 +79,7 @@ namespace RecordParser.Engines.Writer
                     _ when prop.Type == typeof(char) || prop.Type == typeof(bool) =>
                         Expression.Call(typeof(WriteEngine), "TryFormat", Type.EmptyTypes, prop, temp, charsWritten),
 
-                    _ when prop.Type == typeof(Guid) => 
+                    _ when prop.Type == typeof(Guid) =>
                         Expression.Call(prop, "TryFormat", Type.EmptyTypes, temp, charsWritten, format),
 
                     _ => Expression.Call(prop, "TryFormat", Type.EmptyTypes, temp, charsWritten, format,
@@ -189,11 +189,9 @@ namespace RecordParser.Engines.Writer
                 })
                 .Reverse()
                 .Aggregate(Expression.Condition(
-                        test: Expression.Call(
-                               Expression.Convert(enumValue, under), "TryFormat", Type.EmptyTypes, span, charsWritten,
-                                Expression.Default(typeof(ReadOnlySpan<char>)), Expression.Constant(null, typeof(CultureInfo))),
+                        test: Expression.Call(typeof(WriteEngine), nameof(TryFormatEnumFallback), new[] { type }, enumValue, span, charsWritten),
                         ifTrue: CreateTuple(true, charsWritten),
-                        ifFalse: Expression.Call(typeof(WriteEngine), nameof(TryFormatEnumFallback), new[] { type }, enumValue, span)),
+                        ifFalse: CreateTuple(false, charsWritten)),
 
                             (acc, item) =>
                                 Expression.Condition(
@@ -208,18 +206,21 @@ namespace RecordParser.Engines.Writer
             return blockExpr;
         }
 
-        private static (bool success, int charsWritten) TryFormatEnumFallback<TEnum>(TEnum value, Span<char> destination)
+        private static bool TryFormatEnumFallback<TEnum>(TEnum value, Span<char> destination, out int charsWritten)
             where TEnum : struct, Enum
         {
             var text = value.ToString();
 
-            if (text.Length <= destination.Length)
+            if (destination.Length < text.Length)
             {
-                text.AsSpan().CopyTo(destination);
-                return (true, text.Length);
+                charsWritten = 0;
+                return false;
             }
 
-            return (false, 0);
+            text.AsSpan().CopyTo(destination);
+
+            charsWritten = text.Length;
+            return true;
         }
     }
 }
