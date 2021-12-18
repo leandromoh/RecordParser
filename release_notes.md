@@ -1,7 +1,8 @@
 ## version 1.3.0
 
-- support to write quoted csv record (#36)
-- support to read quoted csv record (#34)
+- native enum methods as fallback for read/write (#42)
+- support to write quoted csv record - RFC 4180 (#36)
+- support to read quoted csv record - RFC 4180 (#34)
 - minor improvements
 
 ## version 1.2.0
