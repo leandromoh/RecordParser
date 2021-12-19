@@ -10,13 +10,13 @@ It makes easier for developers to do parsing by automating non-relevant code, wh
 
 ## 🏆 3rd place in [The fastest CSV parser in .NET](https://www.joelverhagen.com/blog/2020/12/fastest-net-csv-parsers) blog post
 
-Even the focus of this library being data mapping to objects (classes or structs), it got an excellent result in the blog benchmark which tested how fast libraries can transform a CSV row into an array of strings. We got 3rd place by parsing a 1 million line file in ~1.8 seconds.
+Even the focus of this library being data mapping to objects (classes or structs), it got an excellent result in the blog benchmark which tested how fast libraries can transform a CSV row into an array of strings. We got 3rd place by parsing a 1 million lines file in ~1.8 seconds.
 
 ## RecordParser is a Zero Allocation Writer/Reader Parser for .NET Core
 
 1. It supports .NET Core 2.1, 3.1, 5.0 and .NET Standard 2.1
 2. It has minimal heap allocations because it does intense use of [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a new .NET type designed to have high-performance and reduce memory allocations [(see benchmark)](/Benchmark.md)
-3. It is even more performant because the relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is almost fast as handwriting code [(sometimes faster, see benchmark)](/Benchmark.md)
+3. It is even more performant because the relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is almost fast as handwriting code
 4. It supports to parse classes and structs types, without doing [boxing](https://docs.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing)
 5. It is flexible: you can choose the most convenient way to configure each of your parsers: indexed or sequential configuration
 6. It is extensible: you can totally customize your parsing with lambdas/delegates 
@@ -30,6 +30,10 @@ Even the focus of this library being data mapping to objects (classes or structs
 
 Libraries always say themselves have great perfomance, but how often they show you a benchmark comparing with other libraries? 
 Check the [benchmark page](/Benchmark.md) to see RecordParser comparisons. If you miss some, a PR is welcome.
+
+Third Party Benchmarks
+- [The fastest CSV parser in .NET](https://www.joelverhagen.com/blog/2020/12/fastest-net-csv-parsers)
+- [Sylvan Benchmarks](https://github.com/MarkPflug/Benchmarks)
 
 ## Currently there are parsers for 2 record formats: 
 1. Fixed length, common in positional files, e.g. financial services, mainframe use, etc
