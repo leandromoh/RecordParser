@@ -194,6 +194,31 @@ namespace RecordParser.Test
                                             Color: Color.LightBlue));
         }
 
+        [Theory]
+        [InlineData(" ")]
+        [InlineData("2020.05.23")]
+        public void Given_record_with_nullable_struct_field_should_parse_properly(string birthday)
+        {
+            var reader = new VariableLengthReaderBuilder<(string Name, DateTime? Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, indexColumn: 0)
+                .Map(x => x.Birthday, 1)
+                .Map(x => x.Money, 2)
+                .Map(x => x.Color, 3)
+                .Build(";");
+
+            var expectedBirthday = DateTime.TryParse(birthday, out var date)
+                                    ? date
+                                    : (DateTime?) null;
+
+            var parsed = reader.TryParse($"foo bar baz ; {birthday} ; 0123.45; LightBlue", out var result);
+
+            parsed.Should().BeTrue();
+            result.Should().BeEquivalentTo((Name: "foo bar baz",
+                                            Birthday: expectedBirthday,
+                                            Money: 123.45M,
+                                            Color: Color.LightBlue));
+        }
+
         [Fact]
         public void Given_nested_mapped_property_should_create_nested_instance_to_parse()
         {
