@@ -24,6 +24,7 @@ Even the focus of this library being data mapping to objects (classes or structs
 8. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your classes with minimised dependencies and low coupling  
 9. It provides clean API with familiar methods: Parse, TryParse and TryFormat
 10. It is easy configurated with a builder object, even programmatically, because does not require to define a class each time you want to define a parser
+11. Compliant with [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt) standard
 
 ## Benchmark
 
