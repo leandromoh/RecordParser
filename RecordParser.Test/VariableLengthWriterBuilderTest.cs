@@ -1,7 +1,9 @@
-﻿using FluentAssertions;
+﻿using AutoFixture;
+using FluentAssertions;
 using RecordParser.Builders.Writer;
 using RecordParser.Test;
 using System;
+using System.Linq;
 using Xunit;
 
 namespace RecordParser.Test
@@ -423,6 +425,48 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
             destination.Slice(0, charsWritten).Should().Be(expected);
+        }
+
+        [Fact]
+        public void Given_variable_length_writer_used_in_multi_thread_context_tryformat_method_should_be_thread_safe()
+        {
+            // Arrange 
+
+            var items = new Fixture()
+                .CreateMany<(string Name, DateTime Birthday, decimal Money, Color Color)>(10_000)
+                .ToList();
+
+            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, 0)
+                .Map(x => x.Birthday, 1, "yyyy.MM.dd")
+                .Map(x => x.Money, 2)
+                .Map(x => x.Color, 3)
+                .Build(" ; ");
+
+            // Act
+
+            var resultParallel = items
+                .AsParallel()
+                .Select(TryFormat)
+                .ToList();
+
+            var resultSequential = items
+                .Select(TryFormat)
+                .ToList();
+
+            // Assert
+
+            resultParallel.Should().OnlyContain(x => x.success);
+
+            resultParallel.Should().BeEquivalentTo(resultSequential, cfg => cfg.WithStrictOrdering());
+
+            (bool success, string line) TryFormat((string Name, DateTime Birthday, decimal Money, Color Color) item)
+            {
+                Span<char> destination = stackalloc char[100];
+                var success = writer.TryFormat(item, destination, out var charsWritten);
+                var line = destination.Slice(0, charsWritten).ToString();
+                return (success, line);
+            }
         }
 
         [Fact]
