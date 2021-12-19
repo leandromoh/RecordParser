@@ -1,7 +1,10 @@
-﻿using FluentAssertions;
+﻿using AutoFixture;
+using FluentAssertions;
 using RecordParser.Builders.Reader;
+using RecordParser.Builders.Writer;
 using RecordParser.Parsers;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -310,6 +313,53 @@ namespace RecordParser.Test
                 .Build(";");
 
             reader.Parse("777").Should().Be((EmptyEnum)777);
+        }
+
+        [Fact]
+        public void Given_variable_length_reader_used_in_multi_thread_context_parse_method_should_be_thread_safe()
+        {
+            // Arrange 
+
+            var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, 0)
+                .Map(x => x.Birthday, 1)
+                .Map(x => x.Money, 2)
+                .Map(x => x.Color, 3)
+                .Build(" ; ");
+
+            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, 0)
+                .Map(x => x.Birthday, 1)
+                .Map(x => x.Money, 2)
+                .Map(x => x.Color, 3)
+                .Build(" ; ");
+
+            var lines = new Fixture()
+                .CreateMany<(string Name, DateTime Birthday, decimal Money, Color Color)>(10_000)
+                .Select(item =>
+                {
+                    Span<char> destination = stackalloc char[100];
+                    var success = writer.TryFormat(item, destination, out var charsWritten);
+                    Debug.Assert(success);
+                    var line = destination.Slice(0, charsWritten).ToString();
+                    return line;
+                })
+                .ToList();
+
+            // Act
+
+            var resultParallel = lines
+                .AsParallel()
+                .Select(line => reader.Parse(line))
+                .ToList();
+
+            var resultSequential = lines
+                .Select(line => reader.Parse(line))
+                .ToList();
+
+            // Assert
+
+            resultParallel.Should().BeEquivalentTo(resultSequential, cfg => cfg.WithStrictOrdering());
         }
     }
 
