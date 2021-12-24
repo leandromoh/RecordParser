@@ -166,7 +166,7 @@ namespace RecordParser.Test
 
             Action result = () => reader.Parse(line);
 
-            result.Should().Throw<Exception>().WithMessage("quoted field missing end quote");
+            result.Should().Throw<Exception>().WithMessage("Quoted field is missing closing quote.");
         }
 
         [Theory]
@@ -182,7 +182,7 @@ namespace RecordParser.Test
 
             Action result = () => reader.Parse(line);
 
-            result.Should().Throw<Exception>().WithMessage("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
+            result.Should().Throw<Exception>().WithMessage("Double quote is not escaped or there is extra data after a quoted field.");
         }
 
         [Fact]

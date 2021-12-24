@@ -85,7 +85,7 @@ namespace RecordParser.Engines.Reader
 
         private ReadOnlySpan<char> ParseQuotedChuck(bool match)
         {
-            const string corruptFieldError = "Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.";
+            const string corruptFieldError = "Double quote is not escaped or there is extra data after a quoted field.";
 
             var unlook = line.Slice(scanned);
             scanned += unlook.IndexOf(quote.ch) + 1;
@@ -176,7 +176,7 @@ namespace RecordParser.Engines.Reader
                 }
             }
 
-            throw new Exception("quoted field missing end quote");
+            throw new Exception("Quoted field is missing closing quote.");
         }
     }
 }
