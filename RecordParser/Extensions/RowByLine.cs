@@ -1,59 +1,12 @@
-﻿using RecordParser.Parsers;
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace RecordParser.Extensions
 {
     public static partial class Exasd
     {
-        // 104
-        public static IEnumerable<T> GetRecords<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
-        {
-            var items = new RowByLine(stream, length);
-
-            if (items.FillBufferAsync() > 0 == false)
-            {
-                yield break;
-            }
-
-            foreach (var x in items.TryReadLine().Skip(hasHeader ? 1 : 0))
-            {
-                yield return reader.Parse(x.Span);
-            }
-
-            while (items.FillBufferAsync() > 0)
-            {
-                foreach (var x in items.TryReadLine())
-                {
-                    yield return reader.Parse(x.Span);
-                }
-            }
-        }
-
-        // 108
-        //public static async IAsyncEnumerable<T> GetRecordsAsync<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
-        //{
-        //    await using var e = new RowByLine(stream).GetRecordsAsync().GetAsyncEnumerator();
-
-        //    if (hasHeader && await e.MoveNextAsync() == false)
-        //        yield break;
-
-        //    while (await e.MoveNextAsync())
-        //    {
-        //        var item = e.Current;
-
-        //        var line = item.buffer.AsMemory().Slice(0, item.length);
-
-        //        var res = reader.Parse(line.Span);
-
-        //        yield return res;
-        //    }
-        //}
-
         private class RowByLine : IFL
         {
             private int i = 0;
@@ -64,11 +17,6 @@ namespace RecordParser.Extensions
 
             private int bufferLength;
             private char[] buffer;
-
-            public RowByLine(TextReader reader) : this(reader, (int)Math.Pow(2, 23))
-            {
-
-            }
 
             public RowByLine(TextReader reader, int bufferLength)
             {
@@ -135,6 +83,15 @@ namespace RecordParser.Extensions
 
                 yield return buffer.AsMemory(j, i - j);
                 goto reloop;
+            }
+
+            public void Dispose()
+            {
+                if (buffer != null)
+                {
+                    ArrayPool<char>.Shared.Return(buffer);
+                    buffer = null;
+                }
             }
         }
     }
