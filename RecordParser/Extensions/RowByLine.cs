@@ -3,7 +3,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
 
@@ -12,136 +11,130 @@ namespace RecordParser.Extensions
     public static partial class Exasd
     {
         // 104
-        public static IEnumerable<T> GetRecords<T>(this IVariableLengthReader<T> reader, Stream stream, Encoding encoding, bool hasHeader)
+        public static IEnumerable<T> GetRecords<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
         {
-            return new RowByLine(stream, encoding).GetRecords().Skip(hasHeader ? 1 : 0).Select(item =>
+            var items = new RowByLine(stream, length);
+
+            if (items.FillBufferAsync() > 0 == false)
             {
-                var line = item.buffer.AsSpan().Slice(0, item.length);
+                yield break;
+            }
 
-                var res = reader.Parse(line);
+            foreach (var x in items.TryReadLine().Skip(hasHeader ? 1 : 0))
+            {
+                yield return reader.Parse(x.Span);
+            }
 
-                return res;
-            });
+            while (items.FillBufferAsync() > 0)
+            {
+                foreach (var x in items.TryReadLine())
+                {
+                    yield return reader.Parse(x.Span);
+                }
+            }
         }
 
         // 108
-        public static async IAsyncEnumerable<T> GetRecordsAsync<T>(this IVariableLengthReader<T> reader, Stream stream, Encoding encoding, bool hasHeader)
+        //public static async IAsyncEnumerable<T> GetRecordsAsync<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
+        //{
+        //    await using var e = new RowByLine(stream).GetRecordsAsync().GetAsyncEnumerator();
+
+        //    if (hasHeader && await e.MoveNextAsync() == false)
+        //        yield break;
+
+        //    while (await e.MoveNextAsync())
+        //    {
+        //        var item = e.Current;
+
+        //        var line = item.buffer.AsMemory().Slice(0, item.length);
+
+        //        var res = reader.Parse(line.Span);
+
+        //        yield return res;
+        //    }
+        //}
+
+        private class RowByLine : IFL
         {
-            await using var e = new RowByLine(stream, encoding).GetRecordsAsync().GetAsyncEnumerator();
+            private int i = 0;
+            private int j = 0;
+            private int c;
+            private TextReader reader;
+            private bool initial = true;
 
-            if (hasHeader && await e.MoveNextAsync() == false)
-                yield break;
+            private int bufferLength;
+            private char[] buffer;
 
-            while (await e.MoveNextAsync())
+            public RowByLine(TextReader reader) : this(reader, (int)Math.Pow(2, 23))
             {
-                var item = e.Current;
 
-                var line = item.buffer.AsMemory().Slice(0, item.length);
-
-                var res = reader.Parse(line.Span);
-
-                yield return res;
-            }
-        }
-
-        private class RowByLine
-        {
-            private readonly Encoding _encoding;
-            private readonly Stream _stream;
-
-            private byte[] _byteBuffer;
-            private char[] _charBuffer;
-
-            public RowByLine(Stream stream, Encoding encoding)
-            {
-                _encoding = encoding;
-                _stream = stream;
-
-                _byteBuffer = ArrayPool<byte>.Shared.Rent(512);
-                _charBuffer = ArrayPool<char>.Shared.Rent(512);
             }
 
-            public IEnumerable<(char[] buffer, int length)> GetRecords()
+            public RowByLine(TextReader reader, int bufferLength)
             {
-                PipeReader reader = PipeReader.Create(_stream);
+                this.reader = reader;
 
-                while (true)
+                buffer = ArrayPool<char>.Shared.Rent(bufferLength);
+                this.bufferLength = buffer.Length;
+            }
+
+            public int FillBufferAsync()
+            {
+                var len = i - j;
+                if (initial == false)
                 {
-                    ReadResult read = reader.ReadAsync().GetAwaiter().GetResult();
-                    ReadOnlySequence<byte> buffer = read.Buffer;
-                    while (ParallelRow.TryReadLine(ref buffer, out ReadOnlySequence<byte> sequence))
-                    {
-                        var length = ProcessSequence(sequence);
-
-                        yield return (_charBuffer, length);
-                    }
-
-                    reader.AdvanceTo(buffer.Start, buffer.End);
-                    if (read.IsCompleted)
-                    {
-                        break;
-                    }
+                    Array.Copy(buffer, j, buffer, 0, len);
                 }
+
+                var totalRead = reader.Read(buffer, len, bufferLength - len);
+                bufferLength = len + totalRead;
+
+                i = 0;
+                j = 0;
+
+                initial = false;
+
+                return totalRead;
             }
 
-            public async IAsyncEnumerable<(char[] buffer, int length)> GetRecordsAsync()
+            public IEnumerable<Memory<char>> TryReadLine()
             {
-                PipeReader reader = PipeReader.Create(_stream);
+                int Peek() => i < bufferLength ? buffer[i] : -1;
 
-                while (true)
+                var hasBufferToConsume = false;
+
+            reloop:
+
+                j = i;
+
+                while (hasBufferToConsume = i < bufferLength)
                 {
-                    ReadResult read = await reader.ReadAsync();
-                    ReadOnlySequence<byte> buffer = read.Buffer;
-                    while (ParallelRow.TryReadLine(ref buffer, out ReadOnlySequence<byte> sequence))
-                    {
-                        var length = ProcessSequence(sequence);
+                    c = buffer[i++];
 
-                        yield return (_charBuffer, length);
-                    }
 
-                    reader.AdvanceTo(buffer.Start, buffer.End);
-                    if (read.IsCompleted)
+                    switch (c)
                     {
-                        break;
+                        case '\r':
+                            if (Peek() == '\n')
+                            {
+                                i++;
+                            }
+                            goto afterLoop;
+
+                        case '\n':
+                            goto afterLoop;
                     }
                 }
-            }
 
-            private int ProcessSequence(ReadOnlySequence<byte> sequence)
-            {
-                if (sequence.IsSingleSegment)
+            afterLoop:
+
+                if (hasBufferToConsume == false)
                 {
-                    return Parse(sequence.FirstSpan);
+                    yield break;
                 }
 
-                var sequenceLength = (int)sequence.Length;
-
-                if (sequenceLength > _byteBuffer.Length)
-                {
-                    ArrayPool<byte>.Shared.Return(_byteBuffer);
-                    _byteBuffer = ArrayPool<byte>.Shared.Rent(sequenceLength);
-                }
-
-                var bytes = _byteBuffer.AsSpan().Slice(0, sequenceLength);
-
-                sequence.CopyTo(bytes);
-
-                return Parse(bytes);
-            }
-
-            private int Parse(ReadOnlySpan<byte> bytes)
-            {
-                if (bytes.Length > _charBuffer.Length)
-                {
-                    ArrayPool<char>.Shared.Return(_charBuffer);
-                    _charBuffer = ArrayPool<char>.Shared.Rent(bytes.Length);
-                }
-
-                var chars = _charBuffer.AsSpan().Slice(0, bytes.Length);
-
-                _encoding.GetChars(bytes, chars);
-
-                return bytes.Length;
+                yield return buffer.AsMemory(j, i - j);
+                goto reloop;
             }
         }
     }

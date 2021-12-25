@@ -91,11 +91,17 @@ namespace RecordParser.Extensions
 			}
 		}
 
-		private class QuotedRow
+		private interface IFL
+        {
+			int FillBufferAsync();
+			IEnumerable<Memory<char>> TryReadLine();
+		}
+
+		private class QuotedRow : IFL
 		{
 			private int i = 0;
 			private int j = 0;
-			private State state = State.BeforeField;
+			private RowState state = RowState.BeforeField;
 			private int c;
 			private TextReader reader;
 			private bool initial = true;
@@ -116,7 +122,7 @@ namespace RecordParser.Extensions
 				this.bufferLength = buffer.Length;
 			}
 
-			private enum State
+			private enum RowState
 			{
 				BeforeField,
 				InField,
@@ -152,7 +158,7 @@ namespace RecordParser.Extensions
 			reloop:
 
 				j = i;
-				state = State.BeforeField;
+				state = RowState.BeforeField;
 
 				while (hasBufferToConsume = i < bufferLength)
 				{
@@ -160,12 +166,12 @@ namespace RecordParser.Extensions
 
 					switch (state)
 					{
-						case State.BeforeField:
+						case RowState.BeforeField:
 
 							switch (c)
 							{
 								case '"':
-									state = State.InQuotedField;
+									state = RowState.InQuotedField;
 									break;
 								case ',':
 									//  fields.Add(string.Empty);
@@ -176,27 +182,27 @@ namespace RecordParser.Extensions
 									{
 										i++;
 									}
-									state = State.LineEnd;
+									state = RowState.LineEnd;
 									goto afterLoop;
 
 								case '\n':
 									// fields.Add(string.Empty);
-									state = State.LineEnd;
+									state = RowState.LineEnd;
 									goto afterLoop;
 
 								default:
 									// builder.Append((char)c);
-									state = State.InField;
+									state = RowState.InField;
 									break;
 							}
 							break;
 
-						case State.InField:
+						case RowState.InField:
 							switch (c)
 							{
 								case ',':
 									//  AddField(fields, builder);
-									state = State.BeforeField;
+									state = RowState.BeforeField;
 									break;
 								case '\r':
 									//  AddField(fields, builder);
@@ -204,12 +210,12 @@ namespace RecordParser.Extensions
 									{
 										i++;
 									}
-									state = State.LineEnd;
+									state = RowState.LineEnd;
 									goto afterLoop;
 
 								case '\n':
 									//    AddField(fields, builder);
-									state = State.LineEnd;
+									state = RowState.LineEnd;
 									goto afterLoop;
 
 								default:
@@ -218,7 +224,7 @@ namespace RecordParser.Extensions
 							}
 							break;
 
-						case State.InQuotedField:
+						case RowState.InQuotedField:
 							switch (c)
 							{
 								case '"':
@@ -234,7 +240,7 @@ namespace RecordParser.Extensions
 											i++;
 
 											//           AddField(fields, builder);
-											state = State.BeforeField;
+											state = RowState.BeforeField;
 											break;
 										case '\r':
 											i++;
@@ -244,13 +250,13 @@ namespace RecordParser.Extensions
 											{
 												i++;
 											}
-											state = State.LineEnd;
+											state = RowState.LineEnd;
 											goto afterLoop;
 
 										case '\n':
 											i++;
 											//          AddField(fields, builder);
-											state = State.LineEnd;
+											state = RowState.LineEnd;
 											goto afterLoop;
 
 										default:
@@ -293,20 +299,20 @@ namespace RecordParser.Extensions
 
 				switch (state)
 				{
-					case State.BeforeField:
+					case RowState.BeforeField:
 						yield return buffer.AsMemory(j, i - j);
 						goto reloop;
 
-					case State.LineEnd:
+					case RowState.LineEnd:
 						if ((i == 1 && char.IsWhiteSpace(buffer[0])) == false)
 							yield return buffer.AsMemory(j, i - j - 1);
 						goto reloop;
 
-					case State.InField:
+					case RowState.InField:
 						yield return buffer.AsMemory(j, i - j);
 						goto reloop;
 
-					case State.InQuotedField:
+					case RowState.InQuotedField:
 						break;
 						throw new InvalidDataException("When the line ends with a quoted field, the last character should be an unescaped double quote.");
 				}
