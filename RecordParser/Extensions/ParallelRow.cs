@@ -1,8 +1,11 @@
-﻿using RecordParser.Parsers;
+﻿using RecordParser.Engines.Reader;
+using RecordParser.Parsers;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace RecordParser.Extensions
 {
@@ -16,15 +19,61 @@ namespace RecordParser.Extensions
             IEnumerable<Memory<char>> TryReadLine();
         }
 
+
+        delegate void Get(ref TextFindHelper finder, string[] inst, FuncSpanT<string> cache);
+
+        private static Get BuildRaw(int collumnCount, bool hasTransform)
+        {
+            // parameters
+            var configParameter = Expression.Parameter(typeof(TextFindHelper).MakeByRefType(), "config");
+            var instanceVariable = Expression.Parameter(typeof(string[]), "inst");
+            var cacheParameter = Expression.Parameter(typeof(FuncSpanT<string>), "cache");
+
+            var commands = new Expression[collumnCount];
+            for (int i = 0; i < collumnCount; i++)
+            {
+                var arrayAccessExpr = Expression.ArrayAccess(instanceVariable, Expression.Constant(i));
+                var getValue = (Expression)Expression.Call(configParameter, nameof(TextFindHelper.GetValue), Type.EmptyTypes, Expression.Constant(i));
+                getValue = Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, getValue);
+
+
+                if (hasTransform)
+                {
+                    getValue = Expression.Invoke(cacheParameter, getValue);
+                }
+                else
+                {
+                    getValue = Expression.Call(getValue, "ToString", Type.EmptyTypes);
+                }
+
+                commands[i] = Expression.Assign(arrayAccessExpr, getValue);
+            }
+
+            var block = Expression.Block(commands);
+            var final = Expression.Lambda<Get>(block, configParameter, instanceVariable, cacheParameter);
+
+            return final.Compile();
+        }
+
         // ???
         public static IEnumerable<T> GetRecordsParallelRaw<T>(this TextReader stream, int columnCount, bool hasHeader, Func<Func<int, string>, T> reader, Func<FuncSpanT<string>> stringCache = null)
         {
-            var parallelism = 30;
+            var get = BuildRaw(columnCount, stringCache != null);
+
+            var parallelism = 20;
             var funcs = Enumerable
                     .Range(0, parallelism)
                     .Select(_ =>
                     {
-                        return new CSVRawReader(columnCount, stringCache());
+                        var buf = new string[columnCount];
+
+                        return new
+                        {
+                            buffer = buf,
+                            lockObj = new object(),
+                            stringCache = stringCache != null ? stringCache() : null,
+                            getField = new Func<int, string>(i => buf[i])
+                        };
                     })
                     .ToArray();
 
@@ -50,12 +99,22 @@ namespace RecordParser.Extensions
 
             T Parse(Memory<char> memory, int i)
             {
-                var r = funcs[i % parallelism];
-                lock (r._lockObj)
-                {
-                    r._reader.Parse(memory.Span);
+                var finder = new TextFindHelper(memory.Span, ",", ('"', "\""));
 
-                    return reader(r.GetField);
+                try
+                {
+                    var r = funcs[i % parallelism];
+                    lock (r.lockObj)
+                    {
+
+                        get(ref finder, r.buffer, r.stringCache);
+
+                        return reader(r.getField);
+                    }
+                }
+                finally
+                {
+                    finder.Dispose();
                 }
             }
         }
