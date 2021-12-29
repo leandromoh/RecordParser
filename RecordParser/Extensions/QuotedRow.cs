@@ -5,7 +5,7 @@ using System.IO;
 
 namespace RecordParser.Extensions
 {
-    public static partial class Exasd
+	public static partial class Exasd
 	{
 		private class QuotedRow : IFL
 		{
@@ -202,35 +202,25 @@ namespace RecordParser.Extensions
 					goto reloop;
 				}
 
-				switch (state)
+				if (state != RowState.InQuotedField)
 				{
-					case RowState.BeforeField:
-						yield return buffer.AsMemory(j, i - j);
-						goto reloop;
-
-					case RowState.LineEnd:
-						if ((i == 1 && char.IsWhiteSpace(buffer[0])) == false)
-							yield return buffer.AsMemory(j, i - j - 1);
-						goto reloop;
-
-					case RowState.InField:
-						yield return buffer.AsMemory(j, i - j);
-						goto reloop;
-
-					case RowState.InQuotedField:
-						break;
-						throw new InvalidDataException("When the line ends with a quoted field, the last character should be an unescaped double quote.");
+					yield return buffer.AsMemory(j, i - j);
+					goto reloop;
+				}
+				else
+				{
+					throw new InvalidDataException("When the line ends with a quoted field, the last character should be an unescaped double quote.");
 				}
 			}
 
-            public void Dispose()
-            {
-                if (buffer != null)
-                {
+			public void Dispose()
+			{
+				if (buffer != null)
+				{
 					ArrayPool<char>.Shared.Return(buffer);
 					buffer = null;
 				}
-            }
-        }
+			}
+		}
 	}
 }
