@@ -5,222 +5,233 @@ using System.IO;
 
 namespace RecordParser.Extensions
 {
-	public static partial class Exasd
-	{
-		private class QuotedRow : IFL
-		{
-			private int i = 0;
-			private int j = 0;
-			private RowState state = RowState.BeforeField;
-			private int c;
-			private TextReader reader;
-			private bool initial = true;
+    public static partial class Exasd
+    {
+        private class QuotedRow : IFL
+        {
+            private int i = 0;
+            private int j = 0;
+            private RowState state = RowState.BeforeField;
+            private int c;
+            private TextReader reader;
+            private bool initial = true;
 
-			private int bufferLength;
-			private char[] buffer;
+            private bool yieldLast = false;
 
-			public QuotedRow(TextReader reader, int bufferLength)
-			{
-				this.reader = reader;
+            private int bufferLength;
+            private char[] buffer;
 
-				buffer = ArrayPool<char>.Shared.Rent(bufferLength);
-				this.bufferLength = buffer.Length;
-			}
+            public QuotedRow(TextReader reader, int bufferLength)
+            {
+                this.reader = reader;
 
-			private enum RowState
-			{
-				BeforeField,
-				InField,
-				InQuotedField,
-				LineEnd,
-			}
+                buffer = ArrayPool<char>.Shared.Rent(bufferLength);
+                this.bufferLength = buffer.Length;
+            }
 
-			public int FillBufferAsync()
-			{
-				var len = i - j;
-				if (initial == false)
-				{
-					Array.Copy(buffer, j, buffer, 0, len);
-				}
+            private enum RowState
+            {
+                BeforeField,
+                InField,
+                InQuotedField,
+                LineEnd,
+            }
 
-				var totalRead = reader.Read(buffer, len, bufferLength - len);
-				bufferLength = len + totalRead;
+            public int FillBufferAsync()
+            {
+                var len = i - j;
+                if (initial == false)
+                {
+                    Array.Copy(buffer, j, buffer, 0, len);
+                }
 
-				i = 0;
-				j = 0;
+                var totalRead = reader.Read(buffer, len, bufferLength - len);
+                bufferLength = len + totalRead;
 
-				initial = false;
+                i = 0;
+                j = 0;
 
-				return totalRead;
-			}
+                initial = false;
 
-			public IEnumerable<Memory<char>> TryReadLine()
-			{
-				int Peek() => i < bufferLength ? buffer[i] : -1;
+                if (totalRead == 0 && len != 0 && yieldLast == false)
+                {
+                    yieldLast = true;
+                    return len;
+                }
 
-				var hasBufferToConsume = false;
+                return totalRead;
+            }
 
-			reloop:
+            public IEnumerable<Memory<char>> TryReadLine()
+            {
+                int Peek() => i < bufferLength ? buffer[i] : -1;
 
-				j = i;
-				state = RowState.BeforeField;
+                var hasBufferToConsume = false;
 
-				while (hasBufferToConsume = i < bufferLength)
-				{
-					c = buffer[i++];
+            reloop:
 
-					switch (state)
-					{
-						case RowState.BeforeField:
+                j = i;
+                state = RowState.BeforeField;
 
-							switch (c)
-							{
-								case '"':
-									state = RowState.InQuotedField;
-									break;
-								case ',':
-									//  fields.Add(string.Empty);
-									break;
-								case '\r':
-									// fields.Add(string.Empty);
-									if (Peek() == '\n')
-									{
-										i++;
-									}
-									state = RowState.LineEnd;
-									goto afterLoop;
+                while (hasBufferToConsume = i < bufferLength)
+                {
+                    c = buffer[i++];
 
-								case '\n':
-									// fields.Add(string.Empty);
-									state = RowState.LineEnd;
-									goto afterLoop;
+                    switch (state)
+                    {
+                        case RowState.BeforeField:
 
-								default:
-									// builder.Append((char)c);
-									state = RowState.InField;
-									break;
-							}
-							break;
+                            switch (c)
+                            {
+                                case '"':
+                                    state = RowState.InQuotedField;
+                                    break;
+                                case ',':
+                                    //  fields.Add(string.Empty);
+                                    break;
+                                case '\r':
+                                    // fields.Add(string.Empty);
+                                    if (Peek() == '\n')
+                                    {
+                                        i++;
+                                    }
+                                    state = RowState.LineEnd;
+                                    goto afterLoop;
 
-						case RowState.InField:
-							switch (c)
-							{
-								case ',':
-									//  AddField(fields, builder);
-									state = RowState.BeforeField;
-									break;
-								case '\r':
-									//  AddField(fields, builder);
-									if (Peek() == '\n')
-									{
-										i++;
-									}
-									state = RowState.LineEnd;
-									goto afterLoop;
+                                case '\n':
+                                    // fields.Add(string.Empty);
+                                    state = RowState.LineEnd;
+                                    goto afterLoop;
 
-								case '\n':
-									//    AddField(fields, builder);
-									state = RowState.LineEnd;
-									goto afterLoop;
+                                default:
+                                    // builder.Append((char)c);
+                                    state = RowState.InField;
+                                    break;
+                            }
+                            break;
 
-								default:
-									//      builder.Append((char)c);
-									break;
-							}
-							break;
+                        case RowState.InField:
+                            switch (c)
+                            {
+                                case ',':
+                                    //  AddField(fields, builder);
+                                    state = RowState.BeforeField;
+                                    break;
+                                case '\r':
+                                    //  AddField(fields, builder);
+                                    if (Peek() == '\n')
+                                    {
+                                        i++;
+                                    }
+                                    state = RowState.LineEnd;
+                                    goto afterLoop;
 
-						case RowState.InQuotedField:
-							switch (c)
-							{
-								case '"':
-									var nc = Peek();
-									switch (nc)
-									{
-										case '"':
-											//        builder.Append('"');
-											i++;
+                                case '\n':
+                                    //    AddField(fields, builder);
+                                    state = RowState.LineEnd;
+                                    goto afterLoop;
 
-											break;
-										case ',':
-											i++;
+                                default:
+                                    //      builder.Append((char)c);
+                                    break;
+                            }
+                            break;
 
-											//           AddField(fields, builder);
-											state = RowState.BeforeField;
-											break;
-										case '\r':
-											i++;
+                        case RowState.InQuotedField:
+                            switch (c)
+                            {
+                                case '"':
+                                    var nc = Peek();
+                                    switch (nc)
+                                    {
+                                        case '"':
+                                            //        builder.Append('"');
+                                            i++;
 
-											//          AddField(fields, builder);
-											if (Peek() == '\n')
-											{
-												i++;
-											}
-											state = RowState.LineEnd;
-											goto afterLoop;
+                                            break;
+                                        case ',':
+                                            i++;
 
-										case '\n':
-											i++;
-											//          AddField(fields, builder);
-											state = RowState.LineEnd;
-											goto afterLoop;
+                                            //           AddField(fields, builder);
+                                            state = RowState.BeforeField;
+                                            break;
+                                        case '\r':
+                                            i++;
 
-										default:
-											throw new InvalidDataException("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
-									}
-									break;
-								default:
-									//    builder.Append((char)c);
-									break;
-							}
-							break;
+                                            //          AddField(fields, builder);
+                                            if (Peek() == '\n')
+                                            {
+                                                i++;
+                                            }
+                                            state = RowState.LineEnd;
+                                            goto afterLoop;
 
-						default:
-							throw new NotImplementedException();
-					}
+                                        case '\n':
+                                            i++;
+                                            //          AddField(fields, builder);
+                                            state = RowState.LineEnd;
+                                            goto afterLoop;
 
-					//if (state == State.LineEnd)
-					//{
-					//    if (i == 1)
-					//        throw new Exception(); // goto reloop;
+                                        default:
+                                            throw new InvalidDataException("Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.");
+                                    }
+                                    break;
+                                default:
+                                    //    builder.Append((char)c);
+                                    break;
+                            }
+                            break;
 
-					//    break;
-					//}
-				}
+                        default:
+                            throw new NotImplementedException();
+                    }
 
-			afterLoop:
+                    //if (state == State.LineEnd)
+                    //{
+                    //    if (i == 1)
+                    //        throw new Exception(); // goto reloop;
 
-				if (hasBufferToConsume == false)
-				{
-					yield break;
+                    //    break;
+                    //}
+                }
 
-					if (FillBufferAsync() == 0)
-					{
-						ArrayPool<char>.Shared.Return(buffer);
-						yield break;
-					}
+            afterLoop:
 
-					goto reloop;
-				}
+                if (hasBufferToConsume == false)
+                {
+                    if (yieldLast)
+                        yield return buffer.AsMemory(j, i - j);
 
-				if (state != RowState.InQuotedField)
-				{
-					yield return buffer.AsMemory(j, i - j);
-					goto reloop;
-				}
-				else
-				{
-					throw new InvalidDataException("When the line ends with a quoted field, the last character should be an unescaped double quote.");
-				}
-			}
+                    yield break;
 
-			public void Dispose()
-			{
-				if (buffer != null)
-				{
-					ArrayPool<char>.Shared.Return(buffer);
-					buffer = null;
-				}
-			}
-		}
-	}
+                    if (FillBufferAsync() == 0)
+                    {
+                        ArrayPool<char>.Shared.Return(buffer);
+                        yield break;
+                    }
+
+                    goto reloop;
+                }
+
+                if (state != RowState.InQuotedField)
+                {
+                    yield return buffer.AsMemory(j, i - j);
+                    goto reloop;
+                }
+                else
+                {
+                    throw new InvalidDataException("When the line ends with a quoted field, the last character should be an unescaped double quote.");
+                }
+            }
+
+            public void Dispose()
+            {
+                if (buffer != null)
+                {
+                    ArrayPool<char>.Shared.Return(buffer);
+                    buffer = null;
+                }
+            }
+        }
+    }
 }

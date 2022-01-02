@@ -9,6 +9,13 @@ using System.Linq.Expressions;
 
 namespace RecordParser.Extensions
 {
+    public class VariableLengthReaderOptions
+    {
+        public bool hasHeader;
+        public bool parallelProcessing;
+        public bool containsQuotedFields;
+    }
+
     public static partial class Exasd
     {
         private static int length = (int)Math.Pow(2, 23);
@@ -77,21 +84,21 @@ namespace RecordParser.Extensions
                     })
                     .ToArray();
 
-            using var items = new QuotedRow(stream, length);
+            using var items = new RowByLine(stream, length);
 
             if (items.FillBufferAsync() > 0 == false)
             {
                 yield break;
             }
 
-            foreach (var item in items.TryReadLine().Skip(hasHeader ? 1 : 0).AsParallel().Select(Parse))
+            foreach (var item in items.TryReadLine().Skip(hasHeader ? 1 : 0).AsParallel().AsOrdered().Select(Parse))
             {
                 yield return item;
             }
 
             while (items.FillBufferAsync() > 0)
             {
-                foreach (var item in items.TryReadLine().AsParallel().Select(Parse))
+                foreach (var item in items.TryReadLine().AsParallel().AsOrdered().Select(Parse))
                 {
                     yield return item;
                 }
@@ -171,30 +178,40 @@ namespace RecordParser.Extensions
         //    }
         //}
 
-
-        // 46
-        public static IEnumerable<T> GetRecordsParallel<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
+        public static IEnumerable<T> GetRecords<T>(this IVariableLengthReader<T> reader, TextReader stream, VariableLengthReaderOptions options)
         {
-            return GetRecordsParallel(reader.Parse, () => new RowByLine(stream, length), hasHeader);
+            Func<IFL> func = options.containsQuotedFields
+                            ? () => new QuotedRow(stream, length)
+                            : () => new RowByLine(stream, length);
+
+            return options.parallelProcessing
+                    ? GetRecordsParallel(reader.Parse, func, options.hasHeader)
+                    : GetRecordsSequential(reader.Parse, func, options.hasHeader);
         }
 
-        // 125
-        public static IEnumerable<T> GetRecordsSequential<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
-        {
-            return GetRecordsSequential(reader.Parse, () => new RowByLine(stream, length), hasHeader);
-        }
+        //// 46
+        //public static IEnumerable<T> GetRecordsParallel<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
+        //{
+        //    return GetRecordsParallel(reader.Parse, () => new RowByLine(stream, length), hasHeader);
+        //}
 
-        // 61
-        public static IEnumerable<T> GetRecordsParallelCSV<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
-        {
-            return GetRecordsParallel(reader.Parse, () => new QuotedRow(stream, length), hasHeader);
-        }
+        //// 125
+        //public static IEnumerable<T> GetRecordsSequential<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
+        //{
+        //    return GetRecordsSequential(reader.Parse, () => new RowByLine(stream, length), hasHeader);
+        //}
 
-        // 130
-        public static IEnumerable<T> GetRecordsSequentialCSV<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
-        {
-            return GetRecordsSequential(reader.Parse, () => new QuotedRow(stream, length), hasHeader);
-        }
+        //// 61
+        //public static IEnumerable<T> GetRecordsParallelCSV<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
+        //{
+        //    return GetRecordsParallel(reader.Parse, () => new QuotedRow(stream, length), hasHeader);
+        //}
+
+        //// 130
+        //public static IEnumerable<T> GetRecordsSequentialCSV<T>(this IVariableLengthReader<T> reader, TextReader stream, bool hasHeader)
+        //{
+        //    return GetRecordsSequential(reader.Parse, () => new QuotedRow(stream, length), hasHeader);
+        //}
 
         private static IEnumerable<T> GetRecordsParallel<T>(FuncSpanT<T> reader, Func<IFL> getItems, bool hasHeader)
         {
@@ -205,14 +222,14 @@ namespace RecordParser.Extensions
                 yield break;
             }
 
-            foreach (var x in items.TryReadLine().Skip(hasHeader ? 1 : 0).AsParallel().Select(x => reader(x.Span)))
+            foreach (var x in items.TryReadLine().Skip(hasHeader ? 1 : 0).AsParallel().AsOrdered().Select(x => reader(x.Span)))
             {
                 yield return x;
             }
 
             while (items.FillBufferAsync() > 0)
             {
-                foreach (var x in items.TryReadLine().AsParallel().Select(x => reader(x.Span)))
+                foreach (var x in items.TryReadLine().AsParallel().AsOrdered().Select(x => reader(x.Span)))
                 {
                     yield return x;
                 }

@@ -15,6 +15,8 @@ namespace RecordParser.Extensions
             private TextReader reader;
             private bool initial = true;
 
+            private bool yieldLast = false;
+
             private int bufferLength;
             private char[] buffer;
 
@@ -41,6 +43,12 @@ namespace RecordParser.Extensions
                 j = 0;
 
                 initial = false;
+
+                if (totalRead == 0 && len != 0 && yieldLast == false)
+                {
+                    yieldLast = true;
+                    return len;
+                }
 
                 return totalRead;
             }
@@ -78,6 +86,9 @@ namespace RecordParser.Extensions
 
                 if (hasBufferToConsume == false)
                 {
+                    if (yieldLast)
+                        yield return buffer.AsMemory(j, i - j);
+
                     yield break;
                 }
 
