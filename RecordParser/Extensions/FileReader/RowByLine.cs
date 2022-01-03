@@ -3,7 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 
-namespace RecordParser.Extensions
+namespace RecordParser.Extensions.FileReader
 {
     public static partial class Exasd
     {
@@ -28,6 +28,7 @@ namespace RecordParser.Extensions
                 this.bufferLength = buffer.Length;
             }
 
+            // remover async do nome
             public int FillBufferAsync()
             {
                 var len = i - j;
@@ -53,7 +54,7 @@ namespace RecordParser.Extensions
                 return totalRead;
             }
 
-            public IEnumerable<Memory<char>> TryReadLine()
+            public IEnumerable<ReadOnlyMemory<char>> TryReadLine()
             {
                 int Peek() => i < bufferLength ? buffer[i] : -1;
 
