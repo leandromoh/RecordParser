@@ -79,50 +79,79 @@ namespace RecordParser.Extensions.FileReader
         {
             var get = BuildRaw(options.columnCount, options.StringFactory != null);
 
-            // criar apenas se for options.parallelProcessing == true
-            var maxParallelism = 20;
-            var funcs = Enumerable
-                    .Range(0, maxParallelism)
-                    .Select(_ =>
-                    {
-                        var buf = new string[options.columnCount];
-
-                        return new
-                        {
-                            buffer = buf,
-                            lockObj = new object(),
-                            stringCache = options.StringFactory?.Invoke(),
-                            getField = new Func<int, string>(i => buf[i])
-                        };
-                    })
-                    .ToArray();
-
             Func<IFL> func = options.containsQuotedFields
-                           ? () => new QuotedRow(stream, length)
+                           ? () => new QuotedRow(stream, length, options.separator)
                            : () => new RowByLine(stream, length);
 
             return options.parallelProcessing
-                    ? GetRecordsParallel(Parser, func, options.hasHeader)
-                    : GetRecordsSequential(Parser, func, options.hasHeader);
+                    ? GetParallel()
+                    : GetSequential();
 
-            T Parser(ReadOnlyMemory<char> memory, int i)
+            IEnumerable<T> GetSequential()
             {
-                var finder = new TextFindHelper(memory.Span, options.separator, ('"', "\""));
+                var buffer = new string[options.columnCount];
+                var stringCache = options.StringFactory?.Invoke();
+                var getField = new Func<int, string>(i => buffer[i]);
 
-                try
+                return GetRecordsSequential(Parser, func, options.hasHeader);
+
+                T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    var r = funcs[i % maxParallelism];
-                    lock (r.lockObj)
+                    var finder = new TextFindHelper(memory.Span, options.separator, ('"', "\""));
+
+                    try
                     {
+                        get(ref finder, buffer, stringCache);
 
-                        get(ref finder, r.buffer, r.stringCache);
-
-                        return reader(r.getField);
+                        return reader(getField);
+                    }
+                    finally
+                    {
+                        finder.Dispose();
                     }
                 }
-                finally
+            }
+
+            IEnumerable<T> GetParallel()
+            {
+                var maxParallelism = 20;
+                var funcs = Enumerable
+                        .Range(0, maxParallelism)
+                        .Select(_ =>
+                        {
+                            var buf = new string[options.columnCount];
+
+                            return new
+                            {
+                                buffer = buf,
+                                lockObj = new object(),
+                                stringCache = options.StringFactory?.Invoke(),
+                                getField = new Func<int, string>(i => buf[i])
+                            };
+                        })
+                        .ToArray();
+
+                return GetRecordsParallel(Parser, func, options.hasHeader);
+
+                T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    finder.Dispose();
+                    var finder = new TextFindHelper(memory.Span, options.separator, ('"', "\""));
+
+                    try
+                    {
+                        var r = funcs[i % maxParallelism];
+                        lock (r.lockObj)
+                        {
+
+                            get(ref finder, r.buffer, r.stringCache);
+
+                            return reader(r.getField);
+                        }
+                    }
+                    finally
+                    {
+                        finder.Dispose();
+                    }
                 }
             }
         }
@@ -130,7 +159,7 @@ namespace RecordParser.Extensions.FileReader
         public static IEnumerable<T> GetRecords<T>(this IVariableLengthReader<T> reader, TextReader stream, VariableLengthReaderOptions options)
         {
             Func<IFL> func = options.containsQuotedFields
-                            ? () => new QuotedRow(stream, length)
+                            ? () => new QuotedRow(stream, length, reader.separator)
                             : () => new RowByLine(stream, length);
 
             Func<ReadOnlyMemory<char>, int, T> parser = (memory, i) => reader.Parse(memory.Span);
