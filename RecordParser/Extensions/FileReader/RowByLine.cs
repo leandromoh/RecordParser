@@ -68,6 +68,10 @@ namespace RecordParser.Extensions.FileReader
                 {
                     c = buffer[i++];
 
+                    // '\r' => 13
+                    // '\n' => 10
+                    if (c > 13)
+                        continue;
 
                     switch (c)
                     {
