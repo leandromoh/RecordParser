@@ -142,6 +142,8 @@ namespace RecordParser.Builders.Writer
         /// <returns>The writer object.</returns>
         public IVariableLengthWriter<T> Build(string separator, CultureInfo cultureInfo = null)
         {
+            // TODO adicionar validacao igual no reader que separator nao pode contaer quote
+
             var quote = '"';
 
             var maps = MappingWriteConfiguration.Merge(list.Select(x => x.Value), dic);
