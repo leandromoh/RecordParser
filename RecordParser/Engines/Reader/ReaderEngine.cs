@@ -26,7 +26,7 @@ namespace RecordParser.Engines.Reader
 
             var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
             {
-                return Expression.Call(configParameter, nameof(TextFindHelper.getValue), Type.EmptyTypes, Expression.Constant(mapConfig.start));
+                return Expression.Call(configParameter, nameof(TextFindHelper.GetValue), Type.EmptyTypes, Expression.Constant(mapConfig.start));
             });
 
             var body = MountBody(instanceVariable, blockThatSetProperties, mappedColumns, factory);

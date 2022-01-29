@@ -11,7 +11,8 @@ namespace RecordParser.Engines.Reader
 
         private int scanned;
         private int position;
-        private int current;
+        private int currentIndex;
+        private ReadOnlySpan<char> currentValue;
 
         private char[] buffer;
 
@@ -23,7 +24,8 @@ namespace RecordParser.Engines.Reader
 
             scanned = -delimiter.Length;
             position = 0;
-            current = 0;
+            currentIndex = -1;
+            currentValue = default;
             buffer = null;
         }
 
@@ -36,19 +38,24 @@ namespace RecordParser.Engines.Reader
             }
         }
 
-        public ReadOnlySpan<char> getValue(int index)
+        public ReadOnlySpan<char> GetValue(int index)
         {
-            if (index < current)
-                throw new Exception("can only be fowarrd");
-
-            while (current <= index)
+            if (index <= currentIndex)
             {
-                var match = index == current++;
-                var range = ParseChunk(match);
+                if (index == currentIndex)
+                    return currentValue;
+                else
+                   throw new Exception("can only be fowarrd");
+            }
+
+            while (currentIndex <= index)
+            {
+                var match = index == ++currentIndex;
+                currentValue = ParseChunk(match);
 
                 if (match)
                 {
-                    return range;
+                    return currentValue;
                 }
             }
 
@@ -78,7 +85,7 @@ namespace RecordParser.Engines.Reader
 
         private ReadOnlySpan<char> ParseQuotedChuck(bool match)
         {
-            const string corruptFieldError = "Corrupt field found. A double quote is not escaped or there is extra data after a quoted field.";
+            const string corruptFieldError = "Double quote is not escaped or there is extra data after a quoted field.";
 
             var unlook = line.Slice(scanned);
             scanned += unlook.IndexOf(quote.ch) + 1;
@@ -169,7 +176,7 @@ namespace RecordParser.Engines.Reader
                 }
             }
 
-            throw new Exception("quoted field missing end quote");
+            throw new Exception("Quoted field is missing closing quote.");
         }
     }
 }

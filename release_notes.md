@@ -1,7 +1,14 @@
+## version 1.3.0
+
+- native enum methods as fallback for read/write (#42)
+- support to write quoted csv record - RFC 4180 (#36)
+- support to read quoted csv record - RFC 4180 (#34)
+- minor improvements
+
 ## version 1.2.0
 
 - support factory method on builders (#30)
-- remove restriction for MemberExpression on builder's Map method (#28)
+- remove restriction for only MemberExpression on builder's Map method (#28)
 
 ## version 1.1.0
 

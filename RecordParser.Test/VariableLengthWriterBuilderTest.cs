@@ -1,7 +1,9 @@
-﻿using FluentAssertions;
+﻿using AutoFixture;
+using FluentAssertions;
 using RecordParser.Builders.Writer;
 using RecordParser.Test;
 using System;
+using System.Linq;
 using Xunit;
 
 namespace RecordParser.Test
@@ -345,34 +347,60 @@ namespace RecordParser.Test
             called.Should().Be(1);
         }
 
-        [Fact]
-        public void Parse_enum_same_way_framework()
+        [Theory]
+        [InlineData(Color.Black)]
+        [InlineData(Color.White)]
+        [InlineData(Color.Yellow)]
+        [InlineData(Color.LightBlue)]
+        [InlineData((Color)777)]
+        public void Parse_enum_same_way_framework(Color value)
         {
+            // Arrange 
+
             var writer = new VariableLengthWriterBuilder<Color>()
                 .Map(x => x, 0)
                 .Build(";");
 
-            Span<char> destination = stackalloc char[50];
+            var expected = value.ToString();
 
-            // values present in enum
+            Span<char> destination = stackalloc char[expected.Length];
 
-            Assert(Color.Black, destination);
-            Assert(Color.White, destination);
-            Assert(Color.Yellow, destination);
-            Assert(Color.LightBlue, destination);
+            // Act
 
-            // value NOT present in enum
-            Assert((Color)777, destination);
+            var success = writer.TryFormat(value, destination, out var charsWritten);
 
-            void Assert(Color value, Span<char> span)
-            {
-                var expected = value.ToString();
+            // Assert
 
-                var success = writer.TryFormat(value, span, out var charsWritten);
+            success.Should().BeTrue();
+            destination.Slice(0, charsWritten).Should().Be(expected);
+        }
 
-                success.Should().BeTrue();
-                span.Slice(0, charsWritten).Should().Be(expected);
-            }
+        [Theory]
+        [InlineData(FlaggedEnum.Some)]
+        [InlineData(FlaggedEnum.Another)]
+        [InlineData(FlaggedEnum.Other | FlaggedEnum.Some)]
+        [InlineData(FlaggedEnum.None | FlaggedEnum.Another)]
+        [InlineData((FlaggedEnum)777)]
+        public void Parse_flag_enum_same_way_framework(FlaggedEnum value)
+        {
+            // Arrange 
+
+            var writer = new VariableLengthWriterBuilder<FlaggedEnum>()
+                .Map(x => x, 0)
+                .Build(";");
+
+            var expected = value.ToString();
+
+            Span<char> destination = stackalloc char[expected.Length];
+
+            // Act
+
+            var success = writer.TryFormat(value, destination, out var charsWritten);
+
+            // Assert
+
+            success.Should().BeTrue();
+            destination.Slice(0, charsWritten).Should().Be(expected);
         }
 
         [Fact]
@@ -384,10 +412,10 @@ namespace RecordParser.Test
                 .Map(x => x, 0)
                 .Build(";");
 
-            Span<char> destination = stackalloc char[50];
-
             var instance = (EmptyEnum)777;
             var expected = instance.ToString();
+
+            Span<char> destination = stackalloc char[expected.Length];
 
             // Act
 
@@ -397,6 +425,48 @@ namespace RecordParser.Test
 
             success.Should().BeTrue();
             destination.Slice(0, charsWritten).Should().Be(expected);
+        }
+
+        [Fact]
+        public void Given_variable_length_writer_used_in_multi_thread_context_tryformat_method_should_be_thread_safe()
+        {
+            // Arrange 
+
+            var items = new Fixture()
+                .CreateMany<(string Name, DateTime Birthday, decimal Money, Color Color)>(10_000)
+                .ToList();
+
+            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, 0)
+                .Map(x => x.Birthday, 1, "yyyy.MM.dd")
+                .Map(x => x.Money, 2)
+                .Map(x => x.Color, 3)
+                .Build(" ; ");
+
+            // Act
+
+            var resultParallel = items
+                .AsParallel()
+                .Select(TryFormat)
+                .ToList();
+
+            var resultSequential = items
+                .Select(TryFormat)
+                .ToList();
+
+            // Assert
+
+            resultParallel.Should().OnlyContain(x => x.success);
+
+            resultParallel.Should().BeEquivalentTo(resultSequential, cfg => cfg.WithStrictOrdering());
+
+            (bool success, string line) TryFormat((string Name, DateTime Birthday, decimal Money, Color Color) item)
+            {
+                Span<char> destination = stackalloc char[100];
+                var success = writer.TryFormat(item, destination, out var charsWritten);
+                var line = destination.Slice(0, charsWritten).ToString();
+                return (success, line);
+            }
         }
 
         [Fact]

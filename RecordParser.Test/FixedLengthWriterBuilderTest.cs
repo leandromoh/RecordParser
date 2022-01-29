@@ -1,7 +1,9 @@
-﻿using FluentAssertions;
+﻿using AutoFixture;
+using FluentAssertions;
 using RecordParser.Builders.Writer;
 using RecordParser.Test;
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 using Xunit;
 
@@ -329,6 +331,50 @@ namespace RecordParser.Test
 
             result.Should().Be("2020.05.23\0son name\01980.01.15\0mother name");
             unwritted.Should().Be(new string(default, freeSpace));
+        }
+
+        [Fact]
+        public void Given_fixed_length_writer_used_in_multi_thread_context_tryformat_method_should_be_thread_safe()
+        {
+            // Arrange 
+
+            var items = new Fixture()
+                .Build<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .With(x => x.Name, () => Guid.NewGuid().ToString().Substring(0, 14))
+                .CreateMany(10_000)
+                .ToList();
+
+            var writer = new FixedLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+                .Map(x => x.Name, 0, 15, paddingChar: ' ')
+                .Map(x => x.Birthday, 16, 10, "yyyy.MM.dd")
+                .Map(x => x.Money, 27, 7, precision: 2)
+                .Map(x => x.Color, 35, 15, padding: Padding.Left, paddingChar: '-')
+                .Build();
+
+            // Act
+
+            var resultParallel = items
+                .AsParallel()
+                .Select(TryFormat)
+                .ToList();
+
+            var resultSequential = items
+                .Select(TryFormat)
+                .ToList();
+
+            // Assert
+
+            resultParallel.Should().OnlyContain(x => x.success);
+
+            resultParallel.Should().BeEquivalentTo(resultSequential, cfg => cfg.WithStrictOrdering());
+
+            (bool success, string line) TryFormat((string Name, DateTime Birthday, decimal Money, Color Color) item)
+            {
+                Span<char> destination = stackalloc char[100];
+                var success = writer.TryFormat(item, destination, out var charsWritten);
+                var line = destination.Slice(0, charsWritten).ToString();
+                return (success, line);
+            }
         }
     }
 

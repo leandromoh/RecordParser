@@ -7,14 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
     <PackageReference Include="Cursively" Version="1.2.0" />
-    <PackageReference Include="CsvHelper" Version="27.1.0" />
-    <PackageReference Include="FlatFiles" Version="4.15.0" />
-    <PackageReference Include="SoftCircuits.CsvParser" Version="3.0.0" />
-    <PackageReference Include="System.IO.Pipelines" Version="5.0.1" />
-    <PackageReference Include="TinyCsvParser" Version="2.6.0" />
-    <PackageReference Include="ZString" Version="2.4.2" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+    <PackageReference Include="CsvHelper" Version="27.2.1" />
+    <PackageReference Include="FlatFiles" Version="4.16.0" />
+    <PackageReference Include="SoftCircuits.CsvParser" Version="3.5.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="6.0.1" />
+    <PackageReference Include="TinyCsvParser" Version="2.6.1" />
+    <PackageReference Include="ZString" Version="2.4.3" />
   </ItemGroup>
 
   <ItemGroup>

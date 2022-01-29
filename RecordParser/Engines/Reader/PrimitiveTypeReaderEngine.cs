@@ -95,15 +95,7 @@ namespace RecordParser.Engines.Reader
                 .Aggregate((Expression)Expression.Condition(
                         Expression.Call(under, "TryParse", Type.EmptyTypes, trim, number),
                         Expression.Convert(number, type),
-                        Expression.Throw(
-                            Expression.New(
-                                typeof(ArgumentException).GetConstructor(new[] { typeof(string) }),
-                                Expression.Call(typeof(string), "Format", Type.EmptyTypes,
-                                    Expression.Constant($"value {{0}} not present in enum {type.Name}"),
-                                    Expression.Call(trim, "ToString", Type.EmptyTypes)
-
-                            )), type)),
-
+                        Expression.Call(typeof(Enum), "Parse", new[] { type }, SpanAsString(trim), Expression.Constant(true))),
                             (acc, item) =>
                                 Expression.Condition(
                                     item.condition,

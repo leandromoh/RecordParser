@@ -14,7 +14,7 @@
     <PackageProjectUrl>https://github.com/leandromoh/RecordParser</PackageProjectUrl>
     <RepositoryUrl>https://github.com/leandromoh/RecordParser</RepositoryUrl>
     <PackageTags>tsv parser performance csv mapper file flat reader dotnet-core span flatfile expression-tree delimited fixedlength</PackageTags>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <PackageReleaseNotes>
      https://github.com/leandromoh/RecordParser/blob/master/release_notes.md
     </PackageReleaseNotes>
