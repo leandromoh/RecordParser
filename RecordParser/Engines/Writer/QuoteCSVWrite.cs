@@ -5,6 +5,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace RecordParser.Engines.Writer
 {
@@ -29,8 +30,8 @@ namespace RecordParser.Engines.Writer
                 if (i.type != typeof(ReadOnlySpan<char>) && i.type != typeof(string))
                     return i;
 
-                var (fmask, type) = i.converter is null 
-                                    ? (fnull, typeof(ReadOnlySpan<char>)) 
+                var (fmask, type) = i.converter is null
+                                    ? (fnull, typeof(ReadOnlySpan<char>))
                                     : (fmaks[i.converter], i.type);
 
                 return new MappingWriteConfiguration(i.prop, i.start, i.length, fmask, i.format, i.padding, i.paddingChar, type);
