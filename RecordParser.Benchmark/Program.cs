@@ -9,13 +9,39 @@ namespace RecordParser.Benchmark
         static async Task Main(string[] args)
         {
 #if DEBUG
-          //  await new WriterTestRunner().VariableLength_Write_Span_Builder();
+            await new WriterTestRunner().VariableLength_Write_Span_Builder();
 #else
-            //BenchmarkRunner.Run<FixedLengthReaderBenchmark>();
+            Console.WriteLine("Benchmark options:");
+            Console.WriteLine("0 - all");
+            Console.WriteLine("1 - variable length writer");
+            Console.WriteLine("2 - variable length reader");
+            Console.WriteLine("3 - fixed length reader");
+            Console.WriteLine("Digit the number of desired benchmark: ");
+            var option = int.Parse(Console.ReadLine());
 
-            BenchmarkRunner.Run<VariableLengthWriterBenchmark>();
-            //BenchmarkRunner.Run<VariableLengthReaderBenchmark>();
+            switch (option)
+            {
+                case 0:
+                    BenchmarkRunner.Run<VariableLengthWriterBenchmark>();
+                    BenchmarkRunner.Run<VariableLengthReaderBenchmark>();
+                    BenchmarkRunner.Run<FixedLengthReaderBenchmark>();
+                    break;
 
+                case 1:
+                    BenchmarkRunner.Run<VariableLengthWriterBenchmark>();
+                    break;
+
+                case 2:
+                    BenchmarkRunner.Run<VariableLengthReaderBenchmark>();
+                    break;
+
+                case 3:
+                    BenchmarkRunner.Run<FixedLengthReaderBenchmark>();
+                    break;
+
+                default:
+                    throw new NotSupportedException("invalid option");
+            }
 #endif
             Console.Out.Write("Hit <enter> to exit...");
             Console.In.ReadLine();
