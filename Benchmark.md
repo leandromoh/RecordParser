@@ -1,4 +1,4 @@
-## Benchmark [#2e89e99](https://github.com/leandromoh/RecordParser/tree/2e89e9929dc4a0b53244466ef8fa6bae050e1e2a)
+## Benchmark [#52dd38f](https://github.com/leandromoh/RecordParser/tree/52dd38fefc3df1e853f0bced0fee8ea320f4e13e)
 
 ### VariableLength Write
 
@@ -7,20 +7,20 @@
 BenchmarkDotNet=v0.13.1, OS=Windows 10.0.18363.1440 (1909/November2019Update/19H2)
 Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical cores
 .NET SDK=6.0.100
-  [Host]   : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
-  .NET 5.0 : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+  [Host]   : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
+  .NET 6.0 : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
 
-Job=.NET 5.0  Runtime=.NET 5.0  
+Job=.NET 6.0  Runtime=.NET 6.0  
 
 ```
-|                                     Method | LimitRecord |       Mean |    Error |   StdDev |       Gen 0 |     Gen 1 |     Gen 2 | Allocated |
-|------------------------------------------- |------------ |-----------:|---------:|---------:|------------:|----------:|----------:|----------:|
-|          Write_VariableLength_ManualString |      500000 |   962.2 ms | 19.13 ms | 37.31 ms |  36000.0000 |         - |         - |    146 MB |
-|          Write_VariableLength_RecordParser |      500000 |   877.0 ms | 16.29 ms | 32.90 ms |   6000.0000 |         - |         - |     24 MB |
-|             Write_VariableLength_FlatFiles |      500000 | 1,859.0 ms | 32.59 ms | 34.87 ms | 120000.0000 |         - |         - |    480 MB |
-|             Write_VariableLength_CSVHelper |      500000 | 1,048.8 ms | 20.54 ms | 25.22 ms |  73000.0000 | 7000.0000 | 7000.0000 |    523 MB |
-| Write_VariableLength_SoftCircuitsCsvParser |      500000 | 1,139.6 ms | 17.50 ms | 15.51 ms | 118000.0000 |         - |         - |    473 MB |
-|               Write_VariableLength_ZString |      500000 |   792.6 ms | 15.13 ms | 16.19 ms |   6000.0000 |         - |         - |     24 MB |
+|                                     Method | LimitRecord |       Mean |    Error |   StdDev |     Median |       Gen 0 |      Gen 1 |     Gen 2 | Allocated |
+|------------------------------------------- |------------ |-----------:|---------:|---------:|-----------:|------------:|-----------:|----------:|----------:|
+|          Write_VariableLength_ManualString |      500000 |   697.9 ms | 28.94 ms | 84.42 ms |   656.1 ms |  30000.0000 |          - |         - |    121 MB |
+|          Write_VariableLength_RecordParser |      500000 |   628.4 ms | 12.34 ms | 21.29 ms |   629.3 ms |   1000.0000 |          - |         - |      5 MB |
+|             Write_VariableLength_FlatFiles |      500000 | 1,130.1 ms | 22.33 ms | 27.42 ms | 1,122.5 ms | 112000.0000 |          - |         - |    447 MB |
+|             Write_VariableLength_CSVHelper |      500000 |   996.0 ms | 14.98 ms | 12.51 ms |   993.9 ms |  71000.0000 | 10000.0000 | 5000.0000 |    523 MB |
+| Write_VariableLength_SoftCircuitsCsvParser |      500000 | 1,086.7 ms | 14.12 ms | 11.03 ms | 1,082.0 ms | 118000.0000 |  1000.0000 |         - |    473 MB |
+|               Write_VariableLength_ZString |      500000 |   560.2 ms | 10.61 ms | 10.90 ms |   558.2 ms |   1000.0000 |          - |         - |      5 MB |
 
 ### VariableLength Read
 
@@ -29,22 +29,22 @@ Job=.NET 5.0  Runtime=.NET 5.0
 BenchmarkDotNet=v0.13.1, OS=Windows 10.0.18363.1440 (1909/November2019Update/19H2)
 Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical cores
 .NET SDK=6.0.100
-  [Host]   : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
-  .NET 5.0 : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+  [Host]   : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
+  .NET 6.0 : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
 
-Job=.NET 5.0  Runtime=.NET 5.0  
+Job=.NET 6.0  Runtime=.NET 6.0  
 
 ```
-|                              Method | LimitRecord |       Mean |    Error |    StdDev |       Gen 0 |       Gen 1 |     Gen 2 | Allocated |
-|------------------------------------ |------------ |-----------:|---------:|----------:|------------:|------------:|----------:|----------:|
-|    Read_VariableLength_ManualString |      500000 | 1,736.2 ms | 31.99 ms |  52.57 ms | 151000.0000 |           - |         - |    598 MB |
-|    Read_VariableLength_RecordParser |      500000 |   733.6 ms | 13.67 ms |  10.67 ms |  13000.0000 |           - |         - |     53 MB |
-|       Read_VariableLength_FlatFiles |      500000 | 2,835.5 ms | 66.94 ms | 185.49 ms | 183000.0000 |           - |         - |    730 MB |
-|      Read_VariableLength_ManualSpan |      500000 |   964.3 ms | 19.27 ms |  27.64 ms |  17000.0000 |           - |         - |     70 MB |
-|       Read_VariableLength_CSVHelper |      500000 | 2,179.3 ms | 27.66 ms |  21.60 ms | 127000.0000 |           - |         - |    504 MB |
-|   Read_VariableLength_TinyCsvParser |      500000 |   985.3 ms | 14.46 ms |  12.81 ms | 279000.0000 | 113000.0000 | 2000.0000 |  1,319 MB |
-| Read_VariableLength_Cursively_Async |      500000 |   559.8 ms | 10.84 ms |  17.50 ms |  16000.0000 |           - |         - |     67 MB |
-|  Read_VariableLength_Cursively_Sync |      500000 |   523.6 ms | 10.38 ms |  20.00 ms |  16000.0000 |           - |         - |     66 MB |
+|                              Method | LimitRecord |       Mean |    Error |   StdDev |       Gen 0 |       Gen 1 |     Gen 2 | Allocated |
+|------------------------------------ |------------ |-----------:|---------:|---------:|------------:|------------:|----------:|----------:|
+|    Read_VariableLength_ManualString |      500000 |   907.8 ms | 17.56 ms | 18.79 ms | 120000.0000 |           - |         - |    480 MB |
+|    Read_VariableLength_RecordParser |      500000 |   664.1 ms | 13.14 ms | 28.29 ms |  12000.0000 |           - |         - |     52 MB |
+|       Read_VariableLength_FlatFiles |      500000 | 1,774.2 ms | 31.76 ms | 28.15 ms | 183000.0000 |   1000.0000 |         - |    730 MB |
+|      Read_VariableLength_ManualSpan |      500000 |   582.1 ms |  8.86 ms |  8.29 ms |  17000.0000 |           - |         - |     69 MB |
+|       Read_VariableLength_CSVHelper |      500000 | 1,165.4 ms | 16.05 ms | 14.22 ms | 125000.0000 |           - |         - |    499 MB |
+|   Read_VariableLength_TinyCsvParser |      500000 |   776.1 ms | 12.74 ms | 13.63 ms | 263000.0000 | 122000.0000 | 6000.0000 |  1,319 MB |
+| Read_VariableLength_Cursively_Async |      500000 |   407.9 ms |  8.08 ms | 12.34 ms |  12000.0000 |           - |         - |     49 MB |
+|  Read_VariableLength_Cursively_Sync |      500000 |   325.5 ms |  5.46 ms |  4.84 ms |  12000.0000 |           - |         - |     49 MB |
 
 ### FixedLength Read
 
@@ -53,17 +53,16 @@ Job=.NET 5.0  Runtime=.NET 5.0
 BenchmarkDotNet=v0.13.1, OS=Windows 10.0.18363.1440 (1909/November2019Update/19H2)
 Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical cores
 .NET SDK=6.0.100
-  [Host]   : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
-  .NET 5.0 : .NET 5.0.1 (5.0.120.57516), X64 RyuJIT
+  [Host]   : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
+  .NET 6.0 : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
 
-Job=.NET 5.0  Runtime=.NET 5.0  
+Job=.NET 6.0  Runtime=.NET 6.0  
 
 ```
-|                        Method | LimitRecord |       Mean |    Error |    StdDev |       Gen 0 |      Gen 1 |     Gen 2 | Allocated |
-|------------------------------ |------------ |-----------:|---------:|----------:|------------:|-----------:|----------:|----------:|
-| Read_FixedLength_ManualString |      400000 | 1,759.8 ms | 69.05 ms | 192.50 ms | 107000.0000 |          - |         - |    424 MB |
-| Read_FixedLength_RecordParser |      400000 |   510.7 ms |  7.08 ms |   6.28 ms |  10000.0000 |          - |         - |     43 MB |
-|   Read_FixedLength_ManualSpan |      400000 |   541.5 ms |  8.59 ms |   8.04 ms |  14000.0000 |          - |         - |     59 MB |
-|    Read_FixedLength_FlatFiles |      400000 | 1,758.4 ms | 27.51 ms |  22.97 ms | 144000.0000 | 27000.0000 | 4000.0000 |    843 MB |
-
+|                        Method | LimitRecord |       Mean |    Error |   StdDev |     Median |       Gen 0 |      Gen 1 |     Gen 2 | Allocated |
+|------------------------------ |------------ |-----------:|---------:|---------:|-----------:|------------:|-----------:|----------:|----------:|
+| Read_FixedLength_ManualString |      400000 |   693.8 ms | 22.71 ms | 65.51 ms |   672.6 ms |  74000.0000 |          - |         - |    295 MB |
+| Read_FixedLength_RecordParser |      400000 |   508.8 ms |  5.37 ms |  5.02 ms |   506.9 ms |  10000.0000 |          - |         - |     42 MB |
+|   Read_FixedLength_ManualSpan |      400000 |   518.1 ms |  8.06 ms |  8.96 ms |   516.0 ms |  14000.0000 |          - |         - |     57 MB |
+|    Read_FixedLength_FlatFiles |      400000 | 1,555.3 ms |  9.24 ms |  7.22 ms | 1,556.4 ms | 144000.0000 | 27000.0000 | 4000.0000 |    843 MB |
 
