@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Cursively" Version="1.2.0" />
     <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
     <PackageReference Include="CsvHelper" Version="27.2.1" />
     <PackageReference Include="FlatFiles" Version="4.16.0" />
