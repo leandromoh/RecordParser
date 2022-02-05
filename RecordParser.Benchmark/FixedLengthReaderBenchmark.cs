@@ -13,7 +13,7 @@ using static RecordParser.Benchmark.Common;
 namespace RecordParser.Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(RuntimeMoniker.NetCoreApp50)]
+    [SimpleJob(RuntimeMoniker.Net60)]
     public class FixedLengthReaderBenchmark
     {
         [Params(400_000)]

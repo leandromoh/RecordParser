@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 namespace RecordParser.Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(RuntimeMoniker.NetCoreApp50)]
+    [SimpleJob(RuntimeMoniker.Net60)]
     public class VariableLengthWriterBenchmark
     {
         [Params(500_000)]

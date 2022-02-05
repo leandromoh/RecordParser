@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>RecordParser</PackageId>
-    <TargetFrameworks>netstandard2.1;netcoreapp2.1;netcoreapp3.1;netcoreapp5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netcoreapp2.1;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <LangVersion>10</LangVersion>
     <Authors>Leandro Fernandes Vieira (leandromoh)</Authors>
     <Description>
