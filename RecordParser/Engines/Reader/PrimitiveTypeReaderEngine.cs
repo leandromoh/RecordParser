@@ -72,9 +72,6 @@ namespace RecordParser.Engines.Reader
             var trim = Expression.Variable(typeof(ReadOnlySpan<char>), "trim");
             var number = Expression.Variable(under, "number");
 
-#if NET6_0_OR_GREATER
-            return Expression.Call(typeof(Enum), "Parse", new[] { type }, span, Expression.Constant(true));
-#endif
             var body = Enum.GetValues(type)
                 .Cast<object>()
                 .Select(color =>
@@ -96,14 +93,20 @@ namespace RecordParser.Engines.Reader
                 })
                 .Reverse()
                 .Aggregate((Expression)Expression.Condition(
-                        Expression.Call(under, "TryParse", Type.EmptyTypes, trim, number),
-                        Expression.Convert(number, type),
-                        Expression.Call(typeof(Enum), "Parse", new[] { type }, SpanAsString(trim), Expression.Constant(true))),
-                            (acc, item) =>
-                                Expression.Condition(
-                                    item.condition,
-                                    Expression.Constant(item.value, type),
-                                    acc));
+                        test: Expression.Call(under, "TryParse", Type.EmptyTypes, trim, number),
+                        ifTrue: Expression.Convert(number, type),
+                        ifFalse: Expression.Call(typeof(Enum), "Parse", new[] { type },
+#if NET6_0_OR_GREATER
+                            span, 
+#else
+                            SpanAsString(trim),
+#endif
+                            Expression.Constant(true))),
+                        (acc, item) =>
+                            Expression.Condition(
+                                item.condition,
+                                Expression.Constant(item.value, type),
+                                acc));
 
             var blockExpr = Expression.Block(
                                 variables: new[] { trim, number },

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <PackageId>RecordParser</PackageId>
@@ -6,9 +6,9 @@
     <LangVersion>10</LangVersion>
     <Authors>Leandro Fernandes Vieira (leandromoh)</Authors>
     <Description>
-	RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance and zero allocations, thanks to Span type.
-	It makes easier for developers to do parsing by automating non-relevant code, which allow you to focus on the essentials of mapping.
-	Include readers and writers for variable-length and fixed-length records.
+	RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance and zero allocations, thanks to Span type.  
+	It makes easier for developers to do parsing by automating non-relevant code, which allow you to focus on the essentials of mapping.  
+	Include readers and writers for variable-length and fixed-length records.  
     </Description>
     <Copyright>Copyright 2021 (c) Leandro F. Vieira (leandromoh). All rights reserved.</Copyright>
     <PackageProjectUrl>https://github.com/leandromoh/RecordParser</PackageProjectUrl>
@@ -31,7 +31,7 @@
 
   <PropertyGroup Condition="
 		( '$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release') AND
-		( '$(TargetFramework)' == 'netcoreapp5.0' OR '$(TargetFramework)' == 'net6.0') AND
+		( '$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0') AND
 		( '$(Platform)' == 'AnyCPU') ">
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>

@@ -59,7 +59,7 @@ namespace RecordParser.Engines.Writer
         private static FuncSpanTIntBool Quote(this FuncSpanTIntBool f, char quote, string separator)
         {
             return
-#if NET6_0
+#if NET5_0_OR_GREATER
         [SkipLocalsInit]
 #endif
                 (Span<char> span, ReadOnlySpan<char> text) =>
@@ -96,7 +96,7 @@ namespace RecordParser.Engines.Writer
         private static FuncSpanTIntBool<string> Quote(this FuncSpanTIntBool<string> f, char quote, string separator)
         {
             return
-#if NET6_0
+#if NET5_0_OR_GREATER
         [SkipLocalsInit]
 #endif
                 (Span<char> span, string text) =>
