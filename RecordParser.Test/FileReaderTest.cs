@@ -76,7 +76,7 @@ namespace RecordParser.Test
             var expectedItems = new Quoted[]
             {
                 new Quoted { Id = 1, Date = new DateTime(2010, 01, 02), Name = "Ana", Rate = "Good", Ranking = 56 },
-                new Quoted { Id = 2, Date = new DateTime(2011, 05, 12), Name = "Bob", Rate = "Much \r\nGood", Ranking = 4 },
+                new Quoted { Id = 2, Date = new DateTime(2011, 05, 12), Name = "Bob", Rate = $"Much {Environment.NewLine}Good", Ranking = 4 },
                 new Quoted { Id = 3, Date = new DateTime(2013, 12, 10), Name = "Carla", Rate = "\"Medium\"", Ranking = 5 },
                 new Quoted { Id = 4, Date = new DateTime(2015, 03, 03), Name = "Derik", Rate = "Absolute, Awesome", Ranking = 1 },
             };
