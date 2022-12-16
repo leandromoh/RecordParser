@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 namespace RecordParser.Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(RuntimeMoniker.Net60)]
+    [SimpleJob(RuntimeMoniker.Net70)]
     public class VariableLengthWriterBenchmark
     {
         [Params(500_000)]
@@ -119,7 +119,7 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public async Task Write_VariableLength_FlatFiles()
         {
-            var mapper = SeparatedValueTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
+            var mapper = DelimitedTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
 
             mapper.Property(x => x.id);
             mapper.Property(x => x.name);
@@ -129,7 +129,7 @@ namespace RecordParser.Benchmark
             mapper.Property(x => x.email);
             mapper.Property(x => x.children);
 
-            var options = new SeparatedValueOptions { FormatProvider = CultureInfo.InvariantCulture, Separator = ";" };
+            var options = new DelimitedOptions { FormatProvider = CultureInfo.InvariantCulture, Separator = ";" };
 
             using var fileStream = File.Create(GetFileName());
             using var streamWriter = new StreamWriter(fileStream);

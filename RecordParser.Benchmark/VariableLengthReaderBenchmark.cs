@@ -19,7 +19,7 @@ using static RecordParser.Benchmark.Common;
 namespace RecordParser.Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(RuntimeMoniker.Net60)]
+    [SimpleJob(RuntimeMoniker.Net70)]
     public class VariableLengthReaderBenchmark
     {
         [Params(500_000)]
@@ -73,7 +73,7 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public async Task Read_VariableLength_FlatFiles()
         {
-            var mapper = SeparatedValueTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
+            var mapper = DelimitedTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
 
             mapper.Property(x => x.id);
             mapper.Property(x => x.name);
@@ -84,7 +84,7 @@ namespace RecordParser.Benchmark
             mapper.Ignored();
             mapper.Property(x => x.children);
 
-            var options = new SeparatedValueOptions { FormatProvider = CultureInfo.InvariantCulture };
+            var options = new DelimitedOptions { FormatProvider = CultureInfo.InvariantCulture };
 
             using var fileStream = File.OpenRead(PathSampleDataCSV);
             using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
