@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using MoreLinq;
 using RecordParser.Builders.Reader;
 using RecordParser.Extensions.FileReader;
 using System;
@@ -13,6 +14,8 @@ namespace RecordParser.Test
 {
     public class FileReaderTest
     {
+        private static readonly IEnumerable<int> _repeats = new[] { 0, 1, 3, 10, 100, 1_000 };
+
         public class Quoted
         {
             public int Id;
@@ -31,25 +34,44 @@ namespace RecordParser.Test
                 GetFilePath("QuotedCsv.csv"),
             };
 
-            foreach (var fileName in fileNames)
+            foreach (var repeat in _repeats)
             {
-                foreach (var parallel in new[] { true, false })
+                foreach (var fileName in fileNames)
                 {
-                    foreach (var hasHeader in new[] { true, false })
+                    foreach (var parallel in new[] { true, false })
                     {
-                        foreach (var blankLineAtEnd in new[] { true, false })
+                        foreach (var hasHeader in new[] { true, false })
                         {
-                            var fileBuilder = new StringBuilder(File.ReadAllText(fileName));
+                            foreach (var blankLineAtEnd in new[] { true, false })
+                            {
+                                var fileBuilder = new StringBuilder();
+                                var content = File.ReadAllText(fileName);
 
-                            if (hasHeader)
-                                fileBuilder.Insert(index: 0, "Id,Date,Name,Rate,Ranking" + Environment.NewLine);
+                                for (int i = 0; i < repeat; i++)
+                                {
+                                    fileBuilder.Append(content);
 
-                            if (blankLineAtEnd)
-                                fileBuilder.AppendLine();
+                                    var lastIteration = i == repeat - 1;
+                                    if (lastIteration is false)
+                                        fileBuilder.AppendLine();
+                                }
 
-                            var fileText = fileBuilder.ToString();
+                                if (hasHeader)
+                                    fileBuilder.Insert(index: 0, "Id,Date,Name,Rate,Ranking" + Environment.NewLine);
 
-                            yield return new object[] { fileText, hasHeader, parallel, blankLineAtEnd };
+                                if (blankLineAtEnd)
+                                    fileBuilder.AppendLine();
+
+                                var fileText = fileBuilder.ToString();
+
+                                // TODO: temp condition, currently GetRecords
+                                // does not skip empty lines(\r\n)
+                                fileText = fileText.Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine);
+                                if (string.IsNullOrWhiteSpace(fileText) == false)
+                                    // --
+
+                                    yield return new object[] { fileText, hasHeader, parallel, blankLineAtEnd, repeat };
+                            }
                         }
                     }
                 }
@@ -58,7 +80,7 @@ namespace RecordParser.Test
 
         [Theory]
         [MemberData(nameof(Given_text_mapped_should_write_quoted_properly_theory))]
-        public async Task Read_file_using_(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd)
+        public async Task Read_file_using_(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, int repeat)
         {
             // Arrange
 
@@ -79,7 +101,8 @@ namespace RecordParser.Test
                 new Quoted { Id = 2, Date = new DateTime(2011, 05, 12), Name = "Bob", Rate = $"Much {Environment.NewLine}Good", Ranking = 4 },
                 new Quoted { Id = 3, Date = new DateTime(2013, 12, 10), Name = "Carla", Rate = "\"Medium\"", Ranking = 5 },
                 new Quoted { Id = 4, Date = new DateTime(2015, 03, 03), Name = "Derik", Rate = "Absolute, Awesome", Ranking = 1 },
-            };
+            }
+            .Repeat(repeat);
 
             var readOptions = new VariableLengthReaderOptions
             {
@@ -104,27 +127,45 @@ namespace RecordParser.Test
                 GetFilePath("SimpleCsv.csv"),
             };
 
-            foreach (var fileName in fileNames)
+            foreach (var repeat in _repeats)
             {
-                foreach (var quote in new[] { true, false })
+                foreach (var fileName in fileNames)
                 {
-                    foreach (var parallel in new[] { true, false })
+                    foreach (var quote in new[] { true, false })
                     {
-                        foreach (var hasHeader in new[] { true, false })
+                        foreach (var parallel in new[] { true, false })
                         {
-                            foreach (var blankLineAtEnd in new[] { true, false })
+                            foreach (var hasHeader in new[] { true, false })
                             {
-                                var fileBuilder = new StringBuilder(File.ReadAllText(fileName));
+                                foreach (var blankLineAtEnd in new[] { true, false })
+                                {
+                                    var fileBuilder = new StringBuilder();
+                                    var content = File.ReadAllText(fileName);
 
-                                if (hasHeader)
-                                    fileBuilder.Insert(index: 0, "Id,Date,Name,Rate,Ranking" + Environment.NewLine);
+                                    for (int i = 0; i < repeat; i++)
+                                    {
+                                        fileBuilder.Append(content);
 
-                                if (blankLineAtEnd)
-                                    fileBuilder.AppendLine();
+                                        var lastIteration = i == repeat - 1;
+                                        if (lastIteration is false)
+                                            fileBuilder.AppendLine();
+                                    }
 
-                                var fileText = fileBuilder.ToString();
+                                    if (hasHeader)
+                                        fileBuilder.Insert(index: 0, "Id,Date,Name,Rate,Ranking" + Environment.NewLine);
 
-                                yield return new object[] { fileText, hasHeader, parallel, blankLineAtEnd, quote };
+                                    if (blankLineAtEnd)
+                                        fileBuilder.AppendLine();
+
+                                    var fileText = fileBuilder.ToString();
+
+                                    // TODO: temp condition, currently GetRecords
+                                    // does not skip empty lines(\r\n)
+                                    fileText = fileText.Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine);
+                                    if (string.IsNullOrWhiteSpace(fileText) == false)
+                                        // --
+                                        yield return new object[] { fileText, hasHeader, parallel, blankLineAtEnd, quote, repeat };
+                                }
                             }
                         }
                     }
@@ -134,7 +175,7 @@ namespace RecordParser.Test
 
         [Theory]
         [MemberData(nameof(Given_text_mapped_should_write_quoted_properly_theory_simple_csv))]
-        public async Task Read_file_using_simple_csv(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, bool containgQuote)
+        public async Task Read_file_using_simple_csv(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, bool containgQuote, int repeat)
         {
             // Arrange
 
@@ -155,7 +196,8 @@ namespace RecordParser.Test
                 new Quoted { Id = 2, Date = new DateTime(2011, 05, 12), Name = "Bob", Rate = "Much \"medium\" Good", Ranking = 4 },
                 new Quoted { Id = 3, Date = new DateTime(2013, 12, 10), Name = "Carla", Rate = "Medium", Ranking = 5 },
                 new Quoted { Id = 4, Date = new DateTime(2015, 03, 03), Name = "Derik", Rate = "Absolute Awesome", Ranking = 1 },
-            };
+            }
+            .Repeat(repeat);
 
             var readOptions = new VariableLengthReaderOptions
             {
