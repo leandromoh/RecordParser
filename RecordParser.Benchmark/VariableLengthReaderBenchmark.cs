@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using Ben.Collections.Specialized;
+using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -6,6 +7,7 @@ using Cursively;
 using FlatFiles;
 using FlatFiles.TypeMapping;
 using RecordParser.Builders.Reader;
+using RecordParser.Extensions.FileReader;
 using System;
 using System.Globalization;
 using System.IO;
@@ -22,7 +24,7 @@ namespace RecordParser.Benchmark
     [SimpleJob(RuntimeMoniker.Net70)]
     public class VariableLengthReaderBenchmark
     {
-        [Params(500_000)]
+        [Params(1_000_000)]
         public int LimitRecord { get; set; }
 
         public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
@@ -68,6 +70,94 @@ namespace RecordParser.Benchmark
                 .Build(",", CultureInfo.InvariantCulture);
 
             await ProcessCSVFile(parser.Parse);
+        }
+
+        [Benchmark]
+        [Arguments(true, true)]
+        [Arguments(true, false)]
+        [Arguments(false, true)]
+        [Arguments(false, false)]
+        public void Read_VariableLength_RecordParser_Parallel(bool parallel, bool quoted)
+        {
+            var cache = new InternPool();
+
+            var builder = new VariableLengthReaderBuilder<Person>()
+                .Map(x => x.id, 0)
+                .Map(x => x.name, 1)
+                .Map(x => x.age, 2)
+                .Map(x => x.birthday, 3)
+                .Map(x => x.gender, 4)
+                .Map(x => x.email, 5)
+                .Map(x => x.children, 7);
+
+            if (parallel == false)
+                builder.DefaultTypeConvert(cache.Intern);
+
+            var parser = builder.Build(",", CultureInfo.InvariantCulture);
+
+            using var fileStream = File.OpenRead(PathSampleDataCSV);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                hasHeader = false,
+                parallelProcessing = parallel,
+                containsQuotedFields = quoted,
+            };
+
+            // Act
+
+            var items = parser.GetRecords(streamReader, readOptions);
+
+            var i = 0;
+            foreach (var person in items)
+            {
+                if (i++ == LimitRecord) return;
+            }
+        }
+
+        [Benchmark]
+        [Arguments(true, true)]
+        [Arguments(true, false)]
+        [Arguments(false, true)]
+        [Arguments(false, false)]
+        public void Read_VariableLength_RecordParser_Raw(bool parallel, bool quoted)
+        {
+            using var fileStream = File.OpenRead(PathSampleDataCSV);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+
+            var readOptions = new VariableLengthReaderRawOptions
+            {
+                hasHeader = false,
+                parallelProcessing = parallel,
+                containsQuotedFields = quoted,
+
+                columnCount = 8,
+                separator = ",",
+                StringFactory = () => new InternPool().Intern
+            };
+
+            var items = streamReader.GetRecordsRaw(readOptions, PersonFactory);
+
+            var i = 0;
+            foreach (var person in items)
+            {
+                if (i++ == LimitRecord) return;
+            }
+
+            Person PersonFactory(Func<int, string> getColumnValue)
+            {
+                return new Person()
+                {
+                    id = Guid.Parse(getColumnValue(0)),
+                    name = getColumnValue(1).Trim(),
+                    age = int.Parse(getColumnValue(2)),
+                    birthday = DateTime.Parse(getColumnValue(3), CultureInfo.InvariantCulture),
+                    gender = Enum.Parse<Gender>(getColumnValue(4)),
+                    email = getColumnValue(5).Trim(),
+                    children = bool.Parse(getColumnValue(7))
+                };
+            }
         }
 
         [Benchmark]
@@ -119,7 +209,7 @@ namespace RecordParser.Benchmark
                     name = name.ToString(),
                     age = int.Parse(age),
                     birthday = DateTime.Parse(birthday, DateTimeFormatInfo.InvariantInfo),
-                    gender = Enum.Parse<Gender>(gender.ToString()),
+                    gender = Enum.Parse<Gender>(gender),
                     email = email.ToString(),
                     children = bool.Parse(children)
                 };

@@ -35,16 +35,25 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
 Job=.NET 7.0  Runtime=.NET 7.0  
 
 ```
-|                              Method | LimitRecord |       Mean |    Error |   StdDev |     Median |        Gen0 |        Gen1 |      Gen2 |  Allocated |
-|------------------------------------ |------------ |-----------:|---------:|---------:|-----------:|------------:|------------:|----------:|-----------:|
-|    Read_VariableLength_ManualString |      500000 |   652.7 ms | 12.67 ms | 33.37 ms |   641.9 ms | 120000.0000 |           - |         - |  479.73 MB |
-|    Read_VariableLength_RecordParser |      500000 |   476.7 ms |  8.95 ms |  7.93 ms |   474.5 ms |  12000.0000 |           - |         - |   49.38 MB |
-|       Read_VariableLength_FlatFiles |      500000 | 1,703.8 ms | 33.41 ms | 45.73 ms | 1,717.3 ms | 207000.0000 |           - |         - |  825.78 MB |
-|      Read_VariableLength_ManualSpan |      500000 |   399.6 ms |  7.86 ms | 13.34 ms |   398.6 ms |  16000.0000 |           - |         - |   66.49 MB |
-|       Read_VariableLength_CSVHelper |      500000 |   994.3 ms | 19.76 ms | 56.36 ms |   973.1 ms |  69000.0000 |           - |         - |  275.75 MB |
-|   Read_VariableLength_TinyCsvParser |      500000 |   691.6 ms | 13.75 ms | 27.78 ms |   684.9 ms | 277000.0000 | 133000.0000 | 2000.0000 | 1308.19 MB |
-| Read_VariableLength_Cursively_Async |      500000 |   442.7 ms | 10.97 ms | 32.01 ms |   442.3 ms |  12000.0000 |           - |         - |   49.46 MB |
-|  Read_VariableLength_Cursively_Sync |      500000 |   340.5 ms |  8.59 ms | 25.07 ms |   337.3 ms |  12000.0000 |           - |         - |   49.32 MB |
+|                                    Method | LimitRecord | parallel | quoted |       Mean |    Error |   StdDev |        Gen0 |        Gen1 |      Gen2 | Allocated |
+|------------------------------------------ |------------ |--------- |------- |-----------:|---------:|---------:|------------:|------------:|----------:|----------:|
+| Read_VariableLength_RecordParser_Parallel |     1000000 |    False |  False |   698.9 ms | 13.38 ms | 12.51 ms |   8000.0000 |   5000.0000 | 2000.0000 | 123.66 MB |
+|      Read_VariableLength_RecordParser_Raw |     1000000 |    False |  False | 1,165.2 ms |  9.82 ms |  8.70 ms |  16000.0000 |   9000.0000 | 3000.0000 | 170.11 MB |
+| Read_VariableLength_RecordParser_Parallel |     1000000 |    False |   True |   697.2 ms |  7.18 ms |  6.36 ms |   8000.0000 |   5000.0000 | 2000.0000 | 123.66 MB |
+|      Read_VariableLength_RecordParser_Raw |     1000000 |    False |   True | 1,159.6 ms | 11.08 ms |  9.82 ms |  16000.0000 |   9000.0000 | 3000.0000 | 170.11 MB |
+| Read_VariableLength_RecordParser_Parallel |     1000000 |     True |  False |   233.0 ms |  3.54 ms |  3.31 ms |  10333.3333 |   4333.3333 | 1000.0000 |  62.39 MB |
+|      Read_VariableLength_RecordParser_Raw |     1000000 |     True |  False |   642.1 ms | 10.41 ms |  8.69 ms |  24000.0000 |  14000.0000 | 4000.0000 | 294.66 MB |
+| Read_VariableLength_RecordParser_Parallel |     1000000 |     True |   True |   281.3 ms |  5.56 ms |  9.89 ms |  12000.0000 |   7000.0000 | 2000.0000 |  82.19 MB |
+|      Read_VariableLength_RecordParser_Raw |     1000000 |     True |   True |   647.1 ms | 10.29 ms | 10.57 ms |  24000.0000 |  14000.0000 | 4000.0000 | 300.47 MB |
+|          Read_VariableLength_ManualString |     1000000 |        ? |      ? |   600.3 ms | 10.78 ms | 13.24 ms | 120000.0000 |           - |         - | 479.73 MB |
+|          Read_VariableLength_RecordParser |     1000000 |        ? |      ? |   449.4 ms |  5.44 ms |  4.54 ms |  12000.0000 |           - |         - |  49.38 MB |
+|             Read_VariableLength_FlatFiles |     1000000 |        ? |      ? | 1,615.2 ms | 29.04 ms | 27.16 ms | 207000.0000 |           - |         - | 825.78 MB |
+|            Read_VariableLength_ManualSpan |     1000000 |        ? |      ? |   386.8 ms |  6.73 ms |  9.86 ms |  12000.0000 |           - |         - |  49.32 MB |
+|             Read_VariableLength_CSVHelper |     1000000 |        ? |      ? |   899.0 ms | 17.80 ms | 17.48 ms |  69000.0000 |           - |         - | 275.75 MB |
+|         Read_VariableLength_TinyCsvParser |     1000000 |        ? |      ? |   613.9 ms |  8.18 ms |  7.26 ms | 278000.0000 | 138000.0000 | 2000.0000 | 1308.2 MB |
+|       Read_VariableLength_Cursively_Async |     1000000 |        ? |      ? |   397.0 ms |  7.79 ms | 15.57 ms |  12000.0000 |           - |         - |  49.46 MB |
+|        Read_VariableLength_Cursively_Sync |     1000000 |        ? |      ? |   307.2 ms |  6.05 ms |  5.66 ms |  12000.0000 |           - |         - |  49.32 MB |
+
 
 ### FixedLength Read
 
