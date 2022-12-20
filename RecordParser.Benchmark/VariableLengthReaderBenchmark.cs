@@ -105,8 +105,6 @@ namespace RecordParser.Benchmark
                 containsQuotedFields = quoted,
             };
 
-            // Act
-
             var items = parser.GetRecords(streamReader, readOptions);
 
             var i = 0;
