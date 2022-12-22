@@ -5,109 +5,106 @@ using System.IO;
 
 namespace RecordParser.Extensions.FileReader
 {
-    public static partial class Exasd
+    internal class RowByLine : IFL
     {
-        private class RowByLine : IFL
+        private int i = 0;
+        private int j = 0;
+        private int c;
+        private TextReader reader;
+        private bool initial = true;
+
+        private bool yieldLast = false;
+
+        private int bufferLength;
+        private char[] buffer;
+
+        public RowByLine(TextReader reader, int bufferLength)
         {
-            private int i = 0;
-            private int j = 0;
-            private int c;
-            private TextReader reader;
-            private bool initial = true;
+            this.reader = reader;
 
-            private bool yieldLast = false;
+            buffer = ArrayPool<char>.Shared.Rent(bufferLength);
+            this.bufferLength = buffer.Length;
+        }
 
-            private int bufferLength;
-            private char[] buffer;
-
-            public RowByLine(TextReader reader, int bufferLength)
+        // remover async do nome
+        public int FillBufferAsync()
+        {
+            var len = i - j;
+            if (initial == false)
             {
-                this.reader = reader;
-
-                buffer = ArrayPool<char>.Shared.Rent(bufferLength);
-                this.bufferLength = buffer.Length;
+                Array.Copy(buffer, j, buffer, 0, len);
             }
 
-            // remover async do nome
-            public int FillBufferAsync()
+            var totalRead = reader.Read(buffer, len, bufferLength - len);
+            bufferLength = len + totalRead;
+
+            i = 0;
+            j = 0;
+
+            initial = false;
+
+            if (totalRead == 0 && len != 0 && yieldLast == false)
             {
-                var len = i - j;
-                if (initial == false)
-                {
-                    Array.Copy(buffer, j, buffer, 0, len);
-                }
-
-                var totalRead = reader.Read(buffer, len, bufferLength - len);
-                bufferLength = len + totalRead;
-
-                i = 0;
-                j = 0;
-
-                initial = false;
-
-                if (totalRead == 0 && len != 0 && yieldLast == false)
-                {
-                    yieldLast = true;
-                    return len;
-                }
-
-                return totalRead;
+                yieldLast = true;
+                return len;
             }
 
-            public IEnumerable<ReadOnlyMemory<char>> TryReadLine()
+            return totalRead;
+        }
+
+        public IEnumerable<ReadOnlyMemory<char>> TryReadLine()
+        {
+            int Peek() => i < bufferLength ? buffer[i] : -1;
+
+            var hasBufferToConsume = false;
+
+        reloop:
+
+            j = i;
+
+            while (hasBufferToConsume = i < bufferLength)
             {
-                int Peek() => i < bufferLength ? buffer[i] : -1;
+                c = buffer[i++];
 
-                var hasBufferToConsume = false;
+                // '\r' => 13
+                // '\n' => 10
+                if (c > 13)
+                    continue;
 
-            reloop:
-
-                j = i;
-
-                while (hasBufferToConsume = i < bufferLength)
+                switch (c)
                 {
-                    c = buffer[i++];
+                    case '\r':
+                        if (Peek() == '\n')
+                        {
+                            i++;
+                        }
+                        goto afterLoop;
 
-                    // '\r' => 13
-                    // '\n' => 10
-                    if (c > 13)
-                        continue;
-
-                    switch (c)
-                    {
-                        case '\r':
-                            if (Peek() == '\n')
-                            {
-                                i++;
-                            }
-                            goto afterLoop;
-
-                        case '\n':
-                            goto afterLoop;
-                    }
+                    case '\n':
+                        goto afterLoop;
                 }
-
-            afterLoop:
-
-                if (hasBufferToConsume == false)
-                {
-                    if (yieldLast)
-                        yield return buffer.AsMemory(j, i - j);
-
-                    yield break;
-                }
-
-                yield return buffer.AsMemory(j, i - j);
-                goto reloop;
             }
 
-            public void Dispose()
+        afterLoop:
+
+            if (hasBufferToConsume == false)
             {
-                if (buffer != null)
-                {
-                    ArrayPool<char>.Shared.Return(buffer);
-                    buffer = null;
-                }
+                if (yieldLast)
+                    yield return buffer.AsMemory(j, i - j);
+
+                yield break;
+            }
+
+            yield return buffer.AsMemory(j, i - j);
+            goto reloop;
+        }
+
+        public void Dispose()
+        {
+            if (buffer != null)
+            {
+                ArrayPool<char>.Shared.Return(buffer);
+                buffer = null;
             }
         }
     }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using static RecordParser.Extensions.FileReader.ReaderCommon;
 
 namespace RecordParser.Extensions.FileReader
 {
@@ -32,13 +33,6 @@ namespace RecordParser.Extensions.FileReader
     public static partial class Exasd
     {
         private static int length = (int)Math.Pow(2, 23);
-
-        private interface IFL : IDisposable
-        {
-            int FillBufferAsync();
-            IEnumerable<ReadOnlyMemory<char>> TryReadLine();
-        }
-
 
         delegate void Get(ref TextFindHelper finder, string[] inst, StringFactory cache);
         private static Get BuildRaw(int collumnCount, bool hasTransform)
@@ -167,54 +161,6 @@ namespace RecordParser.Extensions.FileReader
             return options.parallelProcessing
                     ? GetRecordsParallel(parser, func, options.hasHeader)
                     : GetRecordsSequential(parser, func, options.hasHeader);
-        }
-
-        private static IEnumerable<T> GetRecordsParallel<T>(Func<ReadOnlyMemory<char>, int, T> reader, Func<IFL> getItems, bool hasHeader)
-        {
-            using var items = getItems();
-
-            if (items.FillBufferAsync() > 0 == false)
-            {
-                yield break;
-            }
-
-            foreach (var x in items.TryReadLine().Skip(hasHeader ? 1 : 0).AsParallel().AsOrdered().Select(reader))
-            {
-                yield return x;
-            }
-
-            while (items.FillBufferAsync() > 0)
-            {
-                foreach (var x in items.TryReadLine().AsParallel().AsOrdered().Select(reader))
-                {
-                    yield return x;
-                }
-            }
-        }
-
-        private static IEnumerable<T> GetRecordsSequential<T>(Func<ReadOnlyMemory<char>, int, T> reader, Func<IFL> getItems, bool hasHeader)
-        {
-            using var items = getItems();
-
-            if (items.FillBufferAsync() > 0 == false)
-            {
-                yield break;
-            }
-
-            var i = 0;
-            foreach (var x in items.TryReadLine().Skip(hasHeader ? 1 : 0))
-            {
-                yield return reader(x, i++);
-            }
-
-            while (items.FillBufferAsync() > 0)
-            {
-                i = 0;
-                foreach (var x in items.TryReadLine())
-                {
-                    yield return reader(x, i++);
-                }
-            }
         }
     }
 }
