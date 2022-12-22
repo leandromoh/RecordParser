@@ -5,7 +5,7 @@ using System.IO;
 
 namespace RecordParser.Extensions.FileReader
 {
-    internal class QuotedRow : IFL
+    internal class RowByQuote : IFL
     {
         private int i = 0;
         private int j = 0;
@@ -19,7 +19,7 @@ namespace RecordParser.Extensions.FileReader
         private char[] buffer;
         public readonly string separator;
 
-        public QuotedRow(TextReader reader, int bufferLength, string separator)
+        public RowByQuote(TextReader reader, int bufferLength, string separator)
         {
             this.reader = reader;
 

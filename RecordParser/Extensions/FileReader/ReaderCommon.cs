@@ -6,6 +6,8 @@ namespace RecordParser.Extensions.FileReader
 {
     internal static class ReaderCommon
     {
+        public static readonly int Length = (int)Math.Pow(2, 23);
+
         public static IEnumerable<T> GetRecordsParallel<T>(Func<ReadOnlyMemory<char>, int, T> reader, Func<IFL> getItems, bool hasHeader)
         {
             using var items = getItems();
