@@ -1,5 +1,5 @@
 [![Nuget](https://img.shields.io/nuget/v/recordparser)](https://www.nuget.org/packages/recordparser)
-![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/leandromoh/recordparser/test-dotnet.yml?branch=master&style=plastic)
+![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/leandromoh/recordparser/test-dotnet.yml?branch=master)
 ![GitHub](https://img.shields.io/github/license/leandromoh/recordparser)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/leandromoh/RecordParser)
 
