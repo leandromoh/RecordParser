@@ -29,7 +29,7 @@ namespace RecordParser.Extensions.FileReader
             this.separator = separator;
         }
 
-        public int FillBufferAsync()
+        public int FillBuffer()
         {
             var len = i - j;
             if (initial == false)
@@ -54,7 +54,7 @@ namespace RecordParser.Extensions.FileReader
             return totalRead;
         }
 
-        public IEnumerable<ReadOnlyMemory<char>> TryReadLine()
+        public IEnumerable<ReadOnlyMemory<char>> ReadLines()
         {
             int Peek() => i < bufferLength ? buffer[i] : -1;
 

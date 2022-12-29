@@ -5,7 +5,7 @@ namespace RecordParser.Extensions.FileReader
 {
     internal interface IFL : IDisposable
     {
-        int FillBufferAsync();
-        IEnumerable<ReadOnlyMemory<char>> TryReadLine();
+        int FillBuffer();
+        IEnumerable<ReadOnlyMemory<char>> ReadLines();
     }
 }

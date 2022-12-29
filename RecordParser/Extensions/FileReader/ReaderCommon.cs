@@ -12,19 +12,19 @@ namespace RecordParser.Extensions.FileReader
         {
             using var items = getItems();
 
-            if (items.FillBufferAsync() > 0 == false)
+            if (items.FillBuffer() > 0 == false)
             {
                 yield break;
             }
 
-            foreach (var x in items.TryReadLine().Skip(hasHeader ? 1 : 0).AsParallel().AsOrdered().Select(reader))
+            foreach (var x in items.ReadLines().Skip(hasHeader ? 1 : 0).AsParallel().AsOrdered().Select(reader))
             {
                 yield return x;
             }
 
-            while (items.FillBufferAsync() > 0)
+            while (items.FillBuffer() > 0)
             {
-                foreach (var x in items.TryReadLine().AsParallel().AsOrdered().Select(reader))
+                foreach (var x in items.ReadLines().AsParallel().AsOrdered().Select(reader))
                 {
                     yield return x;
                 }
@@ -35,21 +35,21 @@ namespace RecordParser.Extensions.FileReader
         {
             using var items = getItems();
 
-            if (items.FillBufferAsync() > 0 == false)
+            if (items.FillBuffer() > 0 == false)
             {
                 yield break;
             }
 
             var i = 0;
-            foreach (var x in items.TryReadLine().Skip(hasHeader ? 1 : 0))
+            foreach (var x in items.ReadLines().Skip(hasHeader ? 1 : 0))
             {
                 yield return reader(x, i++);
             }
 
-            while (items.FillBufferAsync() > 0)
+            while (items.FillBuffer() > 0)
             {
                 i = 0;
-                foreach (var x in items.TryReadLine())
+                foreach (var x in items.ReadLines())
                 {
                     yield return reader(x, i++);
                 }
