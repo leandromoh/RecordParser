@@ -12,7 +12,7 @@ namespace RecordParser.Extensions.FileReader
         {
             using var items = getItems();
 
-            if (items.FillBuffer() > 0 == false)
+            if (items.FillBuffer() <= 0)
             {
                 yield break;
             }
@@ -35,7 +35,7 @@ namespace RecordParser.Extensions.FileReader
         {
             using var items = getItems();
 
-            if (items.FillBuffer() > 0 == false)
+            if (items.FillBuffer() <= 0)
             {
                 yield break;
             }
