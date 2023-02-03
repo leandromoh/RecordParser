@@ -6,13 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace RecordParser.Test
 {
-    public class FileReaderTest
+    public class FileReaderTest : TestSetup
     {
         private static readonly IEnumerable<int> _repeats = new[] { 0, 1, 3, 10, 100, 1_000 };
 
@@ -213,6 +214,143 @@ namespace RecordParser.Test
             // Assert
 
             items.Should().BeEquivalentTo(expectedItems, cfg => cfg.WithStrictOrdering());
+        }
+
+        public static IEnumerable<object[]> Given_text_mapped_should_write_quoted_properly_theory_fixed_length()
+        {
+            foreach (var repeat in _repeats)
+            {
+                foreach (var parallel in new[] { true, false })
+                {
+                    foreach (var blankLineAtEnd in new[] { true, false })
+                    {
+                        var fileBuilder = new StringBuilder();
+
+                        fileBuilder.AppendLine($"0 51b3f287-ddba-402c-993c-d2df68d44163 {repeat.ToString().PadLeft(5, '0')}");
+
+                        for (int i = 0; i < repeat; i++)
+                        {
+                            fileBuilder.Append($"9 {i.ToString().PadLeft(5, '0')} foo bar baz 2020.05.23 0123.45");
+
+                            var lastIteration = i == repeat - 1;
+                            if (lastIteration is false)
+                                fileBuilder.AppendLine();
+                        }
+
+                        if (blankLineAtEnd)
+                            fileBuilder.AppendLine();
+
+                        var fileText = fileBuilder.ToString();
+
+                        // TODO: temp condition, currently GetRecords
+                        // does not skip empty lines(\r\n)
+                        fileText = fileText.Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine);
+                        if (string.IsNullOrWhiteSpace(fileText) == false)
+                            // --
+                            yield return new object[] { fileText, parallel, blankLineAtEnd, repeat };
+                    }
+                }
+            }
+        }
+
+        class HeaderFixedLength
+        {
+            public Guid Id;
+            public int Count;
+            public IEnumerable<RecordFixedLength> Items;
+        }
+
+        struct RecordFixedLength
+        {
+            public int Id;
+            public string Name;
+            public DateTime Birthday;
+            public decimal Money;
+        }
+
+        [Theory]
+        [MemberData(nameof(Given_text_mapped_should_write_quoted_properly_theory_fixed_length))]
+        public async Task Read_file_using_simple_fixed_length(string fileContent, bool parallelProcessing, bool blankLineAtEnd, int repeat)
+        {
+            // Arrange
+
+            using var fileStream = fileContent.ToStream();
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8);
+
+            var headerReader = new FixedLengthReaderSequentialBuilder<HeaderFixedLength>()
+                .Skip(2)
+                .Map(x => x.Id, length: 36)
+                .Skip(1)
+                .Map(x => x.Count, 5)
+                .Build();
+
+            var recordReader = new FixedLengthReaderSequentialBuilder<RecordFixedLength>()
+                .Skip(2)
+                .Map(x => x.Id, length: 5)
+                .Skip(1)
+                .Map(x => x.Name, length: 11)
+                .Skip(1)
+                .Map(x => x.Birthday, 10)
+                .Skip(1)
+                .Map(x => x.Money, 7)
+                .Build();
+
+            var expectedItems = new[]
+                {
+                    new RecordFixedLength { Id = 0, Name = "foo bar baz", Birthday = new DateTime(2020, 05, 23), Money = 123.45M }
+                }
+                .Repeat(repeat)
+                .Select((x, i) =>
+                {
+                    return x with { Id = i };
+                })
+                .ToArray();
+
+            var expected = new HeaderFixedLength
+            {
+                Id = new Guid("51b3f287-ddba-402c-993c-d2df68d44163"),
+                Count = repeat,
+                Items = expectedItems
+            };
+
+            var readOptions = new FixedLengthReaderOptions
+            {
+                parallelProcessing = parallelProcessing,
+                parser = Parse
+            };
+
+            // Act
+
+            var records = streamReader.GetRecords(readOptions);
+
+            var linesByType = records.ToLookup(x => x.GetType());
+            var result = linesByType[typeof(HeaderFixedLength)].Cast<HeaderFixedLength>().Single();
+            var items = linesByType[typeof(RecordFixedLength)].Cast<RecordFixedLength>();
+            result.Items = items;
+
+            // Assert
+
+            result.Count.Should().Be(repeat);
+            result.Items.Count().Should().Be(repeat);
+            result.Should().BeEquivalentTo(expected);
+            result.Items.Should().BeEquivalentTo(expected.Items, cfg => cfg.WithStrictOrdering());
+
+            object Parse(ReadOnlyMemory<char> line, int index)
+            {
+                var lineType = line.Span[0];
+
+                switch(lineType) 
+                {
+                    case '0':
+                        return headerReader.Parse(line.Span);
+
+                    case '9':
+                        return recordReader.Parse(line.Span);
+
+                    default:
+                        throw new InvalidOperationException($"lineType '{lineType}' is not mapped");
+                }
+            }
         }
     }
 }
