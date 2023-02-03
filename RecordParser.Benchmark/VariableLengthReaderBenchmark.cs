@@ -119,7 +119,7 @@ namespace RecordParser.Benchmark
                     name = name.ToString(),
                     age = int.Parse(age),
                     birthday = DateTime.Parse(birthday, DateTimeFormatInfo.InvariantInfo),
-                    gender = Enum.Parse<Gender>(gender.ToString()),
+                    gender = Enum.Parse<Gender>(gender),
                     email = email.ToString(),
                     children = bool.Parse(children)
                 };
