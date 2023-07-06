@@ -1,4 +1,5 @@
-﻿using RecordParser.Parsers;
+﻿using RecordParser.Extensions.FileReader.RowReaders;
+using RecordParser.Parsers;
 using System;
 using System.Collections.Generic;
 using System.IO;
