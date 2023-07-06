@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RecordParser.Extensions.FileReader.RowReaders;
 
 namespace RecordParser.Extensions.FileReader
 {

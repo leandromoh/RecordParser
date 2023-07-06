@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace RecordParser.Extensions.FileReader
+namespace RecordParser.Extensions.FileReader.RowReaders
 {
     internal interface IFL : IDisposable
     {
