@@ -9,24 +9,26 @@ namespace RecordParser.Extensions.FileReader
 {
     public class VariableLengthReaderOptions
     {
-        public bool hasHeader;
-        public bool parallelProcessing;
-        public bool containsQuotedFields;
+        public bool HasHeader { get; set; }
+        public bool ParallelProcessing { get; set; }
+        public bool ContainsQuotedFields { get; set; }
     }
 
     public static class VariableLengthReaderExtensions
     {
         public static IEnumerable<T> GetRecords<T>(this IVariableLengthReader<T> reader, TextReader stream, VariableLengthReaderOptions options)
         {
-            Func<IFL> func = options.containsQuotedFields
-                            ? () => new RowByQuote(stream, Length, reader.separator)
+            Func<IFL> func = options.ContainsQuotedFields
+                            ? () => new RowByQuote(stream, Length, reader.Separator)
                             : () => new RowByLine(stream, Length);
 
             Func<ReadOnlyMemory<char>, int, T> parser = (memory, i) => reader.Parse(memory.Span);
 
-            return options.parallelProcessing
-                    ? GetRecordsParallel(parser, func, options.hasHeader)
-                    : GetRecordsSequential(parser, func, options.hasHeader);
+            ProcessFunc<T> process = options.ParallelProcessing
+                ? GetRecordsParallel
+                : GetRecordsSequential;
+
+            return process(parser, func, options.HasHeader);
         }
     }
 }

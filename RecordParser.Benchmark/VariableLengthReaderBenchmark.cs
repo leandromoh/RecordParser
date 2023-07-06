@@ -100,9 +100,9 @@ namespace RecordParser.Benchmark
 
             var readOptions = new VariableLengthReaderOptions
             {
-                hasHeader = false,
-                parallelProcessing = parallel,
-                containsQuotedFields = quoted,
+                HasHeader = false,
+                ParallelProcessing = parallel,
+                ContainsQuotedFields = quoted,
             };
 
             var items = parser.GetRecords(streamReader, readOptions);
@@ -126,12 +126,12 @@ namespace RecordParser.Benchmark
 
             var readOptions = new VariableLengthReaderRawOptions
             {
-                hasHeader = false,
-                parallelProcessing = parallel,
-                containsQuotedFields = quoted,
+                HasHeader = false,
+                ParallelProcessing = parallel,
+                ContainsQuotedFields = quoted,
 
-                columnCount = 8,
-                separator = ",",
+                ColumnCount = 8,
+                Separator = ",",
                 StringFactory = () => new InternPool().Intern
             };
 

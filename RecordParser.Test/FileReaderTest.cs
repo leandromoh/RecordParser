@@ -107,9 +107,9 @@ namespace RecordParser.Test
 
             var readOptions = new VariableLengthReaderOptions
             {
-                hasHeader = hasHeader,
-                parallelProcessing = parallelProcessing,
-                containsQuotedFields = true,
+                HasHeader = hasHeader,
+                ParallelProcessing = parallelProcessing,
+                ContainsQuotedFields = true,
             };
 
             // Act
@@ -202,9 +202,9 @@ namespace RecordParser.Test
 
             var readOptions = new VariableLengthReaderOptions
             {
-                hasHeader = hasHeader,
-                parallelProcessing = parallelProcessing,
-                containsQuotedFields = containgQuote,
+                HasHeader = hasHeader,
+                ParallelProcessing = parallelProcessing,
+                ContainsQuotedFields = containgQuote,
             };
 
             // Act
@@ -315,8 +315,8 @@ namespace RecordParser.Test
 
             var readOptions = new FixedLengthReaderOptions<object>
             {
-                parallelProcessing = parallelProcessing,
-                parser = Parse
+                ParallelProcessing = parallelProcessing,
+                Parser = Parse
             };
 
             // Act

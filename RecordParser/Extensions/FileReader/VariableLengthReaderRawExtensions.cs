@@ -15,13 +15,13 @@ namespace RecordParser.Extensions.FileReader
 
     public class VariableLengthReaderRawOptions
     {
-        public bool hasHeader;
-        public bool parallelProcessing;
-        public bool containsQuotedFields;
-        public bool trim;
+        public bool HasHeader;
+        public bool ParallelProcessing;
+        public bool ContainsQuotedFields;
+        public bool Trim;
 
-        public int columnCount;
-        public string separator;
+        public int ColumnCount;
+        public string Separator;
         public Func<StringFactory> StringFactory;
     }
 
@@ -64,27 +64,27 @@ namespace RecordParser.Extensions.FileReader
 
         public static IEnumerable<T> GetRecordsRaw<T>(this TextReader stream, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> reader)
         {
-            var get = BuildRaw(options.columnCount, options.StringFactory != null, options.trim);
+            var get = BuildRaw(options.ColumnCount, options.StringFactory != null, options.Trim);
 
-            Func<IFL> func = options.containsQuotedFields
-                           ? () => new RowByQuote(stream, Length, options.separator)
+            Func<IFL> func = options.ContainsQuotedFields
+                           ? () => new RowByQuote(stream, Length, options.Separator)
                            : () => new RowByLine(stream, Length);
 
-            return options.parallelProcessing
+            return options.ParallelProcessing
                     ? GetParallel()
                     : GetSequential();
 
             IEnumerable<T> GetSequential()
             {
-                var buffer = new string[options.columnCount];
+                var buffer = new string[options.ColumnCount];
                 var stringCache = options.StringFactory?.Invoke();
                 var getField = new Func<int, string>(i => buffer[i]);
 
-                return GetRecordsSequential(Parser, func, options.hasHeader);
+                return GetRecordsSequential(Parser, func, options.HasHeader);
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    var finder = new TextFindHelper(memory.Span, options.separator, _quote);
+                    var finder = new TextFindHelper(memory.Span, options.Separator, _quote);
 
                     try
                     {
@@ -106,7 +106,7 @@ namespace RecordParser.Extensions.FileReader
                         .Range(0, maxParallelism)
                         .Select(_ =>
                         {
-                            var buf = new string[options.columnCount];
+                            var buf = new string[options.ColumnCount];
 
                             return new
                             {
@@ -118,11 +118,11 @@ namespace RecordParser.Extensions.FileReader
                         })
                         .ToArray();
 
-                return GetRecordsParallel(Parser, func, options.hasHeader);
+                return GetRecordsParallel(Parser, func, options.HasHeader);
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    var finder = new TextFindHelper(memory.Span, options.separator, _quote);
+                    var finder = new TextFindHelper(memory.Span, options.Separator, _quote);
 
                     try
                     {

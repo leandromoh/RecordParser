@@ -9,7 +9,7 @@ namespace RecordParser.Parsers
         T Parse(ReadOnlySpan<char> line);
         bool TryParse(ReadOnlySpan<char> line, out T result);
 
-        internal string separator { get; }
+        internal string Separator { get; }
     }
 
     internal class VariableLengthReader<T> : IVariableLengthReader<T>
@@ -18,7 +18,7 @@ namespace RecordParser.Parsers
         private readonly string delimiter;
         private readonly (char ch, string str) quote;
 
-        string IVariableLengthReader<T>.separator => delimiter;
+        string IVariableLengthReader<T>.Separator => delimiter;
 
         internal VariableLengthReader(FuncSpanArrayT<T> parser, string separator, char quote)
         {
