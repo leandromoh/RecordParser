@@ -4,9 +4,21 @@ using System.Linq;
 
 namespace RecordParser.Extensions.FileReader
 {
+    internal delegate IEnumerable<T> ProcessFunc<T>(Func<ReadOnlyMemory<char>, int, T> reader, Func<IFL> getItems, bool hasHeader);
+
     internal static class ReaderCommon
     {
         public static readonly int Length = (int)Math.Pow(2, 23);
+
+        public static ProcessFunc<T> GetProcessFunc<T>(bool parallelProcessing) =>
+            parallelProcessing
+            ? GetRecordsParallel
+            : GetRecordsSequential;
+
+        private static IEnumerable<T> Skip<T>(this IEnumerable<T> source, bool hasHeader) =>
+            hasHeader
+            ? source.Skip(1)
+            : source;
 
         public static IEnumerable<T> GetRecordsParallel<T>(Func<ReadOnlyMemory<char>, int, T> reader, Func<IFL> getItems, bool hasHeader)
         {
@@ -17,7 +29,7 @@ namespace RecordParser.Extensions.FileReader
                 yield break;
             }
 
-            foreach (var x in items.ReadLines().Skip(hasHeader ? 1 : 0).AsParallel().AsOrdered().Select(reader))
+            foreach (var x in items.ReadLines().Skip(hasHeader).AsParallel().AsOrdered().Select(reader))
             {
                 yield return x;
             }
@@ -41,7 +53,7 @@ namespace RecordParser.Extensions.FileReader
             }
 
             var i = 0;
-            foreach (var x in items.ReadLines().Skip(hasHeader ? 1 : 0))
+            foreach (var x in items.ReadLines().Skip(hasHeader))
             {
                 yield return reader(x, i++);
             }

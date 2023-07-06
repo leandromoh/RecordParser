@@ -313,7 +313,7 @@ namespace RecordParser.Test
                 Items = expectedItems
             };
 
-            var readOptions = new FixedLengthReaderOptions
+            var readOptions = new FixedLengthReaderOptions<object>
             {
                 parallelProcessing = parallelProcessing,
                 parser = Parse
@@ -351,6 +351,38 @@ namespace RecordParser.Test
                         throw new InvalidOperationException($"lineType '{lineType}' is not mapped");
                 }
             }
+        }
+
+        [Theory]
+        [MemberData(nameof(Given_text_mapped_should_write_quoted_properly_theory_fixed_length))]
+        public async Task Read_file_using_simple_fixed_length_plain_text(string fileContent, bool parallelProcessing, bool blankLineAtEnd, int repeat)
+        {
+            // Arrange
+
+            using var fileStream = fileContent.ToStream();
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8);
+
+            var expected = new List<string>();
+
+            while (streamReader.EndOfStream is false)
+            {
+                expected.Add(streamReader.ReadLine());
+            }
+
+            fileStream.Position = 0;
+
+            // Act
+
+            var result = new List<string>();
+
+            foreach (var item in streamReader.GetRecords())
+            {
+                result.Add(item.Span.TrimEnd().ToString());
+            }
+
+            // Assert
+
+            result.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
         }
     }
 }

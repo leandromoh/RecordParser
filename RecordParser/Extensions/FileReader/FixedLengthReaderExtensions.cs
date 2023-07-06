@@ -5,21 +5,20 @@ using static RecordParser.Extensions.FileReader.ReaderCommon;
 
 namespace RecordParser.Extensions.FileReader
 {
-    public class FixedLengthReaderOptions
+    public class FixedLengthReaderOptions<T>
     {
         public bool parallelProcessing;
-        public Func<ReadOnlyMemory<char>, int, object> parser;
+        public Func<ReadOnlyMemory<char>, int, T> parser;
     }
 
     public static class FixedLengthReaderExtensions
     {
-        public static IEnumerable<object> GetRecords(this TextReader stream, FixedLengthReaderOptions options)
+        public static IEnumerable<T> GetRecords<T>(this TextReader stream, FixedLengthReaderOptions<T> options)
         {
             Func<IFL> func = () => new RowByLine(stream, Length);
+            ProcessFunc<T> process = GetProcessFunc<T>(options.parallelProcessing);
 
-            return options.parallelProcessing
-                    ? GetRecordsParallel(options.parser, func, hasHeader: false)
-                    : GetRecordsSequential(options.parser, func, hasHeader: false);
+            return process(options.parser, func, hasHeader: false);
         }
 
         public static IEnumerable<ReadOnlyMemory<char>> GetRecords(this TextReader stream)
