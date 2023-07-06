@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RecordParser.Extensions.FileReader.RowReaders;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using static RecordParser.Extensions.FileReader.ReaderCommon;
@@ -16,7 +17,9 @@ namespace RecordParser.Extensions.FileReader
         public static IEnumerable<T> GetRecords<T>(this TextReader stream, FixedLengthReaderOptions<T> options)
         {
             Func<IFL> func = () => new RowByLine(stream, Length);
-            ProcessFunc<T> process = GetProcessFunc<T>(options.parallelProcessing);
+            ProcessFunc<T> process = options.parallelProcessing
+                ? GetRecordsParallel
+                : GetRecordsSequential;
 
             return process(options.parser, func, hasHeader: false);
         }

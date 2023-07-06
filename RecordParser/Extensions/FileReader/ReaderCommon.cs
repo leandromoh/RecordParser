@@ -10,11 +10,6 @@ namespace RecordParser.Extensions.FileReader
     {
         public static readonly int Length = (int)Math.Pow(2, 23);
 
-        public static ProcessFunc<T> GetProcessFunc<T>(bool parallelProcessing) =>
-            parallelProcessing
-            ? GetRecordsParallel
-            : GetRecordsSequential;
-
         private static IEnumerable<T> Skip<T>(this IEnumerable<T> source, bool hasHeader) =>
             hasHeader
             ? source.Skip(1)
