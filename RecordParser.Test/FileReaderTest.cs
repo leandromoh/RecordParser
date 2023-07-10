@@ -15,7 +15,7 @@ namespace RecordParser.Test
 {
     public class FileReaderTest : TestSetup
     {
-        private static readonly IEnumerable<int> _repeats = new[] { 0, 1, 3, 10, 100, 1_000 };
+        private static readonly IEnumerable<int> _repeats = new[] { 0, 1, 3, 1_000, 10_000 };
 
         public class Quoted
         {
@@ -28,7 +28,7 @@ namespace RecordParser.Test
 
         public static string GetFilePath(string fileName) => Path.Combine(Directory.GetCurrentDirectory(), fileName);
 
-        public static IEnumerable<object[]> Given_text_mapped_should_write_quoted_properly_theory()
+        public static IEnumerable<object[]> Given_quoted_csv_file_should_read_quoted_properly_theory()
         {
             var fileNames = new[]
             {
@@ -80,8 +80,8 @@ namespace RecordParser.Test
         }
 
         [Theory]
-        [MemberData(nameof(Given_text_mapped_should_write_quoted_properly_theory))]
-        public async Task Read_file_using_(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, int repeat)
+        [MemberData(nameof(Given_quoted_csv_file_should_read_quoted_properly_theory))]
+        public void Read_quoted_csv_file(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, int repeat)
         {
             // Arrange
 
@@ -121,7 +121,7 @@ namespace RecordParser.Test
             items.Should().BeEquivalentTo(expectedItems, cfg => cfg.WithStrictOrdering());
         }
 
-        public static IEnumerable<object[]> Given_text_mapped_should_write_quoted_properly_theory_simple_csv()
+        public static IEnumerable<object[]> Given_not_quoted_csv_file_should_read_quoted_properly_theory()
         {
             var fileNames = new[]
             {
@@ -175,8 +175,8 @@ namespace RecordParser.Test
         }
 
         [Theory]
-        [MemberData(nameof(Given_text_mapped_should_write_quoted_properly_theory_simple_csv))]
-        public async Task Read_file_using_simple_csv(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, bool containgQuote, int repeat)
+        [MemberData(nameof(Given_not_quoted_csv_file_should_read_quoted_properly_theory))]
+        public void Read_not_quoted_csv_file(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, bool containgQuote, int repeat)
         {
             // Arrange
 
@@ -216,7 +216,7 @@ namespace RecordParser.Test
             items.Should().BeEquivalentTo(expectedItems, cfg => cfg.WithStrictOrdering());
         }
 
-        public static IEnumerable<object[]> Given_text_mapped_should_write_quoted_properly_theory_fixed_length()
+        public static IEnumerable<object[]> Given_fixed_length_file_should_read_quoted_properly_theory()
         {
             foreach (var repeat in _repeats)
             {
@@ -269,8 +269,8 @@ namespace RecordParser.Test
         }
 
         [Theory]
-        [MemberData(nameof(Given_text_mapped_should_write_quoted_properly_theory_fixed_length))]
-        public async Task Read_file_using_simple_fixed_length(string fileContent, bool parallelProcessing, bool blankLineAtEnd, int repeat)
+        [MemberData(nameof(Given_fixed_length_file_should_read_quoted_properly_theory))]
+        public void Read_fixed_length_file(string fileContent, bool parallelProcessing, bool blankLineAtEnd, int repeat)
         {
             // Arrange
 
@@ -354,8 +354,8 @@ namespace RecordParser.Test
         }
 
         [Theory]
-        [MemberData(nameof(Given_text_mapped_should_write_quoted_properly_theory_fixed_length))]
-        public async Task Read_file_using_simple_fixed_length_plain_text(string fileContent, bool parallelProcessing, bool blankLineAtEnd, int repeat)
+        [MemberData(nameof(Given_fixed_length_file_should_read_quoted_properly_theory))]
+        public void Read_plain_text_of_fixed_length_file(string fileContent, bool parallelProcessing, bool blankLineAtEnd, int repeat)
         {
             // Arrange
 

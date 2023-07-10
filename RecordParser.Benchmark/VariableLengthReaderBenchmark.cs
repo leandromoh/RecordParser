@@ -24,7 +24,7 @@ namespace RecordParser.Benchmark
     [SimpleJob(RuntimeMoniker.Net70)]
     public class VariableLengthReaderBenchmark
     {
-        [Params(1_000_000)]
+        [Params(500_000)]
         public int LimitRecord { get; set; }
 
         public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
@@ -54,6 +54,9 @@ namespace RecordParser.Benchmark
                     children = bool.Parse(coluns[7])
                 };
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
         [Benchmark]
@@ -79,8 +82,6 @@ namespace RecordParser.Benchmark
         [Arguments(false, false)]
         public void Read_VariableLength_RecordParser_Parallel(bool parallel, bool quoted)
         {
-            var cache = new InternPool();
-
             var builder = new VariableLengthReaderBuilder<Person>()
                 .Map(x => x.id, 0)
                 .Map(x => x.name, 1)
@@ -91,7 +92,7 @@ namespace RecordParser.Benchmark
                 .Map(x => x.children, 7);
 
             if (parallel == false)
-                builder.DefaultTypeConvert(cache.Intern);
+                builder.DefaultTypeConvert(new InternPool().Intern);
 
             var parser = builder.Build(",", CultureInfo.InvariantCulture);
 
@@ -112,6 +113,9 @@ namespace RecordParser.Benchmark
             {
                 if (i++ == LimitRecord) return;
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
         [Benchmark]
@@ -142,6 +146,9 @@ namespace RecordParser.Benchmark
             {
                 if (i++ == LimitRecord) return;
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
 
             Person PersonFactory(Func<int, string> getColumnValue)
             {
@@ -182,6 +189,9 @@ namespace RecordParser.Benchmark
             {
                 if (i++ == LimitRecord) return;
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
         [Benchmark]
@@ -231,8 +241,14 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public async Task Read_VariableLength_CSVHelper()
         {
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                CacheFields = true,
+                HasHeaderRecord = false
+            };
+
             using var reader = new StreamReader(PathSampleDataCSV);
-            using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
+            using var csvReader = new CsvReader(reader, config);
             csvReader.Context.RegisterClassMap<PersonMap>();
 
             var i = 0;
@@ -242,6 +258,9 @@ namespace RecordParser.Benchmark
 
                 var record = csvReader.GetRecord<Person>();
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
         class PersonTinyCsvMapping : CsvMapping<PersonTinyCsvParser>
@@ -261,7 +280,7 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public void Read_VariableLength_TinyCsvParser()
         {
-            var csvParserOptions = new CsvParserOptions(true, ',');
+            var csvParserOptions = new CsvParserOptions(false, ',');
             var csvParser = new CsvParser<PersonTinyCsvParser>(csvParserOptions, new PersonTinyCsvMapping());
 
             var records = csvParser.ReadFromFile(PathSampleDataCSV, Encoding.UTF8);
@@ -273,6 +292,9 @@ namespace RecordParser.Benchmark
 
                 var record = item.Result;
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
         private sealed class AllDoneException : Exception { }
@@ -294,6 +316,9 @@ namespace RecordParser.Benchmark
             catch (AllDoneException)
             {
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
 
             void OnPersonVisited(in Person person)
             {
@@ -317,6 +342,9 @@ namespace RecordParser.Benchmark
             catch (AllDoneException)
             {
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
 
             void OnPersonVisited(in Person person)
             {
