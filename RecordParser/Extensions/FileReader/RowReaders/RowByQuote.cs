@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RecordParser.Engines;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -18,7 +19,7 @@ namespace RecordParser.Extensions.FileReader.RowReaders
             int Peek() => i < bufferLength ? buffer[i] : -1;
 
             var hasBufferToConsume = false;
-            var quote = '"';
+            var quote = QuoteHelper.Quote.Char;
 
         reloop:
 

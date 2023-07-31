@@ -1,4 +1,5 @@
-﻿using RecordParser.Engines.Reader;
+﻿using RecordParser.Engines;
+using RecordParser.Engines.Reader;
 using RecordParser.Extensions.FileReader.RowReaders;
 using System;
 using System.Buffers;
@@ -27,8 +28,6 @@ namespace RecordParser.Extensions.FileReader
 
     public static class VariableLengthReaderRawExtensions
     {
-        private static readonly (char, string) _quote = ('"', "\"");
-
         private static Get BuildRaw(int collumnCount, bool hasTransform, bool trim)
         {
             var configParameter = Expression.Parameter(typeof(TextFindHelper).MakeByRefType(), "config");
@@ -84,7 +83,7 @@ namespace RecordParser.Extensions.FileReader
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    var finder = new TextFindHelper(memory.Span, options.Separator, _quote);
+                    var finder = new TextFindHelper(memory.Span, options.Separator, QuoteHelper.Quote);
 
                     try
                     {
@@ -122,7 +121,7 @@ namespace RecordParser.Extensions.FileReader
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    var finder = new TextFindHelper(memory.Span, options.Separator, _quote);
+                    var finder = new TextFindHelper(memory.Span, options.Separator, QuoteHelper.Quote);
 
                     try
                     {

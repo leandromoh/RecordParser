@@ -1,4 +1,5 @@
-﻿using RecordParser.Engines.Writer;
+﻿using RecordParser.Engines;
+using RecordParser.Engines.Writer;
 using RecordParser.Parsers;
 using System;
 using System.Collections.Generic;
@@ -142,9 +143,9 @@ namespace RecordParser.Builders.Writer
         /// <returns>The writer object.</returns>
         public IVariableLengthWriter<T> Build(string separator, CultureInfo cultureInfo = null)
         {
-            // TODO adicionar validacao igual no reader que separator nao pode contaer quote
+            QuoteHelper.ThrowIfSeparatorContainsQuote(separator);
 
-            var quote = '"';
+            var quote = QuoteHelper.Quote.Char;
 
             var maps = MappingWriteConfiguration.Merge(list.Select(x => x.Value), dic);
 
