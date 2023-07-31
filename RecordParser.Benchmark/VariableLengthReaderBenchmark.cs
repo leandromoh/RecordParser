@@ -27,13 +27,15 @@ namespace RecordParser.Benchmark
         [Params(500_000)]
         public int LimitRecord { get; set; }
 
+        public const int BufferSize = 4_096; // 2^12
+
         public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
 
         [Benchmark]
         public async Task Read_VariableLength_ManualString()
         {
             using var fileStream = File.OpenRead(PathSampleDataCSV);
-            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
 
             string line;
             var i = 0;
@@ -97,7 +99,7 @@ namespace RecordParser.Benchmark
             var parser = builder.Build(",", CultureInfo.InvariantCulture);
 
             using var fileStream = File.OpenRead(PathSampleDataCSV);
-            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
 
             var readOptions = new VariableLengthReaderOptions
             {
@@ -126,7 +128,7 @@ namespace RecordParser.Benchmark
         public void Read_VariableLength_RecordParser_Raw(bool parallel, bool quoted)
         {
             using var fileStream = File.OpenRead(PathSampleDataCSV);
-            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
 
             var readOptions = new VariableLengthReaderRawOptions
             {
@@ -182,7 +184,7 @@ namespace RecordParser.Benchmark
             var options = new DelimitedOptions { FormatProvider = CultureInfo.InvariantCulture };
 
             using var fileStream = File.OpenRead(PathSampleDataCSV);
-            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
 
             var i = 0;
             foreach (var person in mapper.Read(streamReader, options))
@@ -244,7 +246,8 @@ namespace RecordParser.Benchmark
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 CacheFields = true,
-                HasHeaderRecord = false
+                HasHeaderRecord = false, 
+                BufferSize = BufferSize
             };
 
             using var reader = new StreamReader(PathSampleDataCSV);
@@ -280,7 +283,7 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public void Read_VariableLength_TinyCsvParser()
         {
-            var csvParserOptions = new CsvParserOptions(false, ',');
+            var csvParserOptions = new CsvParserOptions(skipHeader: false, ',');
             var csvParser = new CsvParser<PersonTinyCsvParser>(csvParserOptions, new PersonTinyCsvMapping());
 
             var records = csvParser.ReadFromFile(PathSampleDataCSV, Encoding.UTF8);
@@ -302,7 +305,7 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public async Task Read_VariableLength_Cursively_Async()
         {
-            using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan | FileOptions.Asynchronous);
+            using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.SequentialScan | FileOptions.Asynchronous);
 
             int i = 0;
             CursivelyPersonVisitor visitor = new(OnPersonVisited);
@@ -331,12 +334,14 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public void Read_VariableLength_Cursively_Sync()
         {
+            using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.SequentialScan | FileOptions.Asynchronous);
+
             int i = 0;
             CursivelyPersonVisitor visitor = new(OnPersonVisited);
             try
             {
                 CsvSyncInput
-                    .ForMemoryMappedFile(PathSampleDataCSV)
+                    .ForStream(fileStream)
                     .Process(visitor);
             }
             catch (AllDoneException)
