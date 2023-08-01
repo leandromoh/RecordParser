@@ -11,8 +11,8 @@ using static RecordParser.Extensions.FileReader.ReaderCommon;
 
 namespace RecordParser.Extensions.FileReader
 {
-    public delegate string StringFactory(ReadOnlySpan<char> text);
-    internal delegate void Get(ref TextFindHelper finder, string[] inst, StringFactory cache);
+    public delegate string StringPool(ReadOnlySpan<char> text);
+    internal delegate void Get(ref TextFindHelper finder, string[] inst, StringPool cache);
 
     public class VariableLengthReaderRawOptions
     {
@@ -23,7 +23,7 @@ namespace RecordParser.Extensions.FileReader
 
         public int ColumnCount;
         public string Separator;
-        public Func<StringFactory> StringFactory;
+        public Func<StringPool> StringPoolFactory;
     }
 
     public static class VariableLengthReaderRawExtensions
@@ -32,7 +32,7 @@ namespace RecordParser.Extensions.FileReader
         {
             var configParameter = Expression.Parameter(typeof(TextFindHelper).MakeByRefType(), "config");
             var instanceVariable = Expression.Parameter(typeof(string[]), "inst");
-            var cacheParameter = Expression.Parameter(typeof(StringFactory), "cache");
+            var cacheParameter = Expression.Parameter(typeof(StringPool), "cache");
 
             var commands = new Expression[collumnCount];
             for (int i = 0; i < collumnCount; i++)
@@ -63,7 +63,7 @@ namespace RecordParser.Extensions.FileReader
 
         public static IEnumerable<T> GetRecordsRaw<T>(this TextReader stream, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> reader)
         {
-            var get = BuildRaw(options.ColumnCount, options.StringFactory != null, options.Trim);
+            var get = BuildRaw(options.ColumnCount, options.StringPoolFactory != null, options.Trim);
 
             Func<IFL> func = options.ContainsQuotedFields
                            ? () => new RowByQuote(stream, Length, options.Separator)
@@ -76,7 +76,7 @@ namespace RecordParser.Extensions.FileReader
             IEnumerable<T> GetSequential()
             {
                 var buffer = new string[options.ColumnCount];
-                var stringCache = options.StringFactory?.Invoke();
+                var stringCache = options.StringPoolFactory?.Invoke();
                 var getField = new Func<int, string>(i => buffer[i]);
 
                 return GetRecordsSequential(Parser, func, options.HasHeader);
@@ -111,7 +111,7 @@ namespace RecordParser.Extensions.FileReader
                             {
                                 buffer = buf,
                                 lockObj = new object(),
-                                stringCache = options.StringFactory?.Invoke(),
+                                stringCache = options.StringPoolFactory?.Invoke(),
                                 getField = new Func<int, string>(i => buf[i])
                             };
                         })

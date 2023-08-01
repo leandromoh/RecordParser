@@ -138,7 +138,7 @@ namespace RecordParser.Benchmark
 
                 ColumnCount = 8,
                 Separator = ",",
-                StringFactory = () => new InternPool().Intern
+                StringPoolFactory = () => new InternPool().Intern
             };
 
             var items = streamReader.GetRecordsRaw(readOptions, PersonFactory);
