@@ -14,6 +14,7 @@ namespace RecordParser.Extensions.FileReader.RowReaders
         {
             this.separator = separator;
         }
+
         public override IEnumerable<ReadOnlyMemory<char>> ReadLines()
         {
             int Peek() => i < bufferLength ? buffer[i] : -1;
@@ -96,12 +97,12 @@ namespace RecordParser.Extensions.FileReader.RowReaders
             if (hasBufferToConsume == false)
             {
                 if (yieldLast)
-                    yield return buffer.AsMemory(j, i - j);
+                    yield return buffer.AsMemory(j, i - j).TrimEnd();
 
                 yield break;
             }
 
-            yield return buffer.AsMemory(j, i - j);
+            yield return buffer.AsMemory(j, i - j).TrimEnd();
             goto reloop;
         }
     }

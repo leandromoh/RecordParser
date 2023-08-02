@@ -8,7 +8,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace RecordParser.Test
@@ -377,7 +376,7 @@ namespace RecordParser.Test
 
             foreach (var item in streamReader.GetRecords())
             {
-                result.Add(item.Span.TrimEnd().ToString());
+                result.Add(item.Span.ToString());
             }
 
             // Assert

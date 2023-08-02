@@ -49,12 +49,12 @@ namespace RecordParser.Extensions.FileReader.RowReaders
             if (hasBufferToConsume == false)
             {
                 if (yieldLast)
-                    yield return buffer.AsMemory(j, i - j);
+                    yield return buffer.AsMemory(j, i - j).TrimEnd();
 
                 yield break;
             }
 
-            yield return buffer.AsMemory(j, i - j);
+            yield return buffer.AsMemory(j, i - j).TrimEnd();
             goto reloop;
         }
     }
