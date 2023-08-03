@@ -1,4 +1,5 @@
-﻿using RecordParser.Engines.Reader;
+﻿using RecordParser.Engines;
+using RecordParser.Engines.Reader;
 using RecordParser.Parsers;
 using RecordParser.Visitors;
 using System;
@@ -95,10 +96,9 @@ namespace RecordParser.Builders.Reader
         /// <returns>The reader object.</returns>
         public IVariableLengthReader<T> Build(string separator, CultureInfo cultureInfo = null, Func<T> factory = null)
         {
-            const char quote = '"';
+            QuoteHelper.ThrowIfSeparatorContainsQuote(separator);
 
-            if (separator.Contains(quote))
-                throw new ArgumentException("Separator must not contain quote char", nameof(separator));
+            var quote = QuoteHelper.Quote.Char;
 
             var map = MappingReadConfiguration.Merge(list.Select(x => x.Value), dic);
             var func = ReaderEngine.RecordParserSpanCSV(map, factory);

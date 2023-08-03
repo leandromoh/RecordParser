@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using Ben.Collections.Specialized;
+using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -6,6 +7,7 @@ using Cursively;
 using FlatFiles;
 using FlatFiles.TypeMapping;
 using RecordParser.Builders.Reader;
+using RecordParser.Extensions.FileReader;
 using System;
 using System.Globalization;
 using System.IO;
@@ -25,13 +27,15 @@ namespace RecordParser.Benchmark
         [Params(500_000)]
         public int LimitRecord { get; set; }
 
+        public const int BufferSize = 4_096; // 2^12
+
         public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
 
         [Benchmark]
         public async Task Read_VariableLength_ManualString()
         {
             using var fileStream = File.OpenRead(PathSampleDataCSV);
-            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
 
             string line;
             var i = 0;
@@ -52,6 +56,9 @@ namespace RecordParser.Benchmark
                     children = bool.Parse(coluns[7])
                 };
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
         [Benchmark]
@@ -71,6 +78,96 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
+        [Arguments(true, true)]
+        [Arguments(true, false)]
+        [Arguments(false, true)]
+        [Arguments(false, false)]
+        public void Read_VariableLength_RecordParser_Parallel(bool parallel, bool quoted)
+        {
+            var builder = new VariableLengthReaderBuilder<Person>()
+                .Map(x => x.id, 0)
+                .Map(x => x.name, 1)
+                .Map(x => x.age, 2)
+                .Map(x => x.birthday, 3)
+                .Map(x => x.gender, 4)
+                .Map(x => x.email, 5)
+                .Map(x => x.children, 7);
+
+            if (parallel == false)
+                builder.DefaultTypeConvert(new InternPool().Intern);
+
+            var parser = builder.Build(",", CultureInfo.InvariantCulture);
+
+            using var fileStream = File.OpenRead(PathSampleDataCSV);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                HasHeader = false,
+                ParallelProcessing = parallel,
+                ContainsQuotedFields = quoted,
+            };
+
+            var items = parser.GetRecords(streamReader, readOptions);
+
+            var i = 0;
+            foreach (var person in items)
+            {
+                if (i++ == LimitRecord) return;
+            }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
+        }
+
+        [Benchmark]
+        [Arguments(true, true)]
+        [Arguments(true, false)]
+        [Arguments(false, true)]
+        [Arguments(false, false)]
+        public void Read_VariableLength_RecordParser_Raw(bool parallel, bool quoted)
+        {
+            using var fileStream = File.OpenRead(PathSampleDataCSV);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
+
+            var readOptions = new VariableLengthReaderRawOptions
+            {
+                HasHeader = false,
+                ParallelProcessing = parallel,
+                ContainsQuotedFields = quoted,
+
+                ColumnCount = 8,
+                Separator = ",",
+                StringPoolFactory = () => new InternPool().Intern
+            };
+
+            var items = streamReader.GetRecordsRaw(readOptions, PersonFactory);
+
+            var i = 0;
+            foreach (var person in items)
+            {
+                if (i++ == LimitRecord) return;
+            }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
+
+            Person PersonFactory(Func<int, string> getColumnValue)
+            {
+                return new Person()
+                {
+                    id = Guid.Parse(getColumnValue(0)),
+                    name = getColumnValue(1).Trim(),
+                    age = int.Parse(getColumnValue(2)),
+                    birthday = DateTime.Parse(getColumnValue(3), CultureInfo.InvariantCulture),
+                    gender = Enum.Parse<Gender>(getColumnValue(4)),
+                    email = getColumnValue(5).Trim(),
+                    children = bool.Parse(getColumnValue(7))
+                };
+            }
+        }
+
+        [Benchmark]
         public async Task Read_VariableLength_FlatFiles()
         {
             var mapper = DelimitedTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
@@ -87,13 +184,16 @@ namespace RecordParser.Benchmark
             var options = new DelimitedOptions { FormatProvider = CultureInfo.InvariantCulture };
 
             using var fileStream = File.OpenRead(PathSampleDataCSV);
-            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize: 128);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
 
             var i = 0;
             foreach (var person in mapper.Read(streamReader, options))
             {
                 if (i++ == LimitRecord) return;
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
         [Benchmark]
@@ -143,8 +243,15 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public async Task Read_VariableLength_CSVHelper()
         {
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                CacheFields = true,
+                HasHeaderRecord = false, 
+                BufferSize = BufferSize
+            };
+
             using var reader = new StreamReader(PathSampleDataCSV);
-            using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
+            using var csvReader = new CsvReader(reader, config);
             csvReader.Context.RegisterClassMap<PersonMap>();
 
             var i = 0;
@@ -154,6 +261,9 @@ namespace RecordParser.Benchmark
 
                 var record = csvReader.GetRecord<Person>();
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
         class PersonTinyCsvMapping : CsvMapping<PersonTinyCsvParser>
@@ -173,7 +283,7 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public void Read_VariableLength_TinyCsvParser()
         {
-            var csvParserOptions = new CsvParserOptions(true, ',');
+            var csvParserOptions = new CsvParserOptions(skipHeader: false, ',');
             var csvParser = new CsvParser<PersonTinyCsvParser>(csvParserOptions, new PersonTinyCsvMapping());
 
             var records = csvParser.ReadFromFile(PathSampleDataCSV, Encoding.UTF8);
@@ -185,6 +295,9 @@ namespace RecordParser.Benchmark
 
                 var record = item.Result;
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
         private sealed class AllDoneException : Exception { }
@@ -192,7 +305,7 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public async Task Read_VariableLength_Cursively_Async()
         {
-            using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan | FileOptions.Asynchronous);
+            using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.SequentialScan | FileOptions.Asynchronous);
 
             int i = 0;
             CursivelyPersonVisitor visitor = new(OnPersonVisited);
@@ -207,6 +320,9 @@ namespace RecordParser.Benchmark
             {
             }
 
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
+
             void OnPersonVisited(in Person person)
             {
                 if (i++ == LimitRecord) { throw new AllDoneException(); }
@@ -218,17 +334,22 @@ namespace RecordParser.Benchmark
         [Benchmark]
         public void Read_VariableLength_Cursively_Sync()
         {
+            using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.SequentialScan | FileOptions.Asynchronous);
+
             int i = 0;
             CursivelyPersonVisitor visitor = new(OnPersonVisited);
             try
             {
                 CsvSyncInput
-                    .ForMemoryMappedFile(PathSampleDataCSV)
+                    .ForStream(fileStream)
                     .Process(visitor);
             }
             catch (AllDoneException)
             {
             }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
 
             void OnPersonVisited(in Person person)
             {
