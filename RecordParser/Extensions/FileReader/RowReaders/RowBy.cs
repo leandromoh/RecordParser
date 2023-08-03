@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace RecordParser.Extensions.FileReader.RowReaders;
 
-internal abstract class RowBy : IFL
+internal abstract partial class RowBy : IFL
 {
     protected int i = 0;
     protected int j = 0;
@@ -18,6 +18,8 @@ internal abstract class RowBy : IFL
 
     protected int bufferLength;
     protected char[] buffer;
+
+    protected Action SIMD = null;
 
     public RowBy(TextReader reader, int bufferLength)
     {

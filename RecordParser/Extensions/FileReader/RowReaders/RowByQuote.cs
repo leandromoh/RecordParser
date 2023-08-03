@@ -2,10 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
+#if NETCOREAPP3_1_OR_GREATER
+using System.Runtime.Intrinsics.X86;
+#endif
 
 namespace RecordParser.Extensions.FileReader.RowReaders
 {
-    internal class RowByQuote : RowBy
+    internal partial class RowByQuote : RowBy
     {
         public readonly string separator;
 
@@ -13,8 +17,14 @@ namespace RecordParser.Extensions.FileReader.RowReaders
             : base(reader, bufferLength)
         {
             this.separator = separator;
+#if NETCOREAPP3_1_OR_GREATER
+            SIMD = AvaibleSIMD();
+#endif
         }
 
+#if NETCOREAPP3_1_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         public override IEnumerable<ReadOnlyMemory<char>> ReadLines()
         {
             int Peek() => i < bufferLength ? buffer[i] : -1;
@@ -28,6 +38,9 @@ namespace RecordParser.Extensions.FileReader.RowReaders
 
             while (hasBufferToConsume = i < bufferLength)
             {
+#if NETCOREAPP3_1_OR_GREATER
+                SIMD?.Invoke();
+#endif
                 c = buffer[i++];
 
             charLoaded:

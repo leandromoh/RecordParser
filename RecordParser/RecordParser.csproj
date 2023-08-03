@@ -31,7 +31,12 @@
 
   <PropertyGroup Condition="
 		( '$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release') AND
-		( '$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0') AND
+		( 
+		  '$(TargetFramework)' == 'netcoreapp3.1' OR 
+		  '$(TargetFramework)' == 'net5.0' OR 
+		  '$(TargetFramework)' == 'net6.0' OR 
+		  '$(TargetFramework)' == 'net7.0'
+		) AND
 		( '$(Platform)' == 'AnyCPU') ">
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
