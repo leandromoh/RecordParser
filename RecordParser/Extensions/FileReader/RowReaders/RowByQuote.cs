@@ -68,7 +68,7 @@ namespace RecordParser.Extensions.FileReader.RowReaders
                         var next = unlook.Slice(z + 1);
 
                         if (next.IsEmpty)
-                            ; 
+                            ;
 
                         if (next[0] == quote)
                         {
@@ -96,13 +96,15 @@ namespace RecordParser.Extensions.FileReader.RowReaders
 
             if (hasBufferToConsume == false)
             {
-                if (yieldLast)
-                    yield return buffer.AsMemory(j, i - j).TrimEnd();
+                if (yieldLast && TryGetRecord(out var x))
+                    yield return x;
 
                 yield break;
             }
 
-            yield return buffer.AsMemory(j, i - j).TrimEnd();
+            if (TryGetRecord(out var y))
+                yield return y;
+
             goto reloop;
         }
     }

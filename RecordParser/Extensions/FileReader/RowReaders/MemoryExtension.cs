@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace RecordParser.Extensions.FileReader.RowReaders
 {
     internal static class MemoryExtension
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Memory<char> TrimEnd(this Memory<char> current)
         {
             var i = current.Length - 1;

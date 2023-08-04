@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace RecordParser.Extensions.FileReader.RowReaders;
 
@@ -52,6 +53,13 @@ internal abstract class RowBy : IFL
     }
 
     public abstract IEnumerable<ReadOnlyMemory<char>> ReadLines();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected bool TryGetRecord(out Memory<char> record)
+    {
+        record = buffer.AsMemory(j, i - j).TrimEnd();
+        return record.Length > 0;
+    }
 
     public void Dispose()
     {
