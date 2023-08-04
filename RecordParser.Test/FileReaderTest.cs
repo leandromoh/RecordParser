@@ -64,13 +64,7 @@ namespace RecordParser.Test
 
                                 var fileText = fileBuilder.ToString();
 
-                                // TODO: temp condition, currently GetRecords
-                                // does not skip empty lines(\r\n)
-                                fileText = fileText.Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine);
-                                if (string.IsNullOrWhiteSpace(fileText) == false)
-                                    // --
-
-                                    yield return new object[] { fileText, hasHeader, parallel, blankLineAtEnd, repeat };
+                                yield return new object[] { fileText, hasHeader, parallel, blankLineAtEnd, repeat };
                             }
                         }
                     }
@@ -159,12 +153,7 @@ namespace RecordParser.Test
 
                                     var fileText = fileBuilder.ToString();
 
-                                    // TODO: temp condition, currently GetRecords
-                                    // does not skip empty lines(\r\n)
-                                    fileText = fileText.Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine);
-                                    if (string.IsNullOrWhiteSpace(fileText) == false)
-                                        // --
-                                        yield return new object[] { fileText, hasHeader, parallel, blankLineAtEnd, quote, repeat };
+                                    yield return new object[] { fileText, hasHeader, parallel, blankLineAtEnd, quote, repeat };
                                 }
                             }
                         }
@@ -241,12 +230,7 @@ namespace RecordParser.Test
 
                         var fileText = fileBuilder.ToString();
 
-                        // TODO: temp condition, currently GetRecords
-                        // does not skip empty lines(\r\n)
-                        fileText = fileText.Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine);
-                        if (string.IsNullOrWhiteSpace(fileText) == false)
-                            // --
-                            yield return new object[] { fileText, parallel, blankLineAtEnd, repeat };
+                        yield return new object[] { fileText, parallel, blankLineAtEnd, repeat };
                     }
                 }
             }
@@ -338,7 +322,7 @@ namespace RecordParser.Test
             {
                 var lineType = line.Span[0];
 
-                switch(lineType) 
+                switch (lineType)
                 {
                     case '0':
                         return headerReader.Parse(line.Span);
