@@ -346,10 +346,12 @@ namespace RecordParser.Test
             using var streamReader = new StreamReader(fileStream, Encoding.UTF8);
 
             var expected = new List<string>();
+            var line = string.Empty;
 
-            while (streamReader.EndOfStream is false)
+            while ((line = streamReader.ReadLine()) != null)
             {
-                expected.Add(streamReader.ReadLine());
+                if (!string.IsNullOrWhiteSpace(line))
+                    expected.Add(line);
             }
 
             fileStream.Position = 0;
