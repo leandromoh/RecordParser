@@ -26,11 +26,11 @@ namespace RecordParser.Extensions.FileReader.RowReaders
 
             j = i;
 
-        outerWhile:
-
             while (hasBufferToConsume = i < bufferLength)
             {
                 c = buffer[i++];
+
+            charLoaded:
 
                 // '\r' => 13
                 // '\n' => 10
@@ -52,42 +52,33 @@ namespace RecordParser.Extensions.FileReader.RowReaders
                 }
                 else if (c == quote)
                 {
-                    ReadOnlySpan<char> span = buffer.AsSpan();
-                    var isQuotedField = span.Slice(0, i - 1).TrimEnd().EndsWith(separator);
+                    ReadOnlySpan<char> span = buffer.AsSpan().Slice(0, i - 1);
+                    var isQuotedField = span.TrimEnd().EndsWith(separator);
 
                     if (isQuotedField is false)
                         continue;
 
-                    ReadOnlySpan<char> unlook = buffer.AsSpan().Slice(i);
+                    var state = 2;
 
-                    for (int z = 0; hasBufferToConsume = z < unlook.Length; z++)
+                    // 1 Outside quoted field
+                    // 2 Inside quoted field
+                    // 3 Possible escaped quote (the first " in "")
+
+                    while (hasBufferToConsume = i < bufferLength)
                     {
-                        if (unlook[z] != quote)
-                            continue;
-
-                        var next = unlook.Slice(z + 1);
-
-                        if (next.IsEmpty)
-                            ;
-
-                        if (next[0] == quote)
+                        c = buffer[i++];
+                        switch (state)
                         {
-                            z++;
-                            continue;
+                            case 2:
+                                if (c == quote)
+                                    state = 3;
+                                continue;
+                            case 3:
+                                state = c == quote ? 2 : 1;
+                                if (state == 1)
+                                    goto charLoaded;
+                                continue;
                         }
-
-                        for (var t = 0; t < next.Length; t++)
-                            if (next.Slice(t).StartsWith(separator))
-                            {
-                                i += z + 1 + t;
-                                goto outerWhile;
-                            }
-                            else if (char.IsWhiteSpace(next[t]) is false)
-                            {
-                                break;
-                            }
-
-                        throw new Exception("corruptFieldError");
                     }
                 }
             }
