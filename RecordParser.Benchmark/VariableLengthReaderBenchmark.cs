@@ -78,6 +78,47 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
+        [Arguments(false, true)]
+        [Arguments(true, true)]
+        public void Read_VariableLength_Quoted_RecordParser_Parallel(bool parallel, bool quoted)
+        {
+            var builder = new VariableLengthReaderBuilder<Person>()
+                .Map(x => x.id, 0)
+                .Map(x => x.name, 1)
+                .Map(x => x.age, 2)
+                .Map(x => x.birthday, 3)
+                .Map(x => x.gender, 4)
+                .Map(x => x.email, 5)
+                .Map(x => x.children, 7);
+
+            if (parallel == false)
+                builder.DefaultTypeConvert(new InternPool().Intern);
+
+            var parser = builder.Build(",", CultureInfo.InvariantCulture);
+
+            using var fileStream = File.OpenRead(PathSampleDataQuotedCSV);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                HasHeader = false,
+                ParallelProcessing = parallel,
+                ContainsQuotedFields = quoted,
+            };
+
+            var items = parser.GetRecords(streamReader, readOptions);
+
+            var i = 0;
+            foreach (var person in items)
+            {
+                if (i++ == LimitRecord) return;
+            }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
+        }
+
+        [Benchmark]
         [Arguments(true, true)]
         [Arguments(true, false)]
         [Arguments(false, true)]
