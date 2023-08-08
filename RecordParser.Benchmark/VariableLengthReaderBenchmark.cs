@@ -31,6 +31,8 @@ namespace RecordParser.Benchmark
 
         public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
 
+        public string PathSampleDataQuotedCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleDataQuoted.csv");
+
         [Benchmark]
         public async Task Read_VariableLength_ManualString()
         {
@@ -287,7 +289,7 @@ namespace RecordParser.Benchmark
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 CacheFields = true,
-                HasHeaderRecord = false, 
+                HasHeaderRecord = false,
                 BufferSize = BufferSize
             };
 
