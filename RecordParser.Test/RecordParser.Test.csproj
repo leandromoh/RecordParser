@@ -7,16 +7,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="AllFieldsQuotedCsv.csv" />
     <None Remove="QuotedCsv.csv" />
     <None Remove="SimpleCsv.csv" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="AllFieldsQuotedCsv.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="SimpleCsv.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="QuotedCsv.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
