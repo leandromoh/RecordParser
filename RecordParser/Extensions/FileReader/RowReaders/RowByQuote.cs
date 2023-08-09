@@ -58,11 +58,11 @@ namespace RecordParser.Extensions.FileReader.RowReaders
                     if (isQuotedField is false)
                         continue;
 
-                    var state = 2;
-
                     // 1 Outside quoted field
                     // 2 Inside quoted field
                     // 3 Possible escaped quote (the first " in "")
+
+                    var state = 2;
 
                     while (hasBufferToConsume = i < bufferLength)
                     {
