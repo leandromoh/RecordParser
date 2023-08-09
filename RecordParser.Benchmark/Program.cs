@@ -9,7 +9,7 @@ namespace RecordParser.Benchmark
         static async Task Main(string[] args)
         {
 #if DEBUG
-            new VariableLengthReaderBenchmark() { LimitRecord = 500_000 }.Read_VariableLength_RecordParser_Raw(false, false);
+            new VariableLengthReaderBenchmark() { LimitRecord = 500_000 }.Read_VariableLength_Quoted_RecordParser_Parallel(false, true);
 #else
             Console.WriteLine("Benchmark options:");
             Console.WriteLine("0 - all");

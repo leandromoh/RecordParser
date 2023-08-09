@@ -27,11 +27,11 @@ namespace RecordParser.Test
 
         public static string GetFilePath(string fileName) => Path.Combine(Directory.GetCurrentDirectory(), fileName);
 
-        public static IEnumerable<object[]> Given_quoted_csv_file_should_read_quoted_properly_theory()
+        public static IEnumerable<object[]> Given_quoted_csv_file_should_read_quoted_properly_theory(string file)
         {
             var fileNames = new[]
             {
-                GetFilePath("QuotedCsv.csv"),
+                GetFilePath(file),
             };
 
             foreach (var repeat in _repeats)
@@ -73,7 +73,57 @@ namespace RecordParser.Test
         }
 
         [Theory]
-        [MemberData(nameof(Given_quoted_csv_file_should_read_quoted_properly_theory))]
+        [MemberData(nameof(Given_quoted_csv_file_should_read_quoted_properly_theory), new object[] { "AllFieldsQuotedCsv.csv" })]
+        public void Read_csv_file_all_fields_quoted(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, int repeat)
+        {
+            // Arrange
+
+            using var fileStream = fileContent.ToStream();
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8);
+
+            var parser = new VariableLengthReaderBuilder<PersonComplete>()
+                .Map(x => x.id, 0)
+                .Map(x => x.name, 1)
+                .Map(x => x.age, 2)
+                .Map(x => x.birthday, 3)
+                .Map(x => x.gender, 4)
+                .Map(x => x.email, 5)
+                .Map(x => x.children, 7)
+                .Build(",");
+
+            var expectedItems = new PersonComplete[]
+            {
+                new () { id = new Guid("ec9a8be9-a000-503b-adcf-7266804f1eb1"), name = "Lilly Bradley", age = 21, birthday = DateTime.Parse("11/16/1977"), gender = Gender.Male, email = "pak@witak.bf", children = true },
+                new () { id = new Guid("63858071-cbb3-5abd-9f88-3dfd565cc4ab"), name = "Lucy Berry", age = 49, birthday = DateTime.Parse("11/12/1961"), gender = Gender.Female, email = "vanvo@ro.pk", children = false },
+                new () { id = new Guid("203804f9-93e7-5510-8bb2-177296bafe6a"), name = "Frank Fox", age = 36, birthday = DateTime.Parse("3/19/1977"), gender = Gender.Male, email = "vav@ped.fj", children = true },
+                new () { id = new Guid("a8af66fb-bad4-51eb-810c-bf3ca22337c6"), name = "Isabel Todd", age = 51, birthday = DateTime.Parse("9/16/1999"), gender = Gender.Female, email = "gu@or.bz", children = false },
+                new () { id = new Guid("1a3d8a66-3e0c-50eb-99c1-a3926bce15ed"), name = $"Joseph {Environment.NewLine}Scott", age = 55, birthday = DateTime.Parse("10/26/1986"), gender = Gender.Male, email = "bup@vugeb.tt", children = false },
+                new () { id = new Guid("aa7d4395-f10f-5776-9912-e3d86c4b9d3c"), name = "Gilbert Brooks", age = 56, birthday = DateTime.Parse("3/1/1956"), gender = Gender.Female, email = "epiju@ba.ly", children = true },
+                new () { id = new Guid("1d25b811-4002-5744-ac40-93a50f2a442c"), name = "Louis \"Ronaldo\" Bennett", age = 25, birthday = DateTime.Parse("4/4/1967"), gender = Gender.Male, email = "ma@itrovive.tv", children = true },
+                new () { id = new Guid("8e963ae5-a9ed-5572-b11c-566abc6a8a56"), name = "Norman Parker", age = 57, birthday = DateTime.Parse("4/17/1969"), gender = Gender.Male, email = "omi@hewepa.bw", children = true },
+                new () { id = new Guid("4d373cfb-79e3-54ce-87ff-f2a08fde8f28"), name = "Gary Doyle", age = 20, birthday = DateTime.Parse("1/21/1958"), gender = Gender.Male, email = "orjohma@cabmofa.ps", children = true },
+                new () { id = new Guid("5af00cdf-0758-5317-bcdf-c9a3337cc266"), name = "Bruce Silva", age = 39, birthday = DateTime.Parse("1/11/1968"), gender = Gender.Female, email = "ta@ovonib.ir", children = true },
+            }
+            .Repeat(repeat);
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                HasHeader = hasHeader,
+                ParallelProcessing = parallelProcessing,
+                ContainsQuotedFields = true,
+            };
+
+            // Act
+
+            var items = parser.GetRecords(streamReader, readOptions);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expectedItems, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Theory]
+        [MemberData(nameof(Given_quoted_csv_file_should_read_quoted_properly_theory), new object[] { "QuotedCsv.csv" })]
         public void Read_quoted_csv_file(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, int repeat)
         {
             // Arrange

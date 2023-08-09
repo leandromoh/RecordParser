@@ -35,6 +35,24 @@ namespace RecordParser.Test
         public Person Mother { get; set; }
     }
 
+
+    public struct PersonComplete
+    {
+        public char alfa;
+        public Guid? id;
+        public string name;
+        public int age;
+        public DateTime birthday;
+        public Gender gender;
+        public string email;
+        public bool children;
+    }
+    public enum Gender
+    {
+        Female = 0,
+        Male = 1,
+    }
+
     internal class AllType
     {
         public string Str;

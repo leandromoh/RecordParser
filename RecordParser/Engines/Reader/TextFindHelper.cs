@@ -45,7 +45,7 @@ namespace RecordParser.Engines.Reader
                 if (index == currentIndex)
                     return currentValue;
                 else
-                   throw new Exception("can only be forward");
+                    throw new Exception("can only be forward");
             }
 
             while (currentIndex <= index)
