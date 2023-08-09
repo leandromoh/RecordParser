@@ -82,7 +82,7 @@ namespace RecordParser.Benchmark
         [Benchmark]
         [Arguments(false, true)]
         [Arguments(true, true)]
-        public void Read_VariableLength_Quoted_RecordParser_Parallel(bool parallel, bool quoted)
+        public void Read_VariableLength_FullQuoted_RecordParser_Parallel(bool parallel, bool quoted)
         {
             var builder = new VariableLengthReaderBuilder<Person>()
                 .Map(x => x.id, 0)

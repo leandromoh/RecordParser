@@ -71,7 +71,7 @@ namespace RecordParser.Engines.Reader
 
             if (isQuotedField)
             {
-                return ParseQuotedChuck(unlook);
+                return ParseQuotedChuck(match);
             }
 
             position = unlook.IndexOf(delimiter);
@@ -83,157 +83,98 @@ namespace RecordParser.Engines.Reader
             return line.Slice(scanned, position);
         }
 
-        private ReadOnlySpan<char> ParseQuotedChuck(ReadOnlySpan<char> unlook)
+        private ReadOnlySpan<char> ParseQuotedChuck(bool match)
         {
             const string corruptFieldError = "Double quote is not escaped or there is extra data after a quoted field.";
 
-            position = unlook.IndexOf(quote.ch) + 1; // +1 for quote
-            unlook = unlook.Slice(position);
+            var unlook = line.Slice(scanned);
+            scanned += unlook.IndexOf(quote.ch) + 1;
+            unlook = line.Slice(scanned);
+            position = 0;
 
-            //if (match)
-            //{
-            buffer ??= ArrayPool<char>.Shared.Rent(unlook.Length);
-            Span<char> resp = buffer;
-            var x = -1;
-            var state = 2;
-
-            // 1 Outside quoted field
-            // 2 Inside quoted field
-            // 3 Possible escaped quote (the first " in "")
-
-            for (int i = 0; i < unlook.Length; i++)
+            if (match)
             {
-                var c = unlook[i];
+                buffer ??= ArrayPool<char>.Shared.Rent(unlook.Length);
+                Span<char> resp = buffer;
 
-                switch (state)
+                for (int i = 0, j = 0; i < unlook.Length; i++)
                 {
-                    case 2:
-                        if (c == quote.ch)
-                        {
-                            state = 3;
+                    var c = unlook[i];
 
-                            // is this quote the last character of the record?
-                            // if so, it is the closing quote of the last field
-                            if (i + 1 == unlook.Length)
-                            {
-                                c = default;
-                                x++;
-                                i++;
-                                goto case 3;
-                            }
+                    if (c == quote.ch)
+                    {
+                        var next = unlook.Slice(i + 1);
+                        if (next.TrimStart().IsEmpty)
+                        {
+                            position += i;
+                            return resp.Slice(0, j);
                         }
-                        resp[++x] = c;
-
-                        continue;
-                    case 3:
-                        if (c == quote.ch)
+                        if (next[0] == quote.ch)
                         {
-                            state = 2;
+                            resp[j++] = quote.ch;
+                            i++;
                             continue;
                         }
-                        else
-                        {
-                            state = 1;
 
-                            var value = resp.Slice(0, x);
-                            position += i;
-                            var next = unlook.Slice(i);
-
-                            if (next.IsWhiteSpace())
+                        for (var t = 0; t < next.Length; t++)
+                            if (next.Slice(t).StartsWith(delimiter))
                             {
-                                return value;
+                                position += i + 1 + t;
+                                return resp.Slice(0, j);
+                            }
+                            else if (char.IsWhiteSpace(next[t]) is false)
+                            {
+                                break;
                             }
 
-                            for (var t = 0; t < next.Length; t++)
-                                if (next.Slice(t).StartsWith(delimiter))
-                                {
-                                    position += t;
-                                    return value;
-                                }
-                                else if (char.IsWhiteSpace(next[t]) is false)
-                                {
-                                    break;
-                                }
+                        throw new Exception(corruptFieldError);
 
-                            throw new Exception(corruptFieldError);
-                        }
+                    }
+                    else
+                    {
+                        resp[j++] = c;
+                        continue;
+                    }
                 }
-
-                //if (c == quote.ch)
-                //{
-                //    var next = unlook.Slice(i + 1);
-                //    if (next.TrimStart().IsEmpty)
-                //    {
-                //        position += i;
-                //        return resp.Slice(0, j);
-                //    }
-                //    if (next[0] == quote.ch)
-                //    {
-                //        resp[j++] = quote.ch;
-                //        i++;
-                //        continue;
-                //    }
-
-                //    for (var t = 0; t < next.Length; t++)
-                //        if (next.Slice(t).StartsWith(delimiter))
-                //        {
-                //            position += i + 1 + t;
-                //            return resp.Slice(0, j);
-                //        }
-                //        else if (char.IsWhiteSpace(next[t]) is false)
-                //        {
-                //            break;
-                //        }
-
-                //    throw new Exception(corruptFieldError);
-
-                //}
-                //else
-                //{
-                //    resp[j++] = c;
-                //    continue;
-                //}
             }
+            else
+            {
+                for (int i = 0; i < unlook.Length; i++)
+                {
+                    if (unlook[i] == quote.ch)
+                    {
+                        var next = unlook.Slice(i + 1);
+                        if (next.TrimStart().IsEmpty)
+                        {
+                            position += i;
+                            return default;
+                        }
+                        if (next[0] == quote.ch)
+                        {
+                            i++;
+                            continue;
+                        }
 
-            //}
-            //else
-            //{
-            //    for (int i = 0; i < unlook.Length; i++)
-            //    {
-            //        if (unlook[i] == quote.ch)
-            //        {
-            //            var next = unlook.Slice(i + 1);
-            //            if (next.TrimStart().IsEmpty)
-            //            {
-            //                position += i;
-            //                return default;
-            //            }
-            //            if (next[0] == quote.ch)
-            //            {
-            //                i++;
-            //                continue;
-            //            }
+                        for (var t = 0; t < next.Length; t++)
+                            if (next.Slice(t).StartsWith(delimiter))
+                            {
+                                position += i + 1 + t;
+                                return default;
+                            }
+                            else if (char.IsWhiteSpace(next[t]) is false)
+                            {
+                                break;
+                            }
 
-            //            for (var t = 0; t < next.Length; t++)
-            //                if (next.Slice(t).StartsWith(delimiter))
-            //                {
-            //                    position += i + 1 + t;
-            //                    return default;
-            //                }
-            //                else if (char.IsWhiteSpace(next[t]) is false)
-            //                {
-            //                    break;
-            //                }
+                        throw new Exception(corruptFieldError);
 
-            //            throw new Exception(corruptFieldError);
-
-            //        }
-            //        else
-            //        {
-            //            continue;
-            //        }
-            //    }
-            //}
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+            }
 
             throw new Exception("Quoted field is missing closing quote.");
         }
