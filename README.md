@@ -39,9 +39,17 @@ Third Party Benchmarks
 1. Fixed length, common in positional files, e.g. financial services, mainframe use, etc
     * [Reader](#fixed-length-reader)
     * [Writer](#fixed-length-writer)
-3. Variable length, common in delimited files, e.g. CSV, TSV files, etc
+2. Variable length, common in delimited files, e.g. CSV, TSV files, etc
     * [Reader](#variable-length-reader)
     * [Writer](#variable-length-writer)
+  
+### Custom Mappings
+1. Readers
+    * [Default Type Convert](#default-type-convert---reader)
+    * [Custom Property Convert](#custom-property-convert---reader)
+2. Writers
+    * [Default Type Convert](#default-type-convert---writer)
+    * [Custom Property Convert](#custom-property-convert---writer)
 
 ## Fixed Length Reader
 There are 2 flavors for mapping: indexed or sequential.  
