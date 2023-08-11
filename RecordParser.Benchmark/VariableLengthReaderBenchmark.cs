@@ -27,8 +27,6 @@ namespace RecordParser.Benchmark
         [Params(500_000)]
         public int LimitRecord { get; set; }
 
-        public const int BufferSize = 4_096; // 2^12
-
         public string PathSampleDataCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.csv");
 
         public string PathSampleDataQuotedCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleDataQuoted.csv");
