@@ -8,6 +8,7 @@ using FlatFiles;
 using FlatFiles.TypeMapping;
 using RecordParser.Builders.Reader;
 using RecordParser.Extensions.FileReader;
+using RecordParser.RecordParser.Extensions.FileReader;
 using System;
 using System.Globalization;
 using System.IO;
@@ -33,7 +34,7 @@ namespace RecordParser.Benchmark
 
         public string PathSampleDataQuotedCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleDataQuoted.csv");
 
-        [Benchmark]
+    //    [Benchmark]
         public async Task Read_VariableLength_ManualString()
         {
             using var fileStream = File.OpenRead(PathSampleDataCSV);
@@ -80,7 +81,7 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
-        [Arguments(false, true)]
+      //  [Arguments(false, true)]
         [Arguments(true, true)]
         public void Read_VariableLength_FullQuoted_RecordParser_Parallel(bool parallel, bool quoted)
         {
@@ -95,6 +96,8 @@ namespace RecordParser.Benchmark
 
             if (parallel == false)
                 builder.DefaultTypeConvert(new InternPool().Intern);
+            else
+                builder.DefaultTypeConvert(new ThreadSafeCache(() => new InternPool().Intern, 20).Get);
 
             var parser = builder.Build(",", CultureInfo.InvariantCulture);
 
@@ -123,8 +126,8 @@ namespace RecordParser.Benchmark
         [Benchmark]
         [Arguments(true, true)]
         [Arguments(true, false)]
-        [Arguments(false, true)]
-        [Arguments(false, false)]
+     //  [Arguments(false, true)]
+     //  [Arguments(false, false)]
         public void Read_VariableLength_RecordParser_Parallel(bool parallel, bool quoted)
         {
             var builder = new VariableLengthReaderBuilder<Person>()
@@ -138,6 +141,8 @@ namespace RecordParser.Benchmark
 
             if (parallel == false)
                 builder.DefaultTypeConvert(new InternPool().Intern);
+            else
+                builder.DefaultTypeConvert(new ThreadSafeCache(() => new InternPool().Intern, 20).Get);
 
             var parser = builder.Build(",", CultureInfo.InvariantCulture);
 
@@ -163,7 +168,7 @@ namespace RecordParser.Benchmark
                 throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
-        [Benchmark]
+     //   [Benchmark]
         [Arguments(true, true)]
         [Arguments(true, false)]
         [Arguments(false, true)]
@@ -210,7 +215,7 @@ namespace RecordParser.Benchmark
             }
         }
 
-        [Benchmark]
+    //    [Benchmark]
         public async Task Read_VariableLength_FlatFiles()
         {
             var mapper = DelimitedTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
@@ -239,7 +244,7 @@ namespace RecordParser.Benchmark
                 throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
-        [Benchmark]
+     //   [Benchmark]
         public async Task Read_VariableLength_ManualSpan()
         {
             await ProcessCSVFile((ReadOnlySpan<char> line) =>
@@ -283,7 +288,7 @@ namespace RecordParser.Benchmark
             }
         }
 
-        [Benchmark]
+     //   [Benchmark]
         public async Task Read_VariableLength_CSVHelper()
         {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -323,7 +328,7 @@ namespace RecordParser.Benchmark
             }
         }
 
-        [Benchmark]
+     //   [Benchmark]
         public void Read_VariableLength_TinyCsvParser()
         {
             var csvParserOptions = new CsvParserOptions(skipHeader: false, ',');
@@ -345,7 +350,7 @@ namespace RecordParser.Benchmark
 
         private sealed class AllDoneException : Exception { }
 
-        [Benchmark]
+      //  [Benchmark]
         public async Task Read_VariableLength_Cursively_Async()
         {
             using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.SequentialScan | FileOptions.Asynchronous);
@@ -374,7 +379,7 @@ namespace RecordParser.Benchmark
             }
         }
 
-        [Benchmark]
+    //    [Benchmark]
         public void Read_VariableLength_Cursively_Sync()
         {
             using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.SequentialScan | FileOptions.Asynchronous);
