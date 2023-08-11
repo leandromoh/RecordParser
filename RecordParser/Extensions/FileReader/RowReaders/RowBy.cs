@@ -57,7 +57,7 @@ internal abstract class RowBy : IFL
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected bool TryGetRecord(out Memory<char> record)
     {
-        record = buffer.AsMemory(j, i - j).TrimEnd();
+        record = buffer.AsMemory(j, i - j).TrimEndLineEnd();
         return record.Length > 0;
     }
 
