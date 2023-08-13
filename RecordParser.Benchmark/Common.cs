@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipelines;
 using System.Text;
@@ -10,10 +9,12 @@ namespace RecordParser.Benchmark
 {
     public static class Common
     {
+        public const int BufferSize = 4_096; // 2^12
+
         public static async Task ProcessFile(string filePath, FuncSpanT<Person> parser, int limitRecord)
         {
             using var stream = File.OpenRead(filePath);
-            PipeReader reader = PipeReader.Create(stream);
+            PipeReader reader = PipeReader.Create(stream, new(null, BufferSize, 1024, false));
 
             var i = 0;
 
