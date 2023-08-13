@@ -36,11 +36,6 @@ namespace RecordParser.Extensions.FileReader.RowReaders
 
                 c = buffer[i++];
 
-                // '\r' => 13
-                // '\n' => 10
-                if (c > 13)
-                    continue;
-
                 switch (c)
                 {
                     case '\r':
