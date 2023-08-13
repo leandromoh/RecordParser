@@ -28,7 +28,6 @@ internal abstract class RowBy : IFL
         this.bufferLength = buffer.Length;
     }
 
-    private int a = 0;
     public int FillBuffer()
     {
         var len = i - j;

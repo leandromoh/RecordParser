@@ -38,7 +38,8 @@ namespace RecordParser.Extensions.FileReader.RowReaders
                 {
                     i += index;
                 }
-                    c = buffer[i++];
+
+                c = buffer[i++];
 
             charLoaded:
 

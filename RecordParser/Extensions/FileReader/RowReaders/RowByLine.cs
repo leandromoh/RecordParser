@@ -23,6 +23,17 @@ namespace RecordParser.Extensions.FileReader.RowReaders
 
             while (hasBufferToConsume = i < bufferLength)
             {
+                var index = memory.Span.Slice(i).IndexOfAny('\r', '\n');
+                if (index < 0)
+                {
+                    i = bufferLength;
+                    continue;
+                }
+                else
+                {
+                    i += index;
+                }
+
                 c = buffer[i++];
 
                 // '\r' => 13
