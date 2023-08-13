@@ -31,7 +31,7 @@ namespace RecordParser.Benchmark
 
         public string PathSampleDataQuotedCSV => Path.Combine(Directory.GetCurrentDirectory(), "SampleDataQuoted.csv");
 
-        [Benchmark]
+        //    [Benchmark]
         public async Task Read_VariableLength_ManualString()
         {
             using var fileStream = File.OpenRead(PathSampleDataCSV);
@@ -208,7 +208,7 @@ namespace RecordParser.Benchmark
             }
         }
 
-        [Benchmark]
+        //     [Benchmark]
         public async Task Read_VariableLength_FlatFiles()
         {
             var mapper = DelimitedTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
@@ -237,7 +237,7 @@ namespace RecordParser.Benchmark
                 throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
-        [Benchmark]
+        //    [Benchmark]
         public async Task Read_VariableLength_ManualSpan()
         {
             await ProcessCSVFile((ReadOnlySpan<char> line) =>
@@ -281,7 +281,7 @@ namespace RecordParser.Benchmark
             }
         }
 
-        [Benchmark]
+        //   [Benchmark]
         public async Task Read_VariableLength_CSVHelper()
         {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -321,7 +321,7 @@ namespace RecordParser.Benchmark
             }
         }
 
-        [Benchmark]
+        //    [Benchmark]
         public void Read_VariableLength_TinyCsvParser()
         {
             var csvParserOptions = new CsvParserOptions(skipHeader: false, ',');
@@ -343,7 +343,7 @@ namespace RecordParser.Benchmark
 
         private sealed class AllDoneException : Exception { }
 
-        [Benchmark]
+        //  [Benchmark]
         public async Task Read_VariableLength_Cursively_Async()
         {
             using FileStream fileStream = new(PathSampleDataCSV, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.SequentialScan | FileOptions.Asynchronous);
