@@ -8,7 +8,6 @@ using RecordParser.Extensions.FileReader;
 using System;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static RecordParser.Benchmark.Common;
@@ -94,7 +93,7 @@ namespace RecordParser.Benchmark
             var readOptions = new FixedLengthReaderOptions<Person>
             {
                 ParallelProcessing = parallel,
-                Parser = (line, i) => parser.Parse(line.Span),
+                Parser = parser.Parse,
             };
 
             var items = streamReader.GetRecords(readOptions);

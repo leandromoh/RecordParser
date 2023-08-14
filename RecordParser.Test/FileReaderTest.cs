@@ -368,17 +368,17 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo(expected);
             result.Items.Should().BeEquivalentTo(expected.Items, cfg => cfg.WithStrictOrdering());
 
-            object Parse(ReadOnlyMemory<char> line, int index)
+            object Parse(ReadOnlySpan<char> line)
             {
-                var lineType = line.Span[0];
+                var lineType = line[0];
 
                 switch (lineType)
                 {
                     case '0':
-                        return headerReader.Parse(line.Span);
+                        return headerReader.Parse(line);
 
                     case '9':
-                        return recordReader.Parse(line.Span);
+                        return recordReader.Parse(line);
 
                     default:
                         throw new InvalidOperationException($"lineType '{lineType}' is not mapped");

@@ -9,7 +9,7 @@ namespace RecordParser.Extensions.FileReader
     public class FixedLengthReaderOptions<T>
     {
         public bool ParallelProcessing { get; set; }
-        public Func<ReadOnlyMemory<char>, int, T> Parser { get; set; }
+        public FuncSpanT<T> Parser { get; set; }
     }
 
     public static class FixedLengthReaderExtensions
@@ -21,7 +21,7 @@ namespace RecordParser.Extensions.FileReader
                 ? GetRecordsParallel
                 : GetRecordsSequential;
 
-            return process(options.Parser, func, hasHeader: false);
+            return process((memory, i) => options.Parser(memory.Span), func, hasHeader: false);
         }
 
         public static IEnumerable<ReadOnlyMemory<char>> GetRecords(this TextReader stream)
