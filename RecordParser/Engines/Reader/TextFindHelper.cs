@@ -1,5 +1,9 @@
 ﻿using System;
 using System.Buffers;
+#if NETCOREAPP3_1_OR_GREATER
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 
 namespace RecordParser.Engines.Reader
 {
@@ -8,6 +12,10 @@ namespace RecordParser.Engines.Reader
         private readonly ReadOnlySpan<char> line;
         private readonly string delimiter;
         private readonly (char ch, string str) quote;
+
+#if NETCOREAPP3_1_OR_GREATER
+        private readonly Vector128<ushort>? carriageReturnMaskVector;
+#endif
 
         private int scanned;
         private int position;
@@ -27,6 +35,13 @@ namespace RecordParser.Engines.Reader
             currentIndex = -1;
             currentValue = default;
             buffer = null;
+
+#if NETCOREAPP3_1_OR_GREATER
+            carriageReturnMaskVector =
+                delimiter.Length == 1 && Sse2.IsSupported
+                ? Vector128.Create((ushort)(delimiter[0]))
+                : null;
+#endif
         }
 
         public void Dispose()
@@ -74,6 +89,13 @@ namespace RecordParser.Engines.Reader
                 return ParseQuotedChuck(match);
             }
 
+#if NETCOREAPP3_1_OR_GREATER
+            if (carriageReturnMaskVector.HasValue)
+            {
+                return GoAheadUsingSIMD();
+            }
+#endif
+
             position = unlook.IndexOf(delimiter);
             if (position < 0)
             {
@@ -82,6 +104,42 @@ namespace RecordParser.Engines.Reader
 
             return line.Slice(scanned, position);
         }
+#if NETCOREAPP3_1_OR_GREATER
+
+        public unsafe ReadOnlySpan<char> GoAheadUsingSIMD()
+        {
+            var del = carriageReturnMaskVector.Value;
+            var unlook = line.Slice(scanned);
+            var end = unlook.Length - 8;
+
+            var i = 0;
+
+            fixed (char* p = unlook)
+            {
+                ushort* ip = (ushort*)p;
+                while (i < end)
+                {
+                    var dataVector = Sse2.LoadVector128(ip + i);
+                    var delimiterVector = Sse2.CompareEqual(dataVector, del);
+
+                    var delimiterMask = (uint)Sse2.MoveMask(delimiterVector.AsByte());
+
+                    if (delimiterMask != 0)
+                        break;
+                    else
+                        i += 8;
+                }
+            }
+
+            var offset = unlook.Slice(i).IndexOf(delimiter[0]);
+
+            position = offset < 0
+                ? line.Length - scanned
+                : i + offset;
+
+            return line.Slice(scanned, position);
+        }
+#endif
 
         private ReadOnlySpan<char> ParseQuotedChuck(bool match)
         {
