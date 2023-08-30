@@ -28,15 +28,20 @@ namespace RecordParser.Extensions.FileReader.RowReaders
 
             while (hasBufferToConsume = i < bufferLength)
             {
+                var index = memory.Span.Slice(i).IndexOfAny('\r', '\n', '"');
+                if (index < 0)
+                {
+                    i = bufferLength;
+                    continue;
+                }
+                else
+                {
+                    i += index;
+                }
+
                 c = buffer[i++];
 
             charLoaded:
-
-                // '\r' => 13
-                // '\n' => 10
-                // '"'  => 34
-                if (c > 34)
-                    continue;
 
                 if (c == '\r')
                 {

@@ -18,6 +18,7 @@ internal abstract class RowBy : IFL
 
     protected int bufferLength;
     protected char[] buffer;
+    protected Memory<char> memory;
 
     public RowBy(TextReader reader, int bufferLength)
     {
@@ -38,6 +39,7 @@ internal abstract class RowBy : IFL
         var totalRead = reader.Read(buffer, len, bufferLength - len);
         bufferLength = len + totalRead;
 
+        memory = buffer.AsMemory(0, bufferLength);
         i = 0;
         j = 0;
 
