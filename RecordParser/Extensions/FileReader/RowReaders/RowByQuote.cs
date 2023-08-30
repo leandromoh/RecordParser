@@ -43,12 +43,6 @@ namespace RecordParser.Extensions.FileReader.RowReaders
 
             charLoaded:
 
-                // '\r' => 13
-                // '\n' => 10
-                // '"'  => 34
-                if (c > 34)
-                    continue;
-
                 if (c == '\r')
                 {
                     if (Peek() == '\n')
