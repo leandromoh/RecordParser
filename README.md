@@ -43,7 +43,7 @@ Third Party Benchmarks
     * [Reader](#variable-length-reader)
     * [Writer](#variable-length-writer)
   
-### Custom Mappings
+### Custom Converters
 1. Readers
     * [Default Type Convert](#default-type-convert---reader)
     * [Custom Property Convert](#custom-property-convert---reader)
