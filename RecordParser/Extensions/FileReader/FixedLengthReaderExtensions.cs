@@ -8,25 +8,29 @@ namespace RecordParser.Extensions.FileReader
 {
     public class FixedLengthReaderOptions<T>
     {
-        public bool ParallelProcessing { get; set; }
+        public ParallelOptions ParallelOptions { get; set; }
         public FuncSpanT<T> Parser { get; set; }
     }
 
     public static class FixedLengthReaderExtensions
     {
+        private const bool HasHeader = false;
+        
         public static IEnumerable<T> GetRecords<T>(this TextReader stream, FixedLengthReaderOptions<T> options)
         {
-            Func<IFL> func = () => new RowByLine(stream, Length);
-            ProcessFunc<T> process = options.ParallelProcessing
-                ? GetRecordsParallel
-                : GetRecordsSequential;
+            var func = () => new RowByLine(stream, Length);
+            var parser = (ReadOnlyMemory<char> memory, int i) => options.Parser(memory.Span);
+            var parallelOptions = options.ParallelOptions ?? new();
 
-            return process((memory, i) => options.Parser(memory.Span), func, hasHeader: false);
+            return
+                parallelOptions.Enabled
+                ? GetRecordsParallel(parser, func, HasHeader, parallelOptions)
+                : GetRecordsSequential(parser, func, HasHeader);
         }
 
         public static IEnumerable<ReadOnlyMemory<char>> GetRecords(this TextReader stream)
         {
-            return GetRecordsSequential((memory, i) => memory, () => new RowByLine(stream, Length), hasHeader: false);
+            return GetRecordsSequential((memory, i) => memory, () => new RowByLine(stream, Length), HasHeader);
         }
     }
 }

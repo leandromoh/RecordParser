@@ -10,8 +10,8 @@ namespace RecordParser.Extensions.FileReader
     public class VariableLengthReaderOptions
     {
         public bool HasHeader { get; set; }
-        public bool ParallelProcessing { get; set; }
         public bool ContainsQuotedFields { get; set; }
+        public ParallelOptions ParallelOptions { get; set; }
     }
 
     public static class VariableLengthReaderExtensions
@@ -22,13 +22,12 @@ namespace RecordParser.Extensions.FileReader
                             ? () => new RowByQuote(stream, Length, reader.Separator)
                             : () => new RowByLine(stream, Length);
 
-            Func<ReadOnlyMemory<char>, int, T> parser = (memory, i) => reader.Parse(memory.Span);
+            var parser = (ReadOnlyMemory<char> memory, int i) => reader.Parse(memory.Span);
+            var parallelOptions = options.ParallelOptions ?? new();
 
-            ProcessFunc<T> process = options.ParallelProcessing
-                ? GetRecordsParallel
-                : GetRecordsSequential;
-
-            return process(parser, func, options.HasHeader);
+            return parallelOptions.Enabled
+                ? GetRecordsParallel(parser, func, options.HasHeader, parallelOptions)
+                : GetRecordsSequential(parser, func, options.HasHeader);
         }
     }
 }
