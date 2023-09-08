@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net7.0</TargetFrameworks>
     <LangVersion>10</LangVersion>
+	<!--<DefineConstants>TEST_ALL</DefineConstants>-->
   </PropertyGroup>
 
   <ItemGroup>
