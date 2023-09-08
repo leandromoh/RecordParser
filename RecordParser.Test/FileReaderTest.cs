@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace RecordParser.Test
@@ -109,7 +110,7 @@ namespace RecordParser.Test
             var readOptions = new VariableLengthReaderOptions
             {
                 HasHeader = hasHeader,
-                ParallelProcessing = parallelProcessing,
+                ParallelOptions = new() { Enabled = parallelProcessing },
                 ContainsQuotedFields = true,
             };
 
@@ -151,7 +152,7 @@ namespace RecordParser.Test
             var readOptions = new VariableLengthReaderOptions
             {
                 HasHeader = hasHeader,
-                ParallelProcessing = parallelProcessing,
+                ParallelOptions = new() { Enabled = parallelProcessing },
                 ContainsQuotedFields = true,
             };
 
@@ -241,7 +242,7 @@ namespace RecordParser.Test
             var readOptions = new VariableLengthReaderOptions
             {
                 HasHeader = hasHeader,
-                ParallelProcessing = parallelProcessing,
+                ParallelOptions = new() { Enabled = parallelProcessing },
                 ContainsQuotedFields = containgQuote,
             };
 
@@ -348,7 +349,7 @@ namespace RecordParser.Test
 
             var readOptions = new FixedLengthReaderOptions<object>
             {
-                ParallelProcessing = parallelProcessing,
+                ParallelOptions = new() { Enabled = parallelProcessing },
                 Parser = Parse
             };
 

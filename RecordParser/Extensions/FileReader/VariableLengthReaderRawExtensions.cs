@@ -17,12 +17,12 @@ namespace RecordParser.Extensions.FileReader
     public class VariableLengthReaderRawOptions
     {
         public bool HasHeader;
-        public bool ParallelProcessing;
         public bool ContainsQuotedFields;
         public bool Trim;
 
         public int ColumnCount;
         public string Separator;
+        public ParallelOptions ParallelOptions { get; set; }
         public Func<StringPool> StringPoolFactory;
     }
 
@@ -69,7 +69,9 @@ namespace RecordParser.Extensions.FileReader
                            ? () => new RowByQuote(stream, Length, options.Separator)
                            : () => new RowByLine(stream, Length);
 
-            return options.ParallelProcessing
+            var parallelOptions = options.ParallelOptions ?? new();
+
+            return parallelOptions.Enabled
                     ? GetParallel()
                     : GetSequential();
 
@@ -117,7 +119,7 @@ namespace RecordParser.Extensions.FileReader
                         })
                         .ToArray();
 
-                return GetRecordsParallel(Parser, func, options.HasHeader);
+                return GetRecordsParallel(Parser, func, options.HasHeader, parallelOptions);
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
