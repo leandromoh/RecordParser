@@ -47,7 +47,9 @@ namespace RecordParser.Benchmark
             };
         }
 
+#if TEST_ALL
         [Benchmark]
+#endif
         public async Task Write_VariableLength_ManualString()
         {
             using var fileStream = File.Create(GetFileName());
@@ -116,7 +118,9 @@ namespace RecordParser.Benchmark
             }
         }
 
+#if TEST_ALL
         [Benchmark]
+#endif
         public async Task Write_VariableLength_FlatFiles()
         {
             var mapper = DelimitedTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
@@ -161,7 +165,9 @@ namespace RecordParser.Benchmark
             }
         }
 
+#if TEST_ALL
         [Benchmark]
+#endif
         public void Write_VariableLength_CSVHelper()
         {
             using var fileStream = File.Create(GetFileName());
@@ -213,7 +219,9 @@ namespace RecordParser.Benchmark
             new () { id = new Guid("5af00cdf-0758-5317-bcdf-c9a3337cc266"), name = "Bruce Silva", age = 39, birthday = new DateTime(1968, 1, 11), gender = Gender.Female, email = "ta@ovonib.ir", children = true },
         };
 
+#if TEST_ALL
         [Benchmark]
+#endif
         public void Write_VariableLength_SoftCircuitsCsvParser()
         {
             var setting = new CsvSettings

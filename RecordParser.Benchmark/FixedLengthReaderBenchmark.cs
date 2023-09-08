@@ -23,7 +23,9 @@ namespace RecordParser.Benchmark
 
         public string PathSampleDataTXT => Path.Combine(Directory.GetCurrentDirectory(), "SampleData.txt");
 
+#if TEST_ALL
         [Benchmark]
+#endif
         public async Task Read_FixedLength_ManualString()
         {
             using var fileStream = File.OpenRead(PathSampleDataTXT);
@@ -162,7 +164,9 @@ namespace RecordParser.Benchmark
                 throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
+#if TEST_ALL
         [Benchmark]
+#endif
         public async Task Read_FixedLength_FlatFiles()
         {
             var mapper = FixedLengthTypeMapper.Define(() => new PersonSoftCircuitsCsvParser());
