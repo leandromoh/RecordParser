@@ -16,11 +16,20 @@ namespace RecordParser.Test
     {
         private static readonly IEnumerable<int> _repeats = new[] { 0, 1, 3, 1_000, 10_000 };
 
-        public static IEnumerable<object[]> Repeats() => _repeats.Select(x => new object[] { x });
+        public static IEnumerable<object[]> Repeats()
+        {
+            foreach(var repeat in _repeats)
+            {
+                foreach(var b in new[] { true, false})
+                {
+                    yield return new object[] { repeat, b };
+                }
+            }
+        }
 
         [Theory]
         [MemberData(nameof(Repeats))]
-        public void Write_csv_file(int repeat)
+        public void Write_csv_file(int repeat, bool parallel)
         {
             // Arrange
 
@@ -56,7 +65,10 @@ namespace RecordParser.Test
 
             memory.Seek(0, SeekOrigin.Begin);
             using var textReader = new StreamReader(memory);
-            var readOptions = new VariableLengthReaderOptions();
+            var readOptions = new VariableLengthReaderOptions() 
+            { 
+                ParallelOptions = new() { Enabled = parallel } 
+            };
             var reads = reader.GetRecords(textReader, readOptions);
 
             reads.Should().BeEquivalentTo(expectedItems);
@@ -64,7 +76,7 @@ namespace RecordParser.Test
 
         [Theory]
         [MemberData(nameof(Repeats))]
-        public void Write_fixed_length_file(int repeat)
+        public void Write_fixed_length_file(int repeat, bool parallel)
         {
             // Arrange
 
@@ -100,7 +112,8 @@ namespace RecordParser.Test
             using var textReader = new StreamReader(memory);
             var readOptions = new FixedLengthReaderOptions<(string Name, DateTime Birthday, decimal Money, Color Color)>()
             {
-                Parser = reader.Parse
+                Parser = reader.Parse,
+                ParallelOptions = new() { Enabled = parallel }
             };
 
             var reads = textReader.GetRecords(readOptions);

@@ -5,6 +5,7 @@ using Cysharp.Text;
 using FlatFiles;
 using FlatFiles.TypeMapping;
 using RecordParser.Builders.Writer;
+using RecordParser.Extensions.FileWriter;
 using SoftCircuits.CsvParser;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace RecordParser.Benchmark
 {
@@ -80,6 +82,43 @@ namespace RecordParser.Benchmark
 
                     await streamWriter.WriteLineAsync(sb);
                     sb.Clear();
+                }
+            }
+        }
+
+        [Benchmark]
+        [Arguments(false)]
+        [Arguments(true)]
+        public async Task Write_VariableLength_RecordParser_Extension_Parallel(bool parallel)
+        {
+            using var fileStream = File.Create(GetFileName());
+            using var streamWriter = new StreamWriter(fileStream);
+
+            var writer = new VariableLengthWriterSequentialBuilder<Person>()
+                .Map(x => x.id)
+                .Map(x => x.name)
+                .Map(x => x.age)
+                .Map(x => x.birthday)
+                .Map(x => x.gender)
+                .Map(x => x.email)
+                .Map(x => x.children)
+                .Build(";");
+
+            var i = 0;
+
+            Items().Write(streamWriter, writer.TryFormat, new() { Enabled = parallel });
+
+            IEnumerable<Person> Items()
+            {
+                while (true)
+                {
+                    foreach (var person in _people)
+                    {
+                        if (i++ == LimitRecord)
+                            yield break;
+                        else
+                            yield return person;
+                    }
                 }
             }
         }
