@@ -16,9 +16,9 @@ namespace RecordParser.Extensions.FileReader
     {
         private const bool HasHeader = false;
         
-        public static IEnumerable<T> GetRecords<T>(this TextReader stream, FixedLengthReaderOptions<T> options)
+        public static IEnumerable<T> GetRecords<T>(this TextReader reader, FixedLengthReaderOptions<T> options)
         {
-            var func = () => new RowByLine(stream, Length);
+            var func = () => new RowByLine(reader, Length);
             var parser = (ReadOnlyMemory<char> memory, int i) => options.Parser(memory.Span);
             var parallelOptions = options.ParallelOptions ?? new();
 
@@ -28,9 +28,9 @@ namespace RecordParser.Extensions.FileReader
                 : GetRecordsSequential(parser, func, HasHeader);
         }
 
-        public static IEnumerable<ReadOnlyMemory<char>> GetRecords(this TextReader stream)
+        public static IEnumerable<ReadOnlyMemory<char>> GetRecords(this TextReader reader)
         {
-            return GetRecordsSequential((memory, i) => memory, () => new RowByLine(stream, Length), HasHeader);
+            return GetRecordsSequential((memory, i) => memory, () => new RowByLine(reader, Length), HasHeader);
         }
     }
 }

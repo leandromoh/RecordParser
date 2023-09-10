@@ -16,14 +16,15 @@ namespace RecordParser.Extensions.FileReader
 
     public class VariableLengthReaderRawOptions
     {
-        public bool HasHeader;
-        public bool ContainsQuotedFields;
-        public bool Trim;
+        public bool HasHeader { get; set; }
+        public bool ContainsQuotedFields { get; set; }
+        public bool Trim { get; set; }
 
-        public int ColumnCount;
-        public string Separator;
+        public int ColumnCount { get; set; }
+        // TODO change to char
+        public string Separator { get; set; }
         public ParallelOptions ParallelOptions { get; set; }
-        public Func<StringPool> StringPoolFactory;
+        public Func<StringPool> StringPoolFactory { get; set; }
     }
 
     public static class VariableLengthReaderRawExtensions
@@ -79,7 +80,7 @@ namespace RecordParser.Extensions.FileReader
             {
                 var buffer = new string[options.ColumnCount];
                 var stringCache = options.StringPoolFactory?.Invoke();
-                var getField = new Func<int, string>(i => buffer[i]);
+                var getField = (int i) => buffer[i];
 
                 return GetRecordsSequential(Parser, func, options.HasHeader);
 
@@ -102,6 +103,7 @@ namespace RecordParser.Extensions.FileReader
 
             IEnumerable<T> GetParallel()
             {
+                // TODO remove hardcoded
                 var maxParallelism = 20;
                 var funcs = Enumerable
                         .Range(0, maxParallelism)

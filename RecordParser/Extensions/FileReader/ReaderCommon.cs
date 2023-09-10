@@ -17,13 +17,13 @@ namespace RecordParser.Extensions.FileReader
         /// <summary>
         /// Indicates if the original ordering of records must be maintained.
         /// </summary>
-        public bool EnsureOriginalOrdering { get; set; } = true;
+        internal bool EnsureOriginalOrdering { get; set; } = true;
 
         /// <summary>
-        /// Degree of parallelism is the maximum number of concurrently 
-        /// executing tasks that will be used to process the records.
+        /// Maximum number of concurrently executing tasks
+        /// that will be used to process the records.
         /// </summary>
-        public int? DegreeOfParallelism { get; set; }
+        public int? MaxDegreeOfParallelism { get; set; }
 
         /// <summary>
         /// The CancellationToken to associate with the parallel processing.
@@ -47,7 +47,7 @@ namespace RecordParser.Extensions.FileReader
             if (option.EnsureOriginalOrdering)
                 query = query.AsOrdered();
 
-            if (option.DegreeOfParallelism is { } degree)
+            if (option.MaxDegreeOfParallelism is { } degree)
                 query = query.WithDegreeOfParallelism(degree);
 
             if (option.CancellationToken is { } token)
