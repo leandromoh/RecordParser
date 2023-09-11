@@ -3,7 +3,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace RecordParser.Extensions.FileWriter
 {
@@ -32,6 +31,13 @@ namespace RecordParser.Extensions.FileWriter
             }
         }
 
+        private class BufferContext
+        {
+            public int pow;
+            public char[] buffer;
+            public object lockObj;
+        }
+
         private static void WriteParallel<T>(IEnumerable<T> items, TextWriter textWriter, TryFormat<T> tryFormat, ParallelOptions options)
         {
             var parallelism = 20; // TODO remove hardcoded
@@ -39,9 +45,12 @@ namespace RecordParser.Extensions.FileWriter
 
             var buffers = Enumerable
                 .Range(0, parallelism)
-                .Select(_ => (pow: initialPow,
-                              buffer: ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)),
-                              lockObj: new object()))
+                .Select(_ => new BufferContext
+                {
+                    pow = initialPow,
+                    buffer = ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)),
+                    lockObj = new object()
+                })
                 .ToArray();
 
             try
@@ -52,8 +61,6 @@ namespace RecordParser.Extensions.FileWriter
 
                     lock (x.lockObj)
                     {
-                        x = buffers[i % parallelism];
-
                     retry:
 
                         if (tryFormat(item, x.buffer, out var charsWritten))
@@ -68,8 +75,6 @@ namespace RecordParser.Extensions.FileWriter
                             ArrayPool<char>.Shared.Return(x.buffer);
                             x.pow++;
                             x.buffer = ArrayPool<char>.Shared.Rent((int)Math.Pow(2, x.pow));
-
-                            buffers[i % parallelism] = x;
                             goto retry;
                         }
                     }
