@@ -8,13 +8,14 @@ using RecordParser.Builders.Writer;
 using RecordParser.Extensions.FileWriter;
 using SoftCircuits.CsvParser;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using System.Linq;
 
 namespace RecordParser.Benchmark
 {
@@ -87,9 +88,10 @@ namespace RecordParser.Benchmark
         }
 
         [Benchmark]
-        [Arguments(false)]
-        [Arguments(true)]
-        public async Task Write_VariableLength_RecordParser_Extension_Parallel(bool parallel)
+        [Arguments(false, null)]
+        [Arguments(true, true)]
+        [Arguments(true, false)]
+        public async Task Write_VariableLength_RecordParser_Extension(bool parallel, bool? ordered)
         {
             using var fileStream = File.Create(GetFileName());
             using var streamWriter = new StreamWriter(fileStream);
@@ -106,7 +108,11 @@ namespace RecordParser.Benchmark
 
             var i = 0;
 
-            Items().Write(streamWriter, writer.TryFormat, new() { Enabled = parallel });
+            Items().Write(streamWriter, writer.TryFormat, new() 
+            { 
+                Enabled = parallel, 
+                EnsureOriginalOrdering = ordered ?? true,
+            });
 
             IEnumerable<Person> Items()
             {
@@ -283,7 +289,9 @@ namespace RecordParser.Benchmark
             }
         }
 
+#if TEST_ALL
         [Benchmark]
+#endif
         public async Task Write_VariableLength_ZString()
         {
             using var fileStream = File.Create(GetFileName());

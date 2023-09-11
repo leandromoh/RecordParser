@@ -17,7 +17,7 @@ namespace RecordParser.Extensions.FileReader
         /// <summary>
         /// Indicates if the original ordering of records must be maintained.
         /// </summary>
-        internal bool EnsureOriginalOrdering { get; set; } = true;
+        public bool EnsureOriginalOrdering { get; set; } = true;
 
         /// <summary>
         /// Maximum number of concurrently executing tasks
@@ -40,7 +40,7 @@ namespace RecordParser.Extensions.FileReader
             ? source.Skip(1)
             : source;
 
-        private static ParallelQuery<T> AsParallel<T>(this IEnumerable<T> source, ParallelOptions option)
+        public static ParallelQuery<T> AsParallel<T>(this IEnumerable<T> source, ParallelOptions option)
         {
             var query = source.AsParallel();
 

@@ -23,14 +23,19 @@ namespace RecordParser.Extensions.FileWriter
         public static void Write<T>(this IEnumerable<T> items, TextWriter textWriter, TryFormat<T> tryFormat, ParallelOptions options)
         {
             if (options.Enabled)
+            {
                 WriteParallel(items, textWriter, tryFormat, options);
+            }
             else
+            {
                 WriteSequential(items, textWriter, tryFormat);
+            }
         }
 
         private static void WriteParallel<T>(IEnumerable<T> items, TextWriter textWriter, TryFormat<T> tryFormat, ParallelOptions options)
         {
-            var parallelism = 4;
+            var parallelism = 20; // TODO remove hardcoded
+            var textWriterLock = new object();
 
             var buffers = Enumerable
                 .Range(0, parallelism)
@@ -39,18 +44,9 @@ namespace RecordParser.Extensions.FileWriter
                               lockObj: new object()))
                 .ToArray();
 
-            var textWriterLock = new object();
-            var parallelOptions = new System.Threading.Tasks.ParallelOptions();
-            
-            if (options.MaxDegreeOfParallelism is { } degree)
-                parallelOptions.MaxDegreeOfParallelism = degree;
-
-            if (options.CancellationToken is { } cancellationToken)
-                parallelOptions.CancellationToken = cancellationToken;
-
             try
             {
-                Parallel.ForEach(items, parallelOptions, (item, _, i) =>
+                var xs = items.AsParallel(options).Select((item, i) =>
                 {
                     var x = buffers[i % parallelism];
 
@@ -77,7 +73,13 @@ namespace RecordParser.Extensions.FileWriter
                             goto retry;
                         }
                     }
+
+                    // dummy value
+                    return (string)null;
                 });
+
+                // dummy iteration to force evaluation
+                foreach (var _ in xs) ; 
             }
             finally
             {
