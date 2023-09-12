@@ -1,5 +1,6 @@
 ﻿using AutoFixture;
 using FluentAssertions;
+using MoreLinq;
 using RecordParser.Builders.Reader;
 using RecordParser.Builders.Writer;
 using RecordParser.Extensions.FileReader;
@@ -18,25 +19,30 @@ namespace RecordParser.Test
 
         public static IEnumerable<object[]> Repeats()
         {
-            foreach(var repeat in _repeats)
+            foreach (var repeat in _repeats)
             {
-                foreach(var b in new[] { true, false})
+                foreach (var parallel in new[] { true, false })
                 {
-                    yield return new object[] { repeat, b };
+                    foreach (var ordered in new[] { true, false })
+                    {
+                        yield return new object[] { repeat, parallel, ordered };
+                    }
                 }
             }
         }
 
         [Theory]
         [MemberData(nameof(Repeats))]
-        public void Write_csv_file(int repeat, bool parallel)
+        public void Write_csv_file(int repeat, bool parallel, bool ordered)
         {
             // Arrange
 
             const string separator = ";";
 
             var expectedItems = new Fixture()
-               .CreateMany<(string Name, DateTime Birthday, decimal Money, Color Color)>(repeat)
+               .CreateMany<(string Name, DateTime Birthday, decimal Money, Color Color)>(1_000)
+               .Repeat()
+               .Take(repeat)
                .ToList();
 
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
@@ -58,25 +64,34 @@ namespace RecordParser.Test
             using var memory = new MemoryStream();
             using var textWriter = new StreamWriter(memory);
 
-            expectedItems.Write(textWriter, writer.TryFormat);
+            var writeOptions = new ParallelOptions()
+            {
+                Enabled = parallel,
+                EnsureOriginalOrdering = ordered,
+            };
+
+            textWriter.Write(expectedItems, writer.TryFormat, writeOptions);
             textWriter.Flush();
 
             // Assert
 
             memory.Seek(0, SeekOrigin.Begin);
             using var textReader = new StreamReader(memory);
-            var readOptions = new VariableLengthReaderOptions() 
-            { 
-                ParallelOptions = new() { Enabled = parallel } 
+            var readOptions = new VariableLengthReaderOptions()
+            {
+                ParallelOptions = new() { Enabled = parallel }
             };
+
             var reads = reader.GetRecords(textReader, readOptions);
 
             reads.Should().BeEquivalentTo(expectedItems);
         }
 
-        [Theory]
-        [MemberData(nameof(Repeats))]
-        public void Write_fixed_length_file(int repeat, bool parallel)
+        // the scenario is covered in the above test, because test dont matters what
+        // parser is used, since it just receives a delegate
+        //[Theory]
+        //[MemberData(nameof(Repeats))]
+        public void Write_fixed_length_file(int repeat, bool parallel, bool ordered)
         {
             // Arrange
 
@@ -103,7 +118,13 @@ namespace RecordParser.Test
             using var memory = new MemoryStream();
             using var textWriter = new StreamWriter(memory);
 
-            expectedItems.Write(textWriter, writer.TryFormat);
+            var writeOptions = new ParallelOptions()
+            {
+                Enabled = parallel,
+                EnsureOriginalOrdering = ordered
+            };
+
+            textWriter.Write(expectedItems, writer.TryFormat, writeOptions);
             textWriter.Flush();
 
             // Assert

@@ -108,7 +108,7 @@ namespace RecordParser.Benchmark
 
             var i = 0;
 
-            Items().Write(streamWriter, writer.TryFormat, new() 
+            streamWriter.Write(Items(), writer.TryFormat, new() 
             { 
                 Enabled = parallel, 
                 EnsureOriginalOrdering = ordered ?? true,

@@ -14,20 +14,20 @@ namespace RecordParser.Extensions.FileWriter
     {
         private const int initialPow = 10;
 
-        public static void Write<T>(this IEnumerable<T> items, TextWriter textWriter, TryFormat<T> tryFormat)
+        public static void Write<T>(this TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat)
         {
-            items.Write(textWriter, tryFormat, new ParallelOptions());
+            Write(textWriter, items, tryFormat, new ParallelOptions());
         }
 
-        public static void Write<T>(this IEnumerable<T> items, TextWriter textWriter, TryFormat<T> tryFormat, ParallelOptions options)
+        public static void Write<T>(this TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelOptions options)
         {
             if (options.Enabled)
             {
-                WriteParallel(items, textWriter, tryFormat, options);
+                WriteParallel(textWriter, items, tryFormat, options);
             }
             else
             {
-                WriteSequential(items, textWriter, tryFormat);
+                WriteSequential(textWriter, items, tryFormat);
             }
         }
 
@@ -38,7 +38,7 @@ namespace RecordParser.Extensions.FileWriter
             public object lockObj;
         }
 
-        private static void WriteParallel<T>(IEnumerable<T> items, TextWriter textWriter, TryFormat<T> tryFormat, ParallelOptions options)
+        private static void WriteParallel<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelOptions options)
         {
             var parallelism = 20; // TODO remove hardcoded
             var textWriterLock = new object();
@@ -93,7 +93,7 @@ namespace RecordParser.Extensions.FileWriter
             }
         }
 
-        private static void WriteSequential<T>(IEnumerable<T> items, TextWriter textWriter, TryFormat<T> tryFormat)
+        private static void WriteSequential<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat)
         {
             var charsWritten = 0;
             var pow = initialPow;
