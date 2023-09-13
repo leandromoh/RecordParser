@@ -12,6 +12,7 @@ namespace RecordParser.Extensions.FileReader
         public bool HasHeader { get; set; }
         public bool ContainsQuotedFields { get; set; }
         public ParallelOptions ParallelOptions { get; set; }
+        // TODO create ParallelOptionsSafe
     }
 
     public static class VariableLengthReaderExtensions

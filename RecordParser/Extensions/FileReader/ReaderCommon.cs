@@ -20,10 +20,10 @@ namespace RecordParser.Extensions.FileReader
         public bool EnsureOriginalOrdering { get; set; } = true;
 
         /// <summary>
-        /// Degree of parallelism is the maximum number of concurrently 
-        /// executing tasks that will be used to process the records.
+        /// Maximum number of concurrently executing tasks
+        /// that will be used to process the records.
         /// </summary>
-        public int? DegreeOfParallelism { get; set; }
+        public int? MaxDegreeOfParallelism { get; set; }
 
         /// <summary>
         /// The CancellationToken to associate with the parallel processing.
@@ -40,14 +40,14 @@ namespace RecordParser.Extensions.FileReader
             ? source.Skip(1)
             : source;
 
-        private static ParallelQuery<T> AsParallel<T>(this IEnumerable<T> source, ParallelOptions option)
+        public static ParallelQuery<T> AsParallel<T>(this IEnumerable<T> source, ParallelOptions option)
         {
             var query = source.AsParallel();
 
             if (option.EnsureOriginalOrdering)
                 query = query.AsOrdered();
 
-            if (option.DegreeOfParallelism is { } degree)
+            if (option.MaxDegreeOfParallelism is { } degree)
                 query = query.WithDegreeOfParallelism(degree);
 
             if (option.CancellationToken is { } token)

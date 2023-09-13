@@ -1,6 +1,5 @@
 ﻿using RecordParser.Engines.Reader;
 using System;
-using System.Runtime.CompilerServices;
 
 namespace RecordParser.Parsers
 {
