@@ -115,7 +115,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = parser.GetRecords(streamReader, readOptions);
+            var items = streamReader.GetRecords(parser, readOptions);
 
             // Assert
 
@@ -157,7 +157,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = parser.GetRecords(streamReader, readOptions);
+            var items = streamReader.GetRecords(parser, readOptions);
 
             // Assert
 
@@ -247,7 +247,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = parser.GetRecords(streamReader, readOptions);
+            var items = streamReader.GetRecords(parser, readOptions);
 
             // Assert
 

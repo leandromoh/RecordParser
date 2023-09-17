@@ -82,7 +82,7 @@ namespace RecordParser.Test
                 ParallelOptions = new() { Enabled = parallel }
             };
 
-            var reads = reader.GetRecords(textReader, readOptions);
+            var reads = textReader.GetRecords(reader, readOptions);
 
             reads.Should().BeEquivalentTo(expectedItems);
         }

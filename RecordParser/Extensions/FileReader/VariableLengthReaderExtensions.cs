@@ -17,7 +17,7 @@ namespace RecordParser.Extensions.FileReader
 
     public static class VariableLengthReaderExtensions
     {
-        public static IEnumerable<T> GetRecords<T>(this IVariableLengthReader<T> reader, TextReader stream, VariableLengthReaderOptions options)
+        public static IEnumerable<T> GetRecords<T>(this TextReader stream, IVariableLengthReader<T> reader, VariableLengthReaderOptions options)
         {
             Func<IFL> func = options.ContainsQuotedFields
                             ? () => new RowByQuote(stream, Length, reader.Separator)
