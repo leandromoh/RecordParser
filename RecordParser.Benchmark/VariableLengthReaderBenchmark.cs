@@ -108,7 +108,7 @@ namespace RecordParser.Benchmark
                 ContainsQuotedFields = quoted,
             };
 
-            var items = parser.GetRecords(streamReader, readOptions);
+            var items = streamReader.GetRecords(parser, readOptions);
 
             var i = 0;
             foreach (var person in items)
@@ -151,7 +151,7 @@ namespace RecordParser.Benchmark
                 ContainsQuotedFields = quoted,
             };
 
-            var items = parser.GetRecords(streamReader, readOptions);
+            var items = streamReader.GetRecords(parser, readOptions);
 
             var i = 0;
             foreach (var person in items)

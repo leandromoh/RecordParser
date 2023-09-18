@@ -112,6 +112,7 @@ namespace RecordParser.Benchmark
             { 
                 Enabled = parallel, 
                 EnsureOriginalOrdering = ordered ?? true,
+                MaxDegreeOfParallelism = 4
             });
 
             IEnumerable<Person> Items()
