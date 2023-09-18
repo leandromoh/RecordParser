@@ -1,3 +1,12 @@
+## version 1.4.0
+- support dotnet 7 (#52)
+- support dotnet 6 (#47)
+- support to write fixed and variable length files, using sequential or parallel processing (#66)
+- support to read fixed and variable length files, using sequential or parallel processing (#51)
+- skip empty row when reading file (#56)
+- use new Enum.Parse overload for span (dotnet 6 optimization)
+- bugfix/allow TextFindHelper get current index more than once (#46)
+
 ## version 1.3.0
 
 - native enum methods as fallback for read/write (#42)
