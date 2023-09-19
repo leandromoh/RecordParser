@@ -1,9 +1,10 @@
-﻿using System;
+﻿using RecordParser.Extensions.FileReader;
+using System;
 using System.Buffers;
 
 namespace RecordParser.Engines.Reader
 {
-    internal ref struct TextFindHelper
+    public ref struct TextFindHelper
     {
         private readonly ReadOnlySpan<char> line;
         private readonly string delimiter;
@@ -16,6 +17,8 @@ namespace RecordParser.Engines.Reader
 
         private char[] buffer;
 
+        private Span<(int start, int count, bool quoted)> fields;
+
         public TextFindHelper(ReadOnlySpan<char> source, string delimiter, (char ch, string str) quote)
         {
             this.line = source;
@@ -27,6 +30,7 @@ namespace RecordParser.Engines.Reader
             currentIndex = -1;
             currentValue = default;
             buffer = null;
+            fields = new (int start, int count, bool quoted)[50];
         }
 
         public void Dispose()
@@ -36,6 +40,17 @@ namespace RecordParser.Engines.Reader
                 ArrayPool<char>.Shared.Return(buffer);
                 buffer = null;
             }
+        }
+
+        public ReadOnlySpan<char> GetField(int index)
+        {
+            while (currentIndex < index)
+            {
+                GetValue(currentIndex + 1);
+            }
+
+            var x = fields[index];
+            return line.Slice(x.start, x.count);
         }
 
         public ReadOnlySpan<char> GetValue(int index)
@@ -71,7 +86,9 @@ namespace RecordParser.Engines.Reader
 
             if (isQuotedField)
             {
-                return ParseQuotedChuck(match);
+                var value = ParseQuotedChuck(match);
+                fields[currentIndex] = (scanned, position, true);
+                return value;
             }
 
             position = unlook.IndexOf(delimiter);
@@ -80,6 +97,7 @@ namespace RecordParser.Engines.Reader
                 position = line.Length - scanned;
             }
 
+            fields[currentIndex] = (scanned, position, false);
             return line.Slice(scanned, position);
         }
 
