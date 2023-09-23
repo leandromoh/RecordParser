@@ -50,7 +50,10 @@ namespace RecordParser.Engines.Reader
             }
 
             var x = fields[index];
-            return line.Slice(x.start, x.count);
+            if (x.quoted)
+                throw new Exception("TODO");
+            else
+                return line.Slice(x.start, x.count);
         }
 
         public ReadOnlySpan<char> GetValue(int index)
