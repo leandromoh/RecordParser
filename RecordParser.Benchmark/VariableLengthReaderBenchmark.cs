@@ -180,7 +180,7 @@ namespace RecordParser.Benchmark
                 ContainsQuotedFields = quoted,
 
                 ColumnCount = 8,
-                Separator = ",",
+                Separator = ',',
                 StringPoolFactory = () => new InternPool().Intern
             };
 

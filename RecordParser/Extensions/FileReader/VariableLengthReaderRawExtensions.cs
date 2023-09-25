@@ -22,7 +22,7 @@ namespace RecordParser.Extensions.FileReader
 
         public int ColumnCount { get; set; }
         // TODO change to char
-        public string Separator { get; set; }
+        public char Separator { get; set; }
         public ParallelOptions ParallelOptions { get; set; }
         public Func<StringPool> StringPoolFactory { get; set; }
     }
@@ -65,9 +65,10 @@ namespace RecordParser.Extensions.FileReader
         public static IEnumerable<T> GetRecordsRaw<T>(this TextReader stream, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> reader)
         {
             var get = BuildRaw(options.ColumnCount, options.StringPoolFactory != null, options.Trim);
+            var sep = options.Separator.ToString();
 
             Func<IFL> func = options.ContainsQuotedFields
-                           ? () => new RowByQuote(stream, Length, options.Separator)
+                           ? () => new RowByQuote(stream, Length, sep)
                            : () => new RowByLine(stream, Length);
 
             var parallelOptions = options.ParallelOptions ?? new();
@@ -86,7 +87,7 @@ namespace RecordParser.Extensions.FileReader
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    var finder = new TextFindHelper(memory.Span, options.Separator, QuoteHelper.Quote);
+                    var finder = new TextFindHelper(memory.Span, sep, QuoteHelper.Quote);
 
                     try
                     {
@@ -125,7 +126,7 @@ namespace RecordParser.Extensions.FileReader
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    var finder = new TextFindHelper(memory.Span, options.Separator, QuoteHelper.Quote);
+                    var finder = new TextFindHelper(memory.Span, sep, QuoteHelper.Quote);
 
                     try
                     {
