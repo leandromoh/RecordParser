@@ -7,10 +7,12 @@ using Cursively;
 using FlatFiles;
 using FlatFiles.TypeMapping;
 using RecordParser.Builders.Reader;
+using RecordParser.Engines.Reader;
 using RecordParser.Extensions.FileReader;
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TinyCsvParser;
@@ -79,7 +81,7 @@ namespace RecordParser.Benchmark
             await ProcessCSVFile(parser.Parse);
         }
 
-        [Benchmark]
+        //   [Benchmark]
         [Arguments(false, true)]
         [Arguments(true, true)]
         public void Read_VariableLength_FullQuoted_RecordParser_Parallel(bool parallel, bool quoted)
@@ -120,7 +122,7 @@ namespace RecordParser.Benchmark
                 throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
-        [Benchmark]
+        //   [Benchmark]
         [Arguments(true, true)]
         [Arguments(true, false)]
         [Arguments(false, true)]
@@ -163,7 +165,7 @@ namespace RecordParser.Benchmark
                 throw new Exception($"read {i} records but expected {LimitRecord}");
         }
 
-        [Benchmark]
+        //   [Benchmark]
         [Arguments(true, true)]
         [Arguments(true, false)]
         [Arguments(false, true)]
@@ -206,6 +208,110 @@ namespace RecordParser.Benchmark
                     gender = Enum.Parse<Gender>(getColumnValue(4)),
                     email = getColumnValue(5).Trim(),
                     children = bool.Parse(getColumnValue(7))
+                };
+            }
+        }
+
+        [Benchmark]
+        [Arguments(true, true)]
+        [Arguments(true, false)]
+        [Arguments(false, true)]
+        [Arguments(false, false)]
+        public void Read_VariableLength_RecordParser_Fast(bool parallel, bool quoted)
+        {
+            using var fileStream = File.OpenRead(PathSampleDataCSV);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                HasHeader = false,
+                ParallelOptions = new() { Enabled = parallel },
+                ContainsQuotedFields = quoted,
+            };
+
+            var caches = Enumerable.Range(0, 10).Select(_ => new InternPool()).ToArray();
+            var cache2 = new InternPool();
+
+            var items = streamReader.GetRecordsFast(readOptions, ",", PersonFactory);
+
+            var i = 0;
+            foreach (var person in items)
+            {
+                if (i++ == LimitRecord) return;
+            }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
+
+            Person PersonFactory(TextFindHelper finder, int index)
+            {
+                //if (parallel is false)
+                //{
+                return Parser(finder);
+                //}
+
+                //var cache = caches[index % caches.Length];
+                //lock (cache)
+                //{
+                //    return Parser(finder, cache);
+                //}
+
+                static Person Parser(in TextFindHelper finder)
+                {
+                    return new Person()
+                    {
+                        id = Guid.Parse(finder.GetField(0)),
+                        name = finder.GetField(1).Trim().ToString(),
+                        age = int.Parse(finder.GetField(2)),
+                        birthday = DateTime.Parse(finder.GetField(3), CultureInfo.InvariantCulture),
+                        gender = Enum.Parse<Gender>(finder.GetField(4)),
+                        email = finder.GetField(5).Trim().ToString(),
+                        children = bool.Parse(finder.GetField(7))
+                    };
+                }
+            }
+        }
+
+        [Benchmark]
+        [Arguments(true, true)]
+        [Arguments(true, false)]
+        [Arguments(false, true)]
+        [Arguments(false, false)]
+        public void Read_VariableLength_RecordParser_Fast_2(bool parallel, bool quoted)
+        {
+            using var fileStream = File.OpenRead(PathSampleDataCSV);
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
+
+            var readOptions = new VariableLengthReaderRawOptions
+            {
+                HasHeader = false,
+                ParallelOptions = new() { Enabled = parallel },
+                ContainsQuotedFields = quoted,
+                ColumnCount = 8
+            };
+
+            var items = streamReader.GetRecordsFast2(readOptions, ",", PersonFactory);
+
+            var i = 0;
+            foreach (var person in items)
+            {
+                if (i++ == LimitRecord) return;
+            }
+
+            if (i != LimitRecord)
+                throw new Exception($"read {i} records but expected {LimitRecord}");
+
+            Person PersonFactory(Func<int, string> GetField)
+            {
+                return new Person()
+                {
+                    id = Guid.Parse(GetField(0)),
+                    name = GetField(1),
+                    age = int.Parse(GetField(2)),
+                    birthday = DateTime.Parse(GetField(3), CultureInfo.InvariantCulture),
+                    gender = Enum.Parse<Gender>(GetField(4)),
+                    email = GetField(5),
+                    children = bool.Parse(GetField(7))
                 };
             }
         }
