@@ -16,14 +16,43 @@ namespace RecordParser.Extensions.FileReader
 
     public class VariableLengthReaderRawOptions
     {
-        public bool HasHeader { get; set; }
-        public bool ContainsQuotedFields { get; set; }
-        public bool Trim { get; set; }
+        /// <summary>
+        /// Indicates if there is a header record present in the reader's content.
+        /// If true, the first record (the header) will be skipped.
+        /// Default value is false, so nothing is skipped by default.
+        /// </summary>
+        public bool HasHeader { get; set; } = false;
 
+        /// <summary>
+        /// Indicates if there are any quoted field in the reader's content.
+        /// Default value is true.
+        /// </summary>
+        public bool ContainsQuotedFields { get; set; } = true;
+
+        /// <summary>
+        /// Indicates if field's values should be trimmed.
+        /// Default value is false.
+        /// </summary>
+        public bool Trim { get; set; } = false;
+
+        /// <summary>
+        /// Indicates how many columns each record has.
+        /// </summary>
         public int ColumnCount { get; set; }
-        // TODO change to char
+
+        /// <summary>
+        /// The character that delimits columns and separate values.
+        /// </summary>
         public char Separator { get; set; }
+
+        /// <summary>
+        /// Options to configure parallel processing
+        /// </summary>
         public ParallelOptions ParallelOptions { get; set; }
+
+        /// <summary>
+        /// Factory for string pool instances.
+        /// </summary>
         public Func<StringPool> StringPoolFactory { get; set; }
     }
 
@@ -62,6 +91,17 @@ namespace RecordParser.Extensions.FileReader
             return final.Compile();
         }
 
+        /// <summary>
+        /// Reads the records from a variable length file then parses each record
+        /// to object by accessing each field's value by index.
+        /// </summary>
+        /// <typeparam name="T">type of objects read from file</typeparam>
+        /// <param name="stream">variable length file</param>
+        /// <param name="options">options to configure the parsing</param>
+        /// <param name="reader">parser that receives a function that returns field's value by index</param>
+        /// <returns>
+        /// Sequence of records from the file
+        /// </returns>
         public static IEnumerable<T> GetRecordsRaw<T>(this TextReader stream, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> reader)
         {
             var get = BuildRaw(options.ColumnCount, options.StringPoolFactory != null, options.Trim);

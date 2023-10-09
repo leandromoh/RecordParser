@@ -10,25 +10,29 @@ namespace RecordParser.Extensions.FileReader
     {
         /// <summary>
         /// Indicates if the processing should be performed 
-        /// in a parallel instead of sequential.
+        /// in parallel instead of sequential.
+        /// Default value is true.
         /// </summary>
         public bool Enabled { get; set; } = true;
 
         /// <summary>
         /// Indicates if the original ordering of records must be maintained.
+        /// Default value is true.
         /// </summary>
         public bool EnsureOriginalOrdering { get; set; } = true;
 
         /// <summary>
         /// Maximum number of concurrently executing tasks
         /// that will be used to process the records.
+        /// Default value is null.
         /// </summary>
-        public int? MaxDegreeOfParallelism { get; set; }
+        public int? MaxDegreeOfParallelism { get; set; } = null;
 
         /// <summary>
         /// The CancellationToken to associate with the parallel processing.
+        /// Default value is null.
         /// </summary>
-        public CancellationToken? CancellationToken { get; set; }
+        public CancellationToken? CancellationToken { get; set; } = null;
     }
 
     internal static class ReaderCommon
