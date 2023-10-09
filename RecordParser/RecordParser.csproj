@@ -23,6 +23,7 @@
 
   <PropertyGroup>
       <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+      <NoWarn>1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,6 +35,6 @@
 		( '$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0') AND
 		( '$(Platform)' == 'AnyCPU') ">
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	</PropertyGroup>
+  </PropertyGroup>
 
 </Project>
