@@ -94,7 +94,7 @@ namespace RecordParser.Benchmark
 
             var readOptions = new FixedLengthReaderOptions<Person>
             {
-                ParallelOptions = new () { Enabled = parallel },
+                ParallelismOptions = new () { Enabled = parallel },
                 Parser = parser.Parse,
             };
 

@@ -49,7 +49,7 @@ namespace RecordParser.Extensions.FileReader
         /// <summary>
         /// Options to configure parallel processing
         /// </summary>
-        public ParallelOptions ParallelOptions { get; set; }
+        public ParallelismOptions ParallelismOptions { get; set; }
 
         /// <summary>
         /// Factory for string pool instances.
@@ -112,7 +112,7 @@ namespace RecordParser.Extensions.FileReader
                            ? () => new RowByQuote(reader, Length, sep)
                            : () => new RowByLine(reader, Length);
 
-            var parallelOptions = options.ParallelOptions ?? new();
+            var parallelOptions = options.ParallelismOptions ?? new();
 
             return parallelOptions.Enabled
                     ? GetParallel()

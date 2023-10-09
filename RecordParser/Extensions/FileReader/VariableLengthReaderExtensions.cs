@@ -24,7 +24,7 @@ namespace RecordParser.Extensions.FileReader
         /// <summary>
         /// Options to configure parallel processing
         /// </summary>
-        public ParallelOptions ParallelOptions { get; set; }
+        public ParallelismOptions ParallelismOptions { get; set; }
     }
 
     public static class VariableLengthReaderExtensions
@@ -47,7 +47,7 @@ namespace RecordParser.Extensions.FileReader
                             : () => new RowByLine(reader, Length);
 
             var selector = (ReadOnlyMemory<char> memory, int i) => parser.Parse(memory.Span);
-            var parallelOptions = options.ParallelOptions ?? new();
+            var parallelOptions = options.ParallelismOptions ?? new();
 
             return parallelOptions.Enabled
                 ? GetRecordsParallel(selector, func, options.HasHeader, parallelOptions)

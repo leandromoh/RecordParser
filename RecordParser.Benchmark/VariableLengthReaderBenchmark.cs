@@ -104,7 +104,7 @@ namespace RecordParser.Benchmark
             var readOptions = new VariableLengthReaderOptions
             {
                 HasHeader = false,
-                ParallelOptions = new() { Enabled = parallel },
+                ParallelismOptions = new() { Enabled = parallel },
                 ContainsQuotedFields = quoted,
             };
 
@@ -147,7 +147,7 @@ namespace RecordParser.Benchmark
             var readOptions = new VariableLengthReaderOptions
             {
                 HasHeader = false,
-                ParallelOptions = new() { Enabled = parallel },
+                ParallelismOptions = new() { Enabled = parallel },
                 ContainsQuotedFields = quoted,
             };
 
@@ -176,7 +176,7 @@ namespace RecordParser.Benchmark
             var readOptions = new VariableLengthReaderRawOptions
             {
                 HasHeader = false,
-                ParallelOptions = new() { Enabled = parallel },
+                ParallelismOptions = new() { Enabled = parallel },
                 ContainsQuotedFields = quoted,
 
                 ColumnCount = 8,

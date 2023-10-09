@@ -11,7 +11,7 @@ namespace RecordParser.Extensions.FileReader
         /// <summary>
         /// Options to configure parallel processing
         /// </summary>
-        public ParallelOptions ParallelOptions { get; set; }
+        public ParallelismOptions ParallelismOptions { get; set; }
         /// <summary>
         /// Function which parses text into object
         /// </summary>
@@ -36,7 +36,7 @@ namespace RecordParser.Extensions.FileReader
         {
             var func = () => new RowByLine(reader, Length);
             var parser = (ReadOnlyMemory<char> memory, int i) => options.Parser(memory.Span);
-            var parallelOptions = options.ParallelOptions ?? new();
+            var parallelOptions = options.ParallelismOptions ?? new();
 
             return
                 parallelOptions.Enabled

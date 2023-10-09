@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace RecordParser.Extensions.FileReader
 {
-    public class ParallelOptions
+    public class ParallelismOptions
     {
         /// <summary>
         /// Indicates if the processing should be performed 
@@ -44,7 +44,7 @@ namespace RecordParser.Extensions.FileReader
             ? source.Skip(1)
             : source;
 
-        public static ParallelQuery<T> AsParallel<T>(this IEnumerable<T> source, ParallelOptions option)
+        public static ParallelQuery<T> AsParallel<T>(this IEnumerable<T> source, ParallelismOptions option)
         {
             var query = source.AsParallel();
 
@@ -64,7 +64,7 @@ namespace RecordParser.Extensions.FileReader
             Func<ReadOnlyMemory<char>, int, T> reader,
             Func<IFL> getItems,
             bool hasHeader,
-            ParallelOptions parallelOptions)
+            ParallelismOptions parallelOptions)
         {
             using var items = getItems();
 
