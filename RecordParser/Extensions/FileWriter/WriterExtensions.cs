@@ -14,7 +14,7 @@ namespace RecordParser.Extensions.FileWriter
     /// <typeparam name="T">Instance type</typeparam>
     /// <param name="instance">Instance that will be turn into text</param>
     /// <param name="destination">Destination buffer</param>
-    /// <param name="charsWritten">Count of chars written</param>
+    /// <param name="charsWritten">Count of chars written into <paramref name="destination"/>.</param>
     /// <returns>
     /// True if the writting was succeeded, otherwise false.
     /// </returns>

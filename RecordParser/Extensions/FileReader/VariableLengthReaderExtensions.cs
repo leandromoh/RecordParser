@@ -29,15 +29,15 @@ namespace RecordParser.Extensions.FileReader
     public static class VariableLengthReaderExtensions
     {
         /// <summary>
-        /// Reads the records from a variable length file then parses each record
-        /// from text to object
+        /// Reads the records from a variable length file, 
+        /// then parses the records into objects.
         /// </summary>
         /// <typeparam name="T">type of objects read from file</typeparam>
         /// <param name="stream">variable length file</param>
         /// <param name="reader">parse reader</param>
         /// <param name="options">options to configure the parsing</param>
         /// <returns>
-        /// Sequence of records from the file
+        /// Sequence of records.
         /// </returns>
         public static IEnumerable<T> GetRecords<T>(this TextReader stream, IVariableLengthReader<T> reader, VariableLengthReaderOptions options)
         {

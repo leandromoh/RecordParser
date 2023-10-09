@@ -92,7 +92,7 @@ namespace RecordParser.Extensions.FileReader
         }
 
         /// <summary>
-        /// Reads the records from a variable length file then parses each record
+        /// Reads the records from a variable length file, then parses each record
         /// to object by accessing each field's value by index.
         /// </summary>
         /// <typeparam name="T">type of objects read from file</typeparam>
@@ -100,7 +100,7 @@ namespace RecordParser.Extensions.FileReader
         /// <param name="options">options to configure the parsing</param>
         /// <param name="reader">parser that receives a function that returns field's value by index</param>
         /// <returns>
-        /// Sequence of records from the file
+        /// Sequence of records.
         /// </returns>
         public static IEnumerable<T> GetRecordsRaw<T>(this TextReader stream, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> reader)
         {

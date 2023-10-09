@@ -13,7 +13,7 @@ namespace RecordParser.Extensions.FileReader
         /// </summary>
         public ParallelOptions ParallelOptions { get; set; }
         /// <summary>
-        /// Parse function which transforms text to object
+        /// Function which parses text into object
         /// </summary>
         public FuncSpanT<T> Parser { get; set; }
     }
@@ -23,8 +23,8 @@ namespace RecordParser.Extensions.FileReader
         private const bool HasHeader = false;
 
         /// <summary>
-        /// Reads the records (i.e., lines) from a fixed length file then parses each record
-        /// from text to object.
+        /// Reads the records (i.e., lines) from a fixed length file, 
+        /// then parses the records into objects.
         /// </summary>
         /// <typeparam name="T">type of objects read from file</typeparam>
         /// <param name="reader">fixed length file</param>
@@ -46,7 +46,7 @@ namespace RecordParser.Extensions.FileReader
 
         /// <summary>
         /// Reads the records (i.e., lines) from a fixed length file.
-        /// The records are returned in the order they are in the file
+        /// The records are returned in the order they are in the file.
         /// </summary>
         /// <param name="reader">fixed length file</param>
         /// <returns>
@@ -55,7 +55,7 @@ namespace RecordParser.Extensions.FileReader
         /// <remarks>
         /// The ReadOnlyMemory instances representing the records points to regions of the internal buffer used to read the file.
         /// Store ReadOnlyMemory values will not hold record's values since the content of the buffer changes
-        /// as it goes forward through the file
+        /// as it goes forward through the file.
         /// </remarks>
         public static IEnumerable<ReadOnlyMemory<char>> GetRecords(this TextReader reader)
         {
