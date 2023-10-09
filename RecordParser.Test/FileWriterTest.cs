@@ -40,23 +40,26 @@ namespace RecordParser.Test
             const string separator = ";";
 
             var expectedItems = new Fixture()
-               .CreateMany<(string Name, DateTime Birthday, decimal Money, Color Color)>(1_000)
-               .Repeat()
-               .Take(repeat)
-               .ToList();
+                .CreateMany<(string Name, DateTime Birthday, decimal Money, Color Color, int Index)>(1_000)
+                .Repeat()
+                .Take(repeat)
+                .Select((x, i) => { x.Index = i; return x; })
+                .ToList();
 
-            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+            var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, Color Color, int Index)>()
                 .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1, (dest, value) => (value.Ticks.TryFormat(dest, out var written), written))
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
+                .Map(x => x.Index, 4)
                 .Build(separator);
 
-            var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
+            var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color, int Index)>()
                 .Map(x => x.Name, 0)
                 .Map(x => x.Birthday, 1, value => new DateTime(long.Parse(value)))
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
+                .Map(x => x.Index, 4)
                 .Build(separator);
 
             // Act
