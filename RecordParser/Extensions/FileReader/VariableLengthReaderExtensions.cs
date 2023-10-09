@@ -17,6 +17,7 @@ namespace RecordParser.Extensions.FileReader
         public bool HasHeader { get; set; } = false;
         /// <summary>
         /// Indicates if there are any quoted field in the reader's content.
+        /// If false, some optimizations might be applied.
         /// Default value is true.
         /// </summary>
         public bool ContainsQuotedFields { get; set; } = true;
@@ -33,24 +34,24 @@ namespace RecordParser.Extensions.FileReader
         /// then parses the records into objects.
         /// </summary>
         /// <typeparam name="T">type of objects read from file</typeparam>
-        /// <param name="stream">variable length file</param>
-        /// <param name="reader">parse reader</param>
+        /// <param name="reader">variable length file</param>
+        /// <param name="parser">parsing reader</param>
         /// <param name="options">options to configure the parsing</param>
         /// <returns>
         /// Sequence of records.
         /// </returns>
-        public static IEnumerable<T> GetRecords<T>(this TextReader stream, IVariableLengthReader<T> reader, VariableLengthReaderOptions options)
+        public static IEnumerable<T> GetRecords<T>(this TextReader reader, IVariableLengthReader<T> parser, VariableLengthReaderOptions options)
         {
             Func<IFL> func = options.ContainsQuotedFields
-                            ? () => new RowByQuote(stream, Length, reader.Separator)
-                            : () => new RowByLine(stream, Length);
+                            ? () => new RowByQuote(reader, Length, parser.Separator)
+                            : () => new RowByLine(reader, Length);
 
-            var parser = (ReadOnlyMemory<char> memory, int i) => reader.Parse(memory.Span);
+            var selector = (ReadOnlyMemory<char> memory, int i) => parser.Parse(memory.Span);
             var parallelOptions = options.ParallelOptions ?? new();
 
             return parallelOptions.Enabled
-                ? GetRecordsParallel(parser, func, options.HasHeader, parallelOptions)
-                : GetRecordsSequential(parser, func, options.HasHeader);
+                ? GetRecordsParallel(selector, func, options.HasHeader, parallelOptions)
+                : GetRecordsSequential(selector, func, options.HasHeader);
         }
     }
 }
