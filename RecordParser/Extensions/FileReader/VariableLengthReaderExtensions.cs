@@ -9,14 +9,36 @@ namespace RecordParser.Extensions.FileReader
 {
     public class VariableLengthReaderOptions
     {
-        public bool HasHeader { get; set; }
-        public bool ContainsQuotedFields { get; set; }
+        /// <summary>
+        /// Indicates if there is a header record present in the reader's content.
+        /// If true, the first record (the header) will be skipped.
+        /// Default value is false, so nothing is skipped by default.
+        /// </summary>
+        public bool HasHeader { get; set; } = false;
+        /// <summary>
+        /// Indicates if there are any quoted field in the reader's content.
+        /// Default value is true.
+        /// </summary>
+        public bool ContainsQuotedFields { get; set; } = true;
+        /// <summary>
+        /// Options to configure parallel processing
+        /// </summary>
         public ParallelOptions ParallelOptions { get; set; }
-        // TODO create ParallelOptionsSafe
     }
 
     public static class VariableLengthReaderExtensions
     {
+        /// <summary>
+        /// Reads the records from a variable length file, 
+        /// then parses the records into objects.
+        /// </summary>
+        /// <typeparam name="T">type of objects read from file</typeparam>
+        /// <param name="stream">variable length file</param>
+        /// <param name="reader">parse reader</param>
+        /// <param name="options">options to configure the parsing</param>
+        /// <returns>
+        /// Sequence of records.
+        /// </returns>
         public static IEnumerable<T> GetRecords<T>(this TextReader stream, IVariableLengthReader<T> reader, VariableLengthReaderOptions options)
         {
             Func<IFL> func = options.ContainsQuotedFields

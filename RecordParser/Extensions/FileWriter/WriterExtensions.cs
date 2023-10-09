@@ -8,17 +8,43 @@ namespace RecordParser.Extensions.FileWriter
 {
     using RecordParser.Extensions.FileReader;
 
+    /// <summary>
+    /// Delegate representing object to text convert method.
+    /// </summary>
+    /// <typeparam name="T">Instance type</typeparam>
+    /// <param name="instance">Instance that will be turn into text</param>
+    /// <param name="destination">Destination buffer</param>
+    /// <param name="charsWritten">Count of chars written into <paramref name="destination"/>.</param>
+    /// <returns>
+    /// True if the writting was succeeded, otherwise false.
+    /// </returns>
     public delegate bool TryFormat<T>(T instance, Span<char> destination, out int charsWritten);
 
     public static class WriterExtensions
     {
         private const int initialPow = 10;
 
+        /// <summary>
+        /// Writes the elements of a sequence into the <paramref name="textWriter"/>.
+        /// </summary>
+        /// <typeparam name="T">Type of items in the sequence.</typeparam>
+        /// <param name="textWriter">The TextWriter where the items will be written into.</param>
+        /// <param name="items">Sequence of the elements.</param>
+        /// <param name="tryFormat">Delegate that parses element into text.</param>
         public static void Write<T>(this TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat)
         {
             Write(textWriter, items, tryFormat, new ParallelOptions());
         }
 
+
+        /// <summary>
+        /// Writes the elements of a sequence into the <paramref name="textWriter"/>.
+        /// </summary>
+        /// <typeparam name="T">Type of items in the sequence.</typeparam>
+        /// <param name="textWriter">The TextWriter where the items will be written into.</param>
+        /// <param name="items">Sequence of the elements.</param>
+        /// <param name="tryFormat">Delegate that parses element into text.</param>
+        /// <param name="options">Options to configure parallel processing.</param>
         public static void Write<T>(this TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelOptions options)
         {
             if (options.Enabled)

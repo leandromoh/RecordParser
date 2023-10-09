@@ -14,7 +14,7 @@ namespace RecordParser.Builders.Writer
         /// <summary>
         /// Creates the writer object using the registered mappings.
         /// </summary>
-        /// <param name="separator">The text (usually a character) that delimits collumns and separate values.</param>
+        /// <param name="separator">The text (usually a character) that delimits columns and separate values.</param>
         /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
         /// <remarks>
         /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
@@ -134,7 +134,7 @@ namespace RecordParser.Builders.Writer
         /// <summary>
         /// Creates the writer object using the registered mappings.
         /// </summary>
-        /// <param name="separator">The text (usually a character) that delimits collumns and separate values.</param>
+        /// <param name="separator">The text (usually a character) that delimits columns and separate values.</param>
         /// <param name="cultureInfo">Culture that will be used in the library internal default parsers functions.</param>
         /// <remarks>
         /// Culture passed will not be applied in custom parser functions registered by the user (neither for member or type).
