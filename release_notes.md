@@ -1,4 +1,4 @@
-## version 1.4.0
+## version 2.0.0
 - support dotnet 7 (#52)
 - support dotnet 6 (#47)
 - support to write fixed and variable length files, using sequential or parallel processing (#66)
