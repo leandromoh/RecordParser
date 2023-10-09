@@ -21,10 +21,12 @@ Even the focus of this library being data mapping to objects (classes or structs
 5. It is flexible: you can choose the most convenient way to configure each of your parsers: indexed or sequential configuration
 6. It is extensible: you can totally customize your parsing with lambdas/delegates 
 7. It is even more extensible because you can easily create extension methods that wraps custom mappings
-8. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your classes with minimised dependencies and low coupling  
-9. It provides clean API with familiar methods: Parse, TryParse and TryFormat
-10. It is easy configurated with a builder object, even programmatically, because does not require to define a class each time you want to define a parser
-11. Compliant with [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt) standard
+8. It is efficient: you can take advantage of parallel processing to speed up parsing
+9. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your classes with minimised dependencies and low coupling  
+10. It provides clean API with familiar methods: Parse, TryParse and TryFormat
+11. It is easy configurated with a builder object, even programmatically, because does not require to define a class each time you want to define a parser
+12. Compliant with [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt) standard
+13. It supports to parse individual records as well whole files
 
 ## Benchmark
 
