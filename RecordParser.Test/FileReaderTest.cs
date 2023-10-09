@@ -109,7 +109,7 @@ namespace RecordParser.Test
             var readOptions = new VariableLengthReaderOptions
             {
                 HasHeader = hasHeader,
-                ParallelOptions = new() { Enabled = parallelProcessing },
+                ParallelismOptions = new() { Enabled = parallelProcessing },
                 ContainsQuotedFields = true,
             };
 
@@ -151,7 +151,7 @@ namespace RecordParser.Test
             var readOptions = new VariableLengthReaderOptions
             {
                 HasHeader = hasHeader,
-                ParallelOptions = new() { Enabled = parallelProcessing },
+                ParallelismOptions = new() { Enabled = parallelProcessing },
                 ContainsQuotedFields = true,
             };
 
@@ -241,7 +241,7 @@ namespace RecordParser.Test
             var readOptions = new VariableLengthReaderOptions
             {
                 HasHeader = hasHeader,
-                ParallelOptions = new() { Enabled = parallelProcessing },
+                ParallelismOptions = new() { Enabled = parallelProcessing },
                 ContainsQuotedFields = containgQuote,
             };
 
@@ -348,7 +348,7 @@ namespace RecordParser.Test
 
             var readOptions = new FixedLengthReaderOptions<object>
             {
-                ParallelOptions = new() { Enabled = parallelProcessing },
+                ParallelismOptions = new() { Enabled = parallelProcessing },
                 Parser = Parse
             };
 

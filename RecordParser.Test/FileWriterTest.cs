@@ -64,13 +64,13 @@ namespace RecordParser.Test
             using var memory = new MemoryStream();
             using var textWriter = new StreamWriter(memory);
 
-            var writeOptions = new ParallelOptions()
+            var writeOptions = new ParallelismOptions()
             {
                 Enabled = parallel,
                 EnsureOriginalOrdering = ordered,
             };
 
-            textWriter.Write(expectedItems, writer.TryFormat, writeOptions);
+            textWriter.WriteRecords(expectedItems, writer.TryFormat, writeOptions);
             textWriter.Flush();
 
             // Assert
@@ -79,7 +79,7 @@ namespace RecordParser.Test
             using var textReader = new StreamReader(memory);
             var readOptions = new VariableLengthReaderOptions()
             {
-                ParallelOptions = new() { Enabled = parallel }
+                ParallelismOptions = new() { Enabled = parallel }
             };
 
             var reads = textReader.GetRecords(reader, readOptions);
@@ -118,13 +118,13 @@ namespace RecordParser.Test
             using var memory = new MemoryStream();
             using var textWriter = new StreamWriter(memory);
 
-            var writeOptions = new ParallelOptions()
+            var writeOptions = new ParallelismOptions()
             {
                 Enabled = parallel,
                 EnsureOriginalOrdering = ordered
             };
 
-            textWriter.Write(expectedItems, writer.TryFormat, writeOptions);
+            textWriter.WriteRecords(expectedItems, writer.TryFormat, writeOptions);
             textWriter.Flush();
 
             // Assert
@@ -134,7 +134,7 @@ namespace RecordParser.Test
             var readOptions = new FixedLengthReaderOptions<(string Name, DateTime Birthday, decimal Money, Color Color)>()
             {
                 Parser = reader.Parse,
-                ParallelOptions = new() { Enabled = parallel }
+                ParallelismOptions = new() { Enabled = parallel }
             };
 
             var reads = textReader.GetRecords(readOptions);

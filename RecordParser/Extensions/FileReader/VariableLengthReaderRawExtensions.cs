@@ -25,6 +25,7 @@ namespace RecordParser.Extensions.FileReader
 
         /// <summary>
         /// Indicates if there are any quoted field in the reader's content.
+        /// If false, some optimizations might be applied.
         /// Default value is true.
         /// </summary>
         public bool ContainsQuotedFields { get; set; } = true;
@@ -48,7 +49,7 @@ namespace RecordParser.Extensions.FileReader
         /// <summary>
         /// Options to configure parallel processing
         /// </summary>
-        public ParallelOptions ParallelOptions { get; set; }
+        public ParallelismOptions ParallelismOptions { get; set; }
 
         /// <summary>
         /// Factory for string pool instances.
@@ -96,22 +97,22 @@ namespace RecordParser.Extensions.FileReader
         /// to object by accessing each field's value by index.
         /// </summary>
         /// <typeparam name="T">type of objects read from file</typeparam>
-        /// <param name="stream">variable length file</param>
+        /// <param name="reader">variable length file</param>
         /// <param name="options">options to configure the parsing</param>
-        /// <param name="reader">parser that receives a function that returns field's value by index</param>
+        /// <param name="parser">parser that receives a function that returns field's value by index</param>
         /// <returns>
         /// Sequence of records.
         /// </returns>
-        public static IEnumerable<T> GetRecordsRaw<T>(this TextReader stream, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> reader)
+        public static IEnumerable<T> GetRecordsRaw<T>(this TextReader reader, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> parser)
         {
             var get = BuildRaw(options.ColumnCount, options.StringPoolFactory != null, options.Trim);
             var sep = options.Separator.ToString();
 
             Func<IFL> func = options.ContainsQuotedFields
-                           ? () => new RowByQuote(stream, Length, sep)
-                           : () => new RowByLine(stream, Length);
+                           ? () => new RowByQuote(reader, Length, sep)
+                           : () => new RowByLine(reader, Length);
 
-            var parallelOptions = options.ParallelOptions ?? new();
+            var parallelOptions = options.ParallelismOptions ?? new();
 
             return parallelOptions.Enabled
                     ? GetParallel()
@@ -133,7 +134,7 @@ namespace RecordParser.Extensions.FileReader
                     {
                         get(ref finder, buffer, stringCache);
 
-                        return reader(getField);
+                        return parser(getField);
                     }
                     finally
                     {
@@ -175,7 +176,7 @@ namespace RecordParser.Extensions.FileReader
                         {
                             get(ref finder, r.buffer, r.stringCache);
 
-                            return reader(r.getField);
+                            return parser(r.getField);
                         }
                     }
                     finally
