@@ -70,7 +70,7 @@ namespace RecordParser.Test
                 EnsureOriginalOrdering = ordered,
             };
 
-            textWriter.Write(expectedItems, writer.TryFormat, writeOptions);
+            textWriter.WriteRecords(expectedItems, writer.TryFormat, writeOptions);
             textWriter.Flush();
 
             // Assert
@@ -124,7 +124,7 @@ namespace RecordParser.Test
                 EnsureOriginalOrdering = ordered
             };
 
-            textWriter.Write(expectedItems, writer.TryFormat, writeOptions);
+            textWriter.WriteRecords(expectedItems, writer.TryFormat, writeOptions);
             textWriter.Flush();
 
             // Assert

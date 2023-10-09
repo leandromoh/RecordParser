@@ -31,9 +31,9 @@ namespace RecordParser.Extensions.FileWriter
         /// <param name="textWriter">The TextWriter where the items will be written into.</param>
         /// <param name="items">Sequence of the elements.</param>
         /// <param name="tryFormat">Delegate that parses element into text.</param>
-        public static void Write<T>(this TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat)
+        public static void WriteRecords<T>(this TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat)
         {
-            Write(textWriter, items, tryFormat, new ParallelismOptions());
+            WriteRecords(textWriter, items, tryFormat, new ParallelismOptions());
         }
 
 
@@ -45,7 +45,7 @@ namespace RecordParser.Extensions.FileWriter
         /// <param name="items">Sequence of the elements.</param>
         /// <param name="tryFormat">Delegate that parses element into text.</param>
         /// <param name="options">Options to configure parallel processing.</param>
-        public static void Write<T>(this TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
+        public static void WriteRecords<T>(this TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
         {
             if (options.Enabled)
             {
