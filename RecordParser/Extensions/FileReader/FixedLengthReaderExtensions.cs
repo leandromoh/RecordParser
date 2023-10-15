@@ -32,7 +32,7 @@ namespace RecordParser.Extensions.FileReader
         /// <returns>
         /// Sequence of records.
         /// </returns>
-        public static IEnumerable<T> GetRecords<T>(this TextReader reader, FixedLengthReaderOptions<T> options)
+        public static IEnumerable<T> ReadRecords<T>(this TextReader reader, FixedLengthReaderOptions<T> options)
         {
             var func = () => new RowByLine(reader, Length);
             var parser = (ReadOnlyMemory<char> memory, int i) => options.Parser(memory.Span);
@@ -40,8 +40,8 @@ namespace RecordParser.Extensions.FileReader
 
             return
                 parallelOptions.Enabled
-                ? GetRecordsParallel(parser, func, HasHeader, parallelOptions)
-                : GetRecordsSequential(parser, func, HasHeader);
+                ? ReadRecordsParallel(parser, func, HasHeader, parallelOptions)
+                : ReadRecordsSequential(parser, func, HasHeader);
         }
 
         /// <summary>
@@ -57,9 +57,9 @@ namespace RecordParser.Extensions.FileReader
         /// Store ReadOnlyMemory values will not hold record's values since the content of the buffer changes
         /// as it goes forward through the file.
         /// </remarks>
-        public static IEnumerable<ReadOnlyMemory<char>> GetRecords(this TextReader reader)
+        public static IEnumerable<ReadOnlyMemory<char>> ReadRecords(this TextReader reader)
         {
-            return GetRecordsSequential((memory, i) => memory, () => new RowByLine(reader, Length), HasHeader);
+            return ReadRecordsSequential((memory, i) => memory, () => new RowByLine(reader, Length), HasHeader);
         }
     }
 }

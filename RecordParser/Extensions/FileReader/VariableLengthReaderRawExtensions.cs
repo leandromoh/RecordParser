@@ -103,7 +103,7 @@ namespace RecordParser.Extensions.FileReader
         /// <returns>
         /// Sequence of records.
         /// </returns>
-        public static IEnumerable<T> GetRecordsRaw<T>(this TextReader reader, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> parser)
+        public static IEnumerable<T> ReadRecordsRaw<T>(this TextReader reader, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> parser)
         {
             var get = BuildRaw(options.ColumnCount, options.StringPoolFactory != null, options.Trim);
             var sep = options.Separator.ToString();
@@ -124,7 +124,7 @@ namespace RecordParser.Extensions.FileReader
                 var stringCache = options.StringPoolFactory?.Invoke();
                 var getField = (int i) => buffer[i];
 
-                return GetRecordsSequential(Parser, func, options.HasHeader);
+                return ReadRecordsSequential(Parser, func, options.HasHeader);
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
@@ -163,7 +163,7 @@ namespace RecordParser.Extensions.FileReader
                         })
                         .ToArray();
 
-                return GetRecordsParallel(Parser, func, options.HasHeader, parallelOptions);
+                return ReadRecordsParallel(Parser, func, options.HasHeader, parallelOptions);
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {

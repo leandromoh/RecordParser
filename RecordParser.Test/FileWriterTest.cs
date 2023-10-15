@@ -85,7 +85,7 @@ namespace RecordParser.Test
                 ParallelismOptions = new() { Enabled = parallel }
             };
 
-            var reads = textReader.GetRecords(reader, readOptions);
+            var reads = textReader.ReadRecords(reader, readOptions);
 
             reads.Should().BeEquivalentTo(expectedItems);
         }
@@ -140,7 +140,7 @@ namespace RecordParser.Test
                 ParallelismOptions = new() { Enabled = parallel }
             };
 
-            var reads = textReader.GetRecords(readOptions);
+            var reads = textReader.ReadRecords(readOptions);
 
             reads.Should().BeEquivalentTo(expectedItems);
         }

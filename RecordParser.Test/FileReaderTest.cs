@@ -115,7 +115,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = streamReader.GetRecords(parser, readOptions);
+            var items = streamReader.ReadRecords(parser, readOptions);
 
             // Assert
 
@@ -157,7 +157,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = streamReader.GetRecords(parser, readOptions);
+            var items = streamReader.ReadRecords(parser, readOptions);
 
             // Assert
 
@@ -247,7 +247,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = streamReader.GetRecords(parser, readOptions);
+            var items = streamReader.ReadRecords(parser, readOptions);
 
             // Assert
 
@@ -354,7 +354,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var records = streamReader.GetRecords(readOptions);
+            var records = streamReader.ReadRecords(readOptions);
 
             var linesByType = records.ToLookup(x => x.GetType());
             var result = linesByType[typeof(HeaderFixedLength)].Cast<HeaderFixedLength>().Single();
@@ -410,7 +410,7 @@ namespace RecordParser.Test
 
             var result = new List<string>();
 
-            foreach (var item in streamReader.GetRecords())
+            foreach (var item in streamReader.ReadRecords())
             {
                 result.Add(item.Span.ToString());
             }

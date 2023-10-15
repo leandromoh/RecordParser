@@ -98,7 +98,7 @@ namespace RecordParser.Benchmark
                 Parser = parser.Parse,
             };
 
-            var items = streamReader.GetRecords(readOptions);
+            var items = streamReader.ReadRecords(readOptions);
 
             var i = 0;
             foreach (var person in items)
@@ -127,7 +127,7 @@ namespace RecordParser.Benchmark
             using var fileStream = File.OpenRead(PathSampleDataTXT);
             using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize);
 
-            var lines = streamReader.GetRecords();
+            var lines = streamReader.ReadRecords();
 
             var i = 0;
             foreach (var line in lines)

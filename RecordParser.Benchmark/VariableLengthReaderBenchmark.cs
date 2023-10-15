@@ -108,7 +108,7 @@ namespace RecordParser.Benchmark
                 ContainsQuotedFields = quoted,
             };
 
-            var items = streamReader.GetRecords(parser, readOptions);
+            var items = streamReader.ReadRecords(parser, readOptions);
 
             var i = 0;
             foreach (var person in items)
@@ -151,7 +151,7 @@ namespace RecordParser.Benchmark
                 ContainsQuotedFields = quoted,
             };
 
-            var items = streamReader.GetRecords(parser, readOptions);
+            var items = streamReader.ReadRecords(parser, readOptions);
 
             var i = 0;
             foreach (var person in items)
@@ -184,7 +184,7 @@ namespace RecordParser.Benchmark
                 StringPoolFactory = () => new InternPool().Intern
             };
 
-            var items = streamReader.GetRecordsRaw(readOptions, PersonFactory);
+            var items = streamReader.ReadRecordsRaw(readOptions, PersonFactory);
 
             var i = 0;
             foreach (var person in items)
