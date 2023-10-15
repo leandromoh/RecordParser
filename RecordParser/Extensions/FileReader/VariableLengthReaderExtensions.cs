@@ -40,7 +40,7 @@ namespace RecordParser.Extensions.FileReader
         /// <returns>
         /// Sequence of records.
         /// </returns>
-        public static IEnumerable<T> GetRecords<T>(this TextReader reader, IVariableLengthReader<T> parser, VariableLengthReaderOptions options)
+        public static IEnumerable<T> ReadRecords<T>(this TextReader reader, IVariableLengthReader<T> parser, VariableLengthReaderOptions options)
         {
             Func<IFL> func = options.ContainsQuotedFields
                             ? () => new RowByQuote(reader, Length, parser.Separator)
@@ -50,8 +50,8 @@ namespace RecordParser.Extensions.FileReader
             var parallelOptions = options.ParallelismOptions ?? new();
 
             return parallelOptions.Enabled
-                ? GetRecordsParallel(selector, func, options.HasHeader, parallelOptions)
-                : GetRecordsSequential(selector, func, options.HasHeader);
+                ? ReadRecordsParallel(selector, func, options.HasHeader, parallelOptions)
+                : ReadRecordsSequential(selector, func, options.HasHeader);
         }
     }
 }

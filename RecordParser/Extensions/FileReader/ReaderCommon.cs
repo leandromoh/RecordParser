@@ -60,7 +60,7 @@ namespace RecordParser.Extensions.FileReader
             return query;
         }
 
-        public static IEnumerable<T> GetRecordsParallel<T>(
+        public static IEnumerable<T> ReadRecordsParallel<T>(
             Func<ReadOnlyMemory<char>, int, T> reader,
             Func<IFL> getItems,
             bool hasHeader,
@@ -87,7 +87,7 @@ namespace RecordParser.Extensions.FileReader
             }
         }
 
-        public static IEnumerable<T> GetRecordsSequential<T>(Func<ReadOnlyMemory<char>, int, T> reader, Func<IFL> getItems, bool hasHeader)
+        public static IEnumerable<T> ReadRecordsSequential<T>(Func<ReadOnlyMemory<char>, int, T> reader, Func<IFL> getItems, bool hasHeader)
         {
             using var items = getItems();
 
