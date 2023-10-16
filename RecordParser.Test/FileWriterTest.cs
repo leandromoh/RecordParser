@@ -16,6 +16,7 @@ namespace RecordParser.Test
     public class FileWriterTest : TestSetup
     {
         private static readonly IEnumerable<int> _repeats = new[] { 0, 1, 3, 1_000, 10_000 };
+        private const int MaxParallelism = 4;
 
         public static IEnumerable<object[]> Repeats()
         {
@@ -31,6 +32,9 @@ namespace RecordParser.Test
             }
         }
 
+        // the fixed-length file scenario is already covered in the bellow test,
+        // because "WriteRecords" method dont matters what parser is used,
+        // since it just receives a delegate
         [Theory]
         [MemberData(nameof(Repeats))]
         public void Write_csv_file(int repeat, bool parallel, bool ordered)
@@ -71,6 +75,7 @@ namespace RecordParser.Test
             {
                 Enabled = parallel,
                 EnsureOriginalOrdering = ordered,
+                MaxDegreeOfParallelism = MaxParallelism,
             };
 
             textWriter.WriteRecords(expectedItems, writer.TryFormat, writeOptions);
@@ -82,67 +87,15 @@ namespace RecordParser.Test
             using var textReader = new StreamReader(memory);
             var readOptions = new VariableLengthReaderOptions()
             {
-                ParallelismOptions = new() { Enabled = parallel }
+                ParallelismOptions = writeOptions
             };
 
             var reads = textReader.ReadRecords(reader, readOptions);
 
-            reads.Should().BeEquivalentTo(expectedItems);
-        }
-
-        // the scenario is covered in the above test, because test dont matters what
-        // parser is used, since it just receives a delegate
-        //[Theory]
-        //[MemberData(nameof(Repeats))]
-        public void Write_fixed_length_file(int repeat, bool parallel, bool ordered)
-        {
-            // Arrange
-
-            var expectedItems = new Fixture()
-               .CreateMany<(string Name, DateTime Birthday, decimal Money, Color Color)>(repeat)
-               .ToList();
-
-            var writer = new FixedLengthWriterSequentialBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 50)
-                .Map(x => x.Birthday, 20, (dest, value) => (value.Ticks.TryFormat(dest, out var written), written))
-                .Map(x => x.Money, 15)
-                .Map(x => x.Color, 15)
-                .Build();
-
-            var reader = new FixedLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-                .Map(x => x.Name, 50)
-                .Map(x => x.Birthday, 20, value => new DateTime(long.Parse(value)))
-                .Map(x => x.Money, 15)
-                .Map(x => x.Color, 15)
-                .Build();
-
-            // Act
-
-            using var memory = new MemoryStream();
-            using var textWriter = new StreamWriter(memory);
-
-            var writeOptions = new ParallelismOptions()
-            {
-                Enabled = parallel,
-                EnsureOriginalOrdering = ordered
-            };
-
-            textWriter.WriteRecords(expectedItems, writer.TryFormat, writeOptions);
-            textWriter.Flush();
-
-            // Assert
-
-            memory.Seek(0, SeekOrigin.Begin);
-            using var textReader = new StreamReader(memory);
-            var readOptions = new FixedLengthReaderOptions<(string Name, DateTime Birthday, decimal Money, Color Color)>()
-            {
-                Parser = reader.Parse,
-                ParallelismOptions = new() { Enabled = parallel }
-            };
-
-            var reads = textReader.ReadRecords(readOptions);
-
-            reads.Should().BeEquivalentTo(expectedItems);
-        }
+            if (ordered)
+                reads.Should().BeEquivalentTo(expectedItems, cfg => cfg.WithStrictOrdering());
+            else
+                reads.Should().BeEquivalentTo(expectedItems);
+        }       
     }
 }
