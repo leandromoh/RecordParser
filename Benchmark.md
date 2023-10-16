@@ -1,4 +1,4 @@
-## Benchmark [#52dd38f](https://github.com/leandromoh/RecordParser/tree/52dd38fefc3df1e853f0bced0fee8ea320f4e13e)
+## Benchmark [#52dd38f](https://github.com/leandromoh/RecordParser/tree/e140808855d5c599e432c61e78a2b7a67bacb660)
 
 ### VariableLength Write
 
