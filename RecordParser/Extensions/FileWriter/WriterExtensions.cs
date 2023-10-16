@@ -66,34 +66,10 @@ namespace RecordParser.Extensions.FileWriter
 
         private static void WriteParallel<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
         {
-            var parallelism = 20; // TODO remove hardcoded
-            var textWriterLock = new object();
+            var initialPool = 20;
+            var pool = new Stack<char[]>(initialPool);
 
-            //var buffers = Enumerable
-            //    .Range(0, parallelism)
-            //    .Select(_ => new BufferContext
-            //    {
-            //        pow = initialPow,
-            //        buffer = ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)),
-            //        lockObj = new object()
-            //    })
-            //    .ToArray();
-
-            var pool = new Stack<char[]>(20);
-            char[] Pop()
-            {
-                char[] x;
-                lock (pool)
-                    pool.TryPop(out x);
-                return x;
-            }
-            void Push(char[] item)
-            {
-                lock (pool)
-                    pool.Push(item);
-            }
-
-            for (var index = 0; index < 20; index++)
+            for (var index = 0; index < initialPool; index++)
                 pool.Push(ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)));
 
             var xs = items.AsParallel(options).Select((item, i) =>
@@ -125,6 +101,20 @@ namespace RecordParser.Extensions.FileWriter
             }
 
             pool.Clear();
+
+            char[] Pop()
+            {
+                char[] x;
+                lock (pool)
+                    pool.TryPop(out x);
+                return x;
+            }
+
+            void Push(char[] item)
+            {
+                lock (pool)
+                    pool.Push(item);
+            }
         }
 
         private static void WriteSequential<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat)
