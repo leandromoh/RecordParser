@@ -1,6 +1,6 @@
 name: Validate dotnet
 
-on: [ push ]
+on: [ pull_request, push ]
 
 jobs:
   setup-version:
