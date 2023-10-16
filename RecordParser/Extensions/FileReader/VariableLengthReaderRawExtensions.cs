@@ -42,9 +42,9 @@ namespace RecordParser.Extensions.FileReader
         public int ColumnCount { get; set; }
 
         /// <summary>
-        /// The character that delimits columns and separate values.
+        /// The text (usually a character) that delimits columns and separate values.
         /// </summary>
-        public char Separator { get; set; }
+        public string Separator { get; set; }
 
         /// <summary>
         /// Options to configure parallel processing
@@ -106,7 +106,7 @@ namespace RecordParser.Extensions.FileReader
         public static IEnumerable<T> ReadRecordsRaw<T>(this TextReader reader, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> parser)
         {
             var get = BuildRaw(options.ColumnCount, options.StringPoolFactory != null, options.Trim);
-            var sep = options.Separator.ToString();
+            var sep = options.Separator;
 
             Func<IFL> func = options.ContainsQuotedFields
                            ? () => new RowByQuote(reader, Length, sep)
