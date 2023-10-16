@@ -42,7 +42,7 @@ namespace RecordParser.Extensions.FileReader
         public int ColumnCount { get; set; }
 
         /// <summary>
-        /// The text (usually one character) that delimits columns and separate values.
+        /// The text (usually a character) that delimits columns and separate values.
         /// </summary>
         public string Separator { get; set; }
 
