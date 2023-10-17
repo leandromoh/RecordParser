@@ -21,7 +21,7 @@ Even the focus of this library being data mapping to objects (classes or structs
 5. It is flexible: you can choose the most convenient way to configure each of your parsers: indexed or sequential configuration
 6. It is extensible: you can totally customize your parsing with lambdas/delegates 
 7. It is even more extensible because you can easily create extension methods that wraps custom mappings
-8. It is efficient: you can take advantage of parallel processing to speed up parsing
+8. It is efficient: you can take advantage of multicore to use parallel processing and speed up parsing
 9. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your classes with minimised dependencies and low coupling  
 10. It provides clean API with familiar methods: Parse, TryParse and TryFormat
 11. It is easy configurated with a builder object, even programmatically, because does not require to define a class each time you want to define a parser
@@ -36,6 +36,7 @@ Check the [benchmark page](/Benchmark.md) to see RecordParser comparisons. If yo
 Third Party Benchmarks
 - [The fastest CSV parser in .NET](https://www.joelverhagen.com/blog/2020/12/fastest-net-csv-parsers)
 - [Sylvan Benchmarks](https://github.com/MarkPflug/Benchmarks)
+- [Fastest CSV parser in C sharp](https://github.com/mohammadeunus/Fastest-CSV-parser-in-C-sharp)
 
 ## Currently there are parsers for 2 record formats: 
 1. Fixed length, common in positional files, e.g. financial services, mainframe use, etc
@@ -47,11 +48,13 @@ Third Party Benchmarks
   
 ### Custom Converters
 1. Readers
-    * [Default Type Convert](#default-type-convert---reader)
-    * [Custom Property Convert](#custom-property-convert---reader)
+    * [Default Type Convert](#default-type-convert---reader) *
+    * [Custom Property Convert](#custom-property-convert---reader) * 
 2. Writers
     * [Default Type Convert](#default-type-convert---writer)
     * [Custom Property Convert](#custom-property-convert---writer)
+
+*ㅤyou can use a "string pool" to avoid creating multiple instances of strings with same content.
 
 ## Fixed Length Reader
 There are 2 flavors for mapping: indexed or sequential.  
