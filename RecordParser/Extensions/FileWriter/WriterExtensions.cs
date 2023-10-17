@@ -66,56 +66,54 @@ namespace RecordParser.Extensions.FileWriter
 
         private static void WriteParallel<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
         {
-            var parallelism = 20; // TODO remove hardcoded
-            var textWriterLock = new object();
+            var initialPool = 20;
+            var pool = new Stack<char[]>(initialPool);
 
-            var buffers = Enumerable
-                .Range(0, parallelism)
-                .Select(_ => new BufferContext
-                {
-                    pow = initialPow,
-                    buffer = ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)),
-                    lockObj = new object()
-                })
-                .ToArray();
+            for (var index = 0; index < initialPool; index++)
+                pool.Push(ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)));
 
-            try
+            var xs = items.AsParallel(options).Select((item, i) =>
             {
-                var xs = items.AsParallel(options).Select((item, i) =>
+                var buffer = Pop() ?? ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow));
+            retry:
+
+                if (tryFormat(item, buffer, out var charsWritten))
                 {
-                    var x = buffers[i % parallelism];
+                    return (buffer, charsWritten);
+                }
+                else
+                {
+                    ArrayPool<char>.Shared.Return(buffer);
+                    buffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
+                    goto retry;
+                }
+            });
 
-                    lock (x.lockObj)
-                    {
-                    retry:
-
-                        if (tryFormat(item, x.buffer, out var charsWritten))
-                        {
-                            lock (textWriterLock)
-                            {
-                                textWriter.WriteLine(x.buffer, 0, charsWritten);
-                            }
-                        }
-                        else
-                        {
-                            ArrayPool<char>.Shared.Return(x.buffer);
-                            x.pow++;
-                            x.buffer = ArrayPool<char>.Shared.Rent((int)Math.Pow(2, x.pow));
-                            goto retry;
-                        }
-                    }
-
-                    // dummy value
-                    return (string)null;
-                });
-
-                // dummy iteration to force evaluation
-                foreach (var _ in xs) ; 
+            foreach (var x in xs)
+            {
+                textWriter.WriteLine(x.buffer, 0, x.charsWritten);
+                Push(x.buffer);
             }
-            finally
+
+            foreach (var x in pool)
             {
-                foreach (var x in buffers)
-                    ArrayPool<char>.Shared.Return(x.buffer);
+                ArrayPool<char>.Shared.Return(x);
+            }
+
+            pool.Clear();
+
+            char[] Pop()
+            {
+                char[] x;
+                lock (pool)
+                    pool.TryPop(out x);
+                return x;
+            }
+
+            void Push(char[] item)
+            {
+                lock (pool)
+                    pool.Push(item);
             }
         }
 
