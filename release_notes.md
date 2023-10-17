@@ -1,6 +1,8 @@
 ## version 2.0.0
 - support dotnet 7 (#52)
 - support dotnet 6 (#47)
+- removes legacy builds (keep only net6, net7 and netstandard2.1)
+- remove obsolete methods (#76)
 - support to write fixed and variable length files, using sequential or parallel processing (#66)
 - support to read fixed and variable length files, using sequential or parallel processing (#51)
 - skip empty row when reading file (#56)
