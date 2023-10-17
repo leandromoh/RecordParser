@@ -32,7 +32,7 @@ namespace RecordParser.Test
             }
         }
 
-        // the fixed-length file scenario is already covered in the bellow test,
+        // the fixed-length file scenario is already covered in the test bellow,
         // because "WriteRecords" method dont matters what parser is used,
         // since it just receives a delegate
         [Theory]
@@ -71,14 +71,14 @@ namespace RecordParser.Test
             using var memory = new MemoryStream();
             using var textWriter = new StreamWriter(memory);
 
-            var writeOptions = new ParallelismOptions()
+            var parallelOptions = new ParallelismOptions()
             {
                 Enabled = parallel,
                 EnsureOriginalOrdering = ordered,
                 MaxDegreeOfParallelism = MaxParallelism,
             };
 
-            textWriter.WriteRecords(expectedItems, writer.TryFormat, writeOptions);
+            textWriter.WriteRecords(expectedItems, writer.TryFormat, parallelOptions);
             textWriter.Flush();
 
             // Assert
@@ -87,15 +87,15 @@ namespace RecordParser.Test
             using var textReader = new StreamReader(memory);
             var readOptions = new VariableLengthReaderOptions()
             {
-                ParallelismOptions = writeOptions
+                ParallelismOptions = parallelOptions
             };
 
-            var reads = textReader.ReadRecords(reader, readOptions);
+            var items = textReader.ReadRecords(reader, readOptions);
 
             if (ordered)
-                reads.Should().BeEquivalentTo(expectedItems, cfg => cfg.WithStrictOrdering());
+                items.Should().BeEquivalentTo(expectedItems, cfg => cfg.WithStrictOrdering());
             else
-                reads.Should().BeEquivalentTo(expectedItems);
+                items.Should().BeEquivalentTo(expectedItems);
         }       
     }
 }
