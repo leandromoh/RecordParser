@@ -6,26 +6,45 @@ namespace RecordParser.Engines.Reader
     internal ref struct TextFindHelper
     {
         private readonly ReadOnlySpan<char> line;
+        private ReadOnlySpan<char> currentValue;
+        private readonly TextFindHelperCore core;
+
+        public TextFindHelper(ReadOnlySpan<char> source, string delimiter, (char ch, string str) quote)
+        {
+            line = source;
+            currentValue = default;
+            core = new TextFindHelperCore(delimiter, quote);
+        }
+
+        public ReadOnlySpan<char> GetValue(int index)
+        {
+            currentValue = core.GetValue(index, currentValue, line);
+
+            return currentValue;
+        }
+
+        public void Dispose() => core.Dispose();
+    }
+
+    internal struct TextFindHelperCore
+    {
         private readonly string delimiter;
         private readonly (char ch, string str) quote;
 
         private int scanned;
         private int position;
         private int currentIndex;
-        private ReadOnlySpan<char> currentValue;
 
         private char[] buffer;
 
-        public TextFindHelper(ReadOnlySpan<char> source, string delimiter, (char ch, string str) quote)
+        public TextFindHelperCore(string delimiter, (char ch, string str) quote)
         {
-            this.line = source;
             this.delimiter = delimiter;
             this.quote = quote;
 
             scanned = -delimiter.Length;
             position = 0;
             currentIndex = -1;
-            currentValue = default;
             buffer = null;
         }
 
@@ -38,7 +57,7 @@ namespace RecordParser.Engines.Reader
             }
         }
 
-        public ReadOnlySpan<char> GetValue(int index)
+        public ReadOnlySpan<char> GetValue(int index, ReadOnlySpan<char> currentValue, ReadOnlySpan<char> line)
         {
             if (index <= currentIndex)
             {
@@ -51,7 +70,7 @@ namespace RecordParser.Engines.Reader
             while (currentIndex <= index)
             {
                 var match = index == ++currentIndex;
-                currentValue = ParseChunk(match);
+                currentValue = ParseChunk(match, line);
 
                 if (match)
                 {
@@ -62,7 +81,7 @@ namespace RecordParser.Engines.Reader
             throw new Exception("invalid index for line");
         }
 
-        private ReadOnlySpan<char> ParseChunk(bool match)
+        private ReadOnlySpan<char> ParseChunk(bool match, ReadOnlySpan<char> line)
         {
             scanned += position + delimiter.Length;
 
@@ -71,7 +90,7 @@ namespace RecordParser.Engines.Reader
 
             if (isQuotedField)
             {
-                return ParseQuotedChuck(match);
+                return ParseQuotedChuck(match, line);
             }
 
             position = unlook.IndexOf(delimiter);
@@ -83,7 +102,7 @@ namespace RecordParser.Engines.Reader
             return line.Slice(scanned, position);
         }
 
-        private ReadOnlySpan<char> ParseQuotedChuck(bool match)
+        private ReadOnlySpan<char> ParseQuotedChuck(bool match, ReadOnlySpan<char> line)
         {
             const string corruptFieldError = "Double quote is not escaped or there is extra data after a quoted field.";
 
