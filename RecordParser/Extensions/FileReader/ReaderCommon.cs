@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace RecordParser.Extensions.FileReader
+namespace RecordParser.Extensions
 {
     public class ParallelismOptions
     {
