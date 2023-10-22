@@ -7,6 +7,7 @@ using System.Linq;
 namespace RecordParser.Extensions.FileWriter
 {
     using RecordParser.Extensions.FileReader;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// Delegate representing object to text convert method.
@@ -49,7 +50,14 @@ namespace RecordParser.Extensions.FileWriter
         {
             if (options.Enabled)
             {
-                WriteParallel(textWriter, items, tryFormat, options);
+                if (options.EnsureOriginalOrdering)
+                {
+                    WriteParallelOrdered(textWriter, items, tryFormat, options);
+                }
+                else
+                {
+                    WriteParallelUnordered(textWriter, items, tryFormat, options);
+                }
             }
             else
             {
@@ -64,40 +72,98 @@ namespace RecordParser.Extensions.FileWriter
             public object lockObj;
         }
 
-        private static void WriteParallel<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
+        private static void WriteParallelUnordered<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
+        {
+            var parallelism = 20; // TODO remove hardcoded
+
+            var buffers = Enumerable
+            .Range(0, parallelism)
+            .Select(_ => new BufferContext
+            {
+                pow = 10,
+                buffer = ArrayPool<char>.Shared.Rent((int)Math.Pow(2, 10)),
+                lockObj = new object()
+            })
+            .ToArray();
+
+            var textWriterLock = new object();
+            var opts = new ParallelOptions();
+            if (options.MaxDegreeOfParallelism is { } max)
+                opts.MaxDegreeOfParallelism = max;
+
+            try
+            {
+                Parallel.ForEach(items, opts, (item, _, i) =>
+                {
+                    var x = buffers[i % parallelism];
+
+                    lock (x.lockObj)
+                    {
+                    retry:
+
+                        if (tryFormat(item, x.buffer, out var charsWritten))
+                        {
+                            lock (textWriterLock)
+                            {
+                                textWriter.WriteLine(x.buffer, 0, charsWritten);
+                            }
+                        }
+                        else
+                        {
+                            ArrayPool<char>.Shared.Return(x.buffer);
+                            x.pow++;
+                            x.buffer = ArrayPool<char>.Shared.Rent((int)Math.Pow(2, x.pow));
+                            goto retry;
+                        }
+                    }
+                });
+            }
+            finally
+            {
+                foreach (var x in buffers)
+                    ArrayPool<char>.Shared.Return(x.buffer);
+            }
+        }
+
+        private static void WriteParallelOrdered<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
         {
             var initialPool = 20;
             var pool = new Stack<char[]>(initialPool);
 
-            for (var index = 0; index < initialPool; index++)
-                pool.Push(ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)));
-
-            var xs = items.AsParallel(options).Select((item, i) =>
+            try
             {
-                var buffer = Pop() ?? ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow));
-            retry:
+                for (var index = 0; index < initialPool; index++)
+                    pool.Push(ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)));
 
-                if (tryFormat(item, buffer, out var charsWritten))
+                var xs = items.AsParallel(options).Select((item, i) =>
                 {
-                    return (buffer, charsWritten);
-                }
-                else
-                {
-                    ArrayPool<char>.Shared.Return(buffer);
-                    buffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
-                    goto retry;
-                }
-            });
+                    var buffer = Pop();
+                retry:
 
-            foreach (var x in xs)
-            {
-                textWriter.WriteLine(x.buffer, 0, x.charsWritten);
-                Push(x.buffer);
+                    if (tryFormat(item, buffer, out var charsWritten))
+                    {
+                        return (buffer, charsWritten);
+                    }
+                    else
+                    {
+                        ArrayPool<char>.Shared.Return(buffer);
+                        buffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
+                        goto retry;
+                    }
+                });
+
+                foreach (var x in xs)
+                {
+                    textWriter.WriteLine(x.buffer, 0, x.charsWritten);
+                    Push(x.buffer);
+                }
             }
-
-            foreach (var x in pool)
+            finally
             {
-                ArrayPool<char>.Shared.Return(x);
+                foreach (var x in pool)
+                {
+                    ArrayPool<char>.Shared.Return(x);
+                }
             }
 
             pool.Clear();
@@ -107,7 +173,7 @@ namespace RecordParser.Extensions.FileWriter
                 char[] x;
                 lock (pool)
                     pool.TryPop(out x);
-                return x;
+                return x ?? ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow));
             }
 
             void Push(char[] item)
