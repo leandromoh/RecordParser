@@ -5,7 +5,7 @@ using Cysharp.Text;
 using FlatFiles;
 using FlatFiles.TypeMapping;
 using RecordParser.Builders.Writer;
-using RecordParser.Extensions.FileWriter;
+using RecordParser.Extensions;
 using SoftCircuits.CsvParser;
 using System;
 using System.Collections.Generic;

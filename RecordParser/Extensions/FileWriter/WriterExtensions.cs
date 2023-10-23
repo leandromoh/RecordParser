@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace RecordParser.Extensions.FileWriter
+namespace RecordParser.Extensions
 {
-    using RecordParser.Extensions.FileReader;
-
     /// <summary>
     /// Delegate representing object to text convert method.
     /// </summary>

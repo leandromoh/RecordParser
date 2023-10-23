@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using static RecordParser.Extensions.FileReader.ReaderCommon;
+using static RecordParser.Extensions.ReaderCommon;
 
-namespace RecordParser.Extensions.FileReader
+namespace RecordParser.Extensions
 {
     public class FixedLengthReaderOptions<T>
     {

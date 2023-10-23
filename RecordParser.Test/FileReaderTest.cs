@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using MoreLinq;
 using RecordParser.Builders.Reader;
-using RecordParser.Extensions.FileReader;
+using RecordParser.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;

@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using static RecordParser.Extensions.FileReader.ReaderCommon;
+using static RecordParser.Extensions.ReaderCommon;
 
-namespace RecordParser.Extensions.FileReader
+namespace RecordParser.Extensions
 {
     public delegate string StringPool(ReadOnlySpan<char> text);
     internal delegate void Get(ref TextFindHelper finder, string[] inst, StringPool cache);
