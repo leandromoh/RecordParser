@@ -7,7 +7,7 @@ using Cursively;
 using FlatFiles;
 using FlatFiles.TypeMapping;
 using RecordParser.Builders.Reader;
-using RecordParser.Extensions.FileReader;
+using RecordParser.Extensions;
 using System;
 using System.Globalization;
 using System.IO;
