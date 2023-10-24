@@ -7,7 +7,7 @@ namespace RecordParser.Engines.Reader
     {
         private readonly ReadOnlySpan<char> line;
         private ReadOnlySpan<char> currentValue;
-        private readonly TextFindHelperCore core;
+        private TextFindHelperCore core;
 
         public TextFindHelper(ReadOnlySpan<char> source, string delimiter, (char ch, string str) quote)
         {
