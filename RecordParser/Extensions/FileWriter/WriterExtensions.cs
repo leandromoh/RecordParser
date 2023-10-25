@@ -3,11 +3,10 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
-namespace RecordParser.Extensions.FileWriter
+namespace RecordParser.Extensions
 {
-    using RecordParser.Extensions.FileReader;
-    using System.Threading.Tasks;
 
     /// <summary>
     /// Delegate representing object to text convert method.
