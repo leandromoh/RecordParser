@@ -107,15 +107,15 @@ namespace RecordParser.Extensions
             void Make()
             {
                 var mem = bucket.AsMemory(0, count);
-                Parallel.For(0, mem.Length, i =>
+                var xs = Enumerable.Range(0, mem.Length).AsParallel(options).Select(i =>
                 {
-                retry:
                     var x = mem.Span[i];
                     var r = pool[i];
+                retry:
 
                     if (tryFormat(x, r.buffer, out r.charsWritten))
                     {
-                        return;
+                        return r;
                     }
                     else
                     {
@@ -126,9 +126,8 @@ namespace RecordParser.Extensions
                     }
                 });
 
-                for (int i = 0; i < mem.Length; i++)
+                foreach(var r in xs)
                 {
-                    var r = pool[i];
                     textWriter.WriteLine(r.buffer, 0, r.charsWritten);
                 }
             }
