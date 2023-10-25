@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RecordParser.Extensions
 {
@@ -57,61 +60,77 @@ namespace RecordParser.Extensions
 
         private class BufferContext
         {
-            public int pow;
             public char[] buffer;
             public object lockObj;
+            public int charsWritten;
         }
 
         private static void WriteParallel<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
         {
-            var initialPool = 20;
-            var pool = new Stack<char[]>(initialPool);
+            // The largest number of partitions that PLINQ supports.
+            const int MAX_SUPPORTED_DOP = 512;
+            var defaultDegreeOfParallelism = options.MaxDegreeOfParallelism ?? Math.Min(Environment.ProcessorCount, MAX_SUPPORTED_DOP);
+            defaultDegreeOfParallelism = 30;// Math.Min(defaultDegreeOfParallelism * 3, MAX_SUPPORTED_DOP);
 
-            for (var index = 0; index < initialPool; index++)
-                pool.Push(ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)));
+            var size = defaultDegreeOfParallelism;
+            var pool = new BufferContext[size];
+            var bucket = new T[size];
 
-            var xs = items.AsParallel(options).Select((item, i) =>
+            for (var i = 0; i < pool.Length; i++)
+                pool[i] = new() { buffer = ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)), lockObj = new object() };
+
+            var count = 0;
+
+            foreach (var item in items)
             {
-                var buffer = Pop() ?? ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow));
-            retry:
+                bucket[count++] = item;
 
-                if (tryFormat(item, buffer, out var charsWritten))
-                {
-                    return (buffer, charsWritten);
-                }
-                else
-                {
-                    ArrayPool<char>.Shared.Return(buffer);
-                    buffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
-                    goto retry;
-                }
-            });
+                // The bucket is fully buffered before it's yielded
+                if (count != size)
+                    continue;
 
-            foreach (var x in xs)
+                Make();
+                count = 0;
+            }
+
+            // Return the last bucket with all remaining elements
+            if (count > 0)
             {
-                textWriter.WriteLine(x.buffer, 0, x.charsWritten);
-                Push(x.buffer);
+                Make();
             }
 
             foreach (var x in pool)
             {
-                ArrayPool<char>.Shared.Return(x);
+                ArrayPool<char>.Shared.Return(x.buffer);
             }
 
-            pool.Clear();
-
-            char[] Pop()
+            void Make()
             {
-                char[] x;
-                lock (pool)
-                    pool.TryPop(out x);
-                return x;
-            }
+                var mem = bucket.AsMemory(0, count);
+                Parallel.For(0, mem.Length, i =>
+                {
+                retry:
+                    var x = mem.Span[i];
+                    var r = pool[i];
 
-            void Push(char[] item)
-            {
-                lock (pool)
-                    pool.Push(item);
+                    if (tryFormat(x, r.buffer, out r.charsWritten))
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        var newLength = r.buffer.Length * 2;
+                        ArrayPool<char>.Shared.Return(r.buffer);
+                        r.buffer = ArrayPool<char>.Shared.Rent(newLength);
+                        goto retry;
+                    }
+                });
+
+                for (int i = 0; i < mem.Length; i++)
+                {
+                    var r = pool[i];
+                    textWriter.WriteLine(r.buffer, 0, r.charsWritten);
+                }
             }
         }
 
