@@ -10,7 +10,7 @@ It makes easier for developers to do parsing by automating non-relevant code, wh
 
 ## 🏆 1st place in [The fastest CSV parser in .NET](https://www.joelverhagen.com/blog/2020/12/fastest-net-csv-parsers) blog post
 
-Even the focus of this library being data mapping to objects (classes or structs), it got an excellent result in the blog benchmark which tested how fast libraries can transform a CSV row into an array of strings. We got 3rd place by parsing a 1 million lines file in ~1.8 seconds.
+Even the focus of this library being data mapping to objects (classes, structs, etc), it got an excellent result in the blog benchmark which tested how fast libraries can transform a CSV row into an array of strings. We got 1st place by parsing a 1 million lines file in 826ms.
 
 ## RecordParser is a Zero Allocation Writer/Reader Parser for .NET Core
 
