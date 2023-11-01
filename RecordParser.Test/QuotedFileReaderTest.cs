@@ -3,6 +3,7 @@ using RecordParser.Builders.Reader;
 using RecordParser.Extensions;
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Xunit;
 
@@ -16,6 +17,59 @@ namespace RecordParser.Test
             public DateTime Date;
             public string Name;
             public Gender Gender;
+        }
+
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void foo(bool parallel)
+        {
+            // Arrange
+
+            var fileContent = """
+                A,B,C,D
+                "x
+                y",2,3,4
+                """;
+
+            var reader = new StringReader(fileContent);
+            var options = new VariableLengthReaderRawOptions
+            {
+                HasHeader = true,
+                ContainsQuotedFields = true,
+                ColumnCount = 4,
+                Separator = ",",
+                ParallelismOptions = new()
+                {
+                    Enabled = parallel,
+                    MaxDegreeOfParallelism = 2
+                },
+            };
+
+            // Act
+
+            var records = reader.ReadRecordsRaw(options, getField =>
+            {
+                var record = new
+                {
+                    A = getField(0),
+                    B = getField(1),
+                    C = getField(2),
+                    D = getField(3)
+                };
+                return record;
+            }).ToList();
+
+            // Assert
+
+            records.Should().HaveCount(1);
+
+            var record = records.Single();
+            record.A.Should().Be("x\r\ny");
+            record.B.Should().Be("2");
+            record.C.Should().Be("3");
+            record.D.Should().Be("4");
         }
 
         [Theory]

@@ -58,7 +58,7 @@ namespace RecordParser.Extensions.FileReader.RowReaders
                 else if (c == quote)
                 {
                     ReadOnlySpan<char> span = buffer.AsSpan().Slice(0, i - 1);
-                    var isQuotedField = span.TrimEnd().EndsWith(separator);
+                    var isQuotedField = i == 1 || span[span.Length - 1] == '\n' || span.TrimEnd().EndsWith(separator);
 
                     if (isQuotedField is false)
                         continue;
