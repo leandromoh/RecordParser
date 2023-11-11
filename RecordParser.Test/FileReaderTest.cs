@@ -26,9 +26,13 @@ namespace RecordParser.Test
         }
 
         [Theory]
-        [InlineData(800_000, false)]
-        [InlineData(1_000_000, true)]
-        public void Doo(int innerRecords, bool shouldThrow)
+        // note: since new line is \n on unix and \r\n on windows
+        // string length will not be the same. so depending of the 
+        // values passed, result may differ depending of the OS.
+        // current values passes in both.
+        [InlineData(900_000, true)]
+        [InlineData(1_100_000, false)]
+        public void Given_record_is_too_large_for_default_buffer_size_then_exception_should_be_throw(int innerRecords, bool enoughBuffer)
         {
             // Arrange
 
@@ -36,8 +40,7 @@ namespace RecordParser.Test
             // and a *single* data row, where the 4th column contains a large inlined, CSV file enclosed in quotes.
             // this is an extreme case, but is a valid CSV according to the spec. 
             var tw = new StringWriter();
-            var header = "A,B,C,D";
-            tw.WriteLine(header);
+            tw.WriteLine("A,B,C,D");
             tw.Write("1,2,3,\"");
 
             for (int i = 0; i < innerRecords; i++)
@@ -84,13 +87,9 @@ namespace RecordParser.Test
 
             // Assert
 
-            var neededBuffer = fileContent.Length - header.Length;
-            var enoughBuffer = ReaderCommon.Length >= neededBuffer;
-            enoughBuffer.Should().Be(!shouldThrow);
-
-            if (shouldThrow)
+            if (enoughBuffer == false)
             {
-                act.Should().Throw<RecordTooLargeException>().WithMessage("Record found is too large.");
+                act.Should().Throw<RecordTooLargeException>().WithMessage("Record is too large.");
                 return;
             }
 
@@ -113,7 +112,7 @@ namespace RecordParser.Test
         [InlineData(13, 5)]
         [InlineData(14, 7)]
         [InlineData(15, 7)]
-        public void Given_record_is_too_large_to_fit_in_buffer_then_exception_should_be_throw(int bufferSize, int canRead)
+        public void Given_record_is_too_large_for_custom_buffer_size_then_exception_should_be_throw(int bufferSize, int canRead)
         {
             // Arrange
 
@@ -170,7 +169,7 @@ namespace RecordParser.Test
             if (bufferLargeEnoughToReadAll)
                 act();
             else
-                act.Should().Throw<RecordTooLargeException>().WithMessage("Record found is too large.");
+                act.Should().Throw<RecordTooLargeException>().WithMessage("Record is too large.");
 
             results.Should().BeEquivalentTo(expected.Take(canRead));
         }
