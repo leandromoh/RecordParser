@@ -26,7 +26,7 @@ namespace RecordParser.Test
         }
 
         [Theory]
-        [InlineData(900_000, false)]
+        [InlineData(800_000, false)]
         [InlineData(1_000_000, true)]
         public void Doo(int innerRecords, bool shouldThrow)
         {
@@ -36,7 +36,8 @@ namespace RecordParser.Test
             // and a *single* data row, where the 4th column contains a large inlined, CSV file enclosed in quotes.
             // this is an extreme case, but is a valid CSV according to the spec. 
             var tw = new StringWriter();
-            tw.WriteLine("A,B,C,D");
+            var header = "A,B,C,D";
+            tw.WriteLine(header);
             tw.Write("1,2,3,\"");
 
             for (int i = 0; i < innerRecords; i++)
@@ -46,8 +47,8 @@ namespace RecordParser.Test
             // close the quoted field
             tw.WriteLine("\"");
 
-            var str = tw.ToString();
-            var reader = new StringReader(str);
+            var fileContent = tw.ToString();
+            var reader = new StringReader(fileContent);
 
             // Act
 
@@ -83,6 +84,10 @@ namespace RecordParser.Test
 
             // Assert
 
+            var neededBuffer = fileContent.Length - header.Length;
+            var enoughBuffer = ReaderCommon.Length >= neededBuffer;
+            enoughBuffer.Should().Be(!shouldThrow);
+
             if (shouldThrow)
             {
                 act.Should().Throw<RecordTooLargeException>().WithMessage("Record found is too large.");
@@ -96,9 +101,9 @@ namespace RecordParser.Test
             row.B.Should().Be("2");
             row.C.Should().Be("3");
 
-            var start = str.IndexOf('"') + 1;
-            var end = str.LastIndexOf('"');
-            var innerCSV = str.AsSpan(start, end - start);
+            var start = fileContent.IndexOf('"') + 1;
+            var end = fileContent.LastIndexOf('"');
+            var innerCSV = fileContent.AsSpan(start, end - start);
 
             row.D.Should().Be(innerCSV);
         }
