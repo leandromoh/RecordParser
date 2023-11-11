@@ -33,6 +33,9 @@ internal abstract class RowBy : IFL
         var len = i - j;
         if (initial == false)
         {
+            if (len == buffer.Length)
+                throw new RecordTooLargeException("Record found is too large.");
+
             Array.Copy(buffer, j, buffer, 0, len);
         }
 

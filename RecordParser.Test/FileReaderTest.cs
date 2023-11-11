@@ -25,6 +25,151 @@ namespace RecordParser.Test
             public int Ranking;
         }
 
+        [Theory]
+        [InlineData(900_000, false)]
+        [InlineData(1_000_000, true)]
+        public void Doo(int innerRecords, bool shouldThrow)
+        {
+            // Arrange
+
+            // construct a CSV with a header row
+            // and a *single* data row, where the 4th column contains a large inlined, CSV file enclosed in quotes.
+            // this is an extreme case, but is a valid CSV according to the spec. 
+            var tw = new StringWriter();
+            tw.WriteLine("A,B,C,D");
+            tw.Write("1,2,3,\"");
+
+            for (int i = 0; i < innerRecords; i++)
+            {
+                tw.WriteLine("1,2,3,4");
+            }
+            // close the quoted field
+            tw.WriteLine("\"");
+
+            var str = tw.ToString();
+            var reader = new StringReader(str);
+
+            // Act
+
+            var options = new VariableLengthReaderRawOptions
+            {
+                HasHeader = true,
+                ContainsQuotedFields = true,
+                ColumnCount = 4,
+                Separator = ",",
+                ParallelismOptions = new()
+                {
+                    Enabled = true,
+                    MaxDegreeOfParallelism = 2
+                },
+            };
+
+            var act = () =>
+            {
+                var records = reader.ReadRecordsRaw(options, getField =>
+                {
+                    var record = new
+                    {
+                        A = getField(0),
+                        B = getField(1),
+                        C = getField(2),
+                        D = getField(3)
+                    };
+                    return record;
+                });
+
+                return records.ToList();
+            };
+
+            // Assert
+
+            if (shouldThrow)
+            {
+                act.Should().Throw<RecordTooLargeException>().WithMessage("Record found is too large.");
+                return;
+            }
+
+            var result = act();
+            result.Should().HaveCount(1);
+            var row = result[0];
+            row.A.Should().Be("1");
+            row.B.Should().Be("2");
+            row.C.Should().Be("3");
+
+            var start = str.IndexOf('"') + 1;
+            var end = str.LastIndexOf('"');
+            var innerCSV = str.AsSpan(start, end - start);
+
+            row.D.Should().Be(innerCSV);
+        }
+
+        [Theory(Skip = "At the moment lib does not support customized buffer size")]
+        [InlineData(12, 4)]
+        [InlineData(13, 5)]
+        [InlineData(14, 7)]
+        [InlineData(15, 7)]
+        public void Given_record_is_too_large_to_fit_in_buffer_then_exception_should_be_throw(int bufferSize, int canRead)
+        {
+            // Arrange
+
+            var fileContent = """
+                A,B,C,D
+                1,2,3,4
+                5,6,7,8
+                9,10,11,12
+                13,14,15,16
+                87,88,89,100
+                89,99,100,101
+                88,89,90,91
+                """;
+
+            var expected = new[]
+            {
+                (1,2,3,4),
+                (5,6,7,8),
+                (9,10,11,12),
+                (13,14,15,16),
+                (87,88,89,100),
+                (89,99,100,101),
+                (88,89,90,91),
+            };
+
+            var reader = new StringReader(fileContent);
+
+            var parser = new VariableLengthReaderSequentialBuilder<(int A, int B, int C, int D)>()
+                .Map(x => x.A)
+                .Map(x => x.B)
+                .Map(x => x.C)
+                .Map(x => x.D)
+                .Build(",");
+
+            // Act
+
+            var results = new List<(int A, int B, int C, int D)>();
+            var act = () =>
+            {
+                var records = reader.ReadRecords(parser, new()
+                {
+                    HasHeader = true,
+                //  BufferSize = bufferSize,
+                });
+
+                foreach (var item in records)
+                    results.Add(item);
+            };
+
+            // Assert
+
+            var bufferLargeEnoughToReadAll = canRead == expected.Length;
+
+            if (bufferLargeEnoughToReadAll)
+                act();
+            else
+                act.Should().Throw<RecordTooLargeException>().WithMessage("Record found is too large.");
+
+            results.Should().BeEquivalentTo(expected.Take(canRead));
+        }
+
         public static string GetFilePath(string fileName) => Path.Combine(Directory.GetCurrentDirectory(), fileName);
 
         public static IEnumerable<object[]> Given_quoted_csv_file_should_read_quoted_properly_theory(string file)
