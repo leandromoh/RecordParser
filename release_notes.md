@@ -1,3 +1,10 @@
+## version 2.2.1
+- bugfix/first-field-quoted (#91) 
+- improvement/record-too-large-exception (#90)
+
+## version 2.1.0
+- refactor/fix-namespace-extensions (#84)
+
 ## version 2.0.0
 - support dotnet 7 (#52)
 - support dotnet 6 (#47)
