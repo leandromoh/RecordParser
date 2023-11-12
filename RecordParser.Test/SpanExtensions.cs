@@ -22,12 +22,15 @@ namespace RecordParser.Test
         }
 
         // FluentAssertions does not support Span yet
-        public static StringAssertions Should(this Span<char> value)
-            => value.ToString().Should();
+        public static StringAssertions Should(this Span<char> value) =>
+            value.ToString().Should();
 
         // FluentAssertions does not support ReadOnlySpan yet
-        public static StringAssertions Should(this ReadOnlySpan<char> value)
-            => value.ToString().Should();
+        public static StringAssertions Should(this ReadOnlySpan<char> value) =>
+            value.ToString().Should();
+
+        public static AndConstraint<StringAssertions> Be(this StringAssertions value, ReadOnlySpan<char> expected) =>
+            value.Be(expected.ToString());
 
         public static readonly FuncSpanTIntBool ToUpperInvariant = (Span<char> span, ReadOnlySpan<char> text) =>
             (text.ToUpperInvariant(span) is var written && written == text.Length, Math.Max(0, written));
