@@ -2,6 +2,7 @@
 using RecordParser.Builders.Reader;
 using RecordParser.Extensions;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,11 +20,20 @@ namespace RecordParser.Test
             public Gender Gender;
         }
 
+        public static IEnumerable<object[]> QuotedFieldsAnyColumn()
+        {
+            foreach (var parallel in new[] { true, false })
+            {
+                foreach (var newline in new[] { "\r", "\n", "\r\n" })
+                {
+                    yield return new object[] { parallel, newline };
+                }
+            }
+        }
+
         [Theory]
-        [InlineData("\r")]
-        [InlineData("\n")]
-        [InlineData("\r\n")]
-        public void Given_quoted_field_in_any_column_should_parse_successfully(string newline)
+        [MemberData(nameof(QuotedFieldsAnyColumn))]
+        public void Given_quoted_field_in_any_column_should_parse_successfully(bool parallel, string newline)
         {
             // Arrange
 
@@ -71,8 +81,9 @@ namespace RecordParser.Test
                 Separator = ",",
                 ParallelismOptions = new()
                 {
-                    Enabled = false,
-                    MaxDegreeOfParallelism = 2
+                    Enabled = parallel,
+                    MaxDegreeOfParallelism = 2,
+                    EnsureOriginalOrdering = true,
                 },
             };
 
@@ -80,7 +91,7 @@ namespace RecordParser.Test
 
             var records = reader.ReadRecordsRaw(options, getField =>
             {
-                var record = 
+                var record =
                 (
                     getField(0),
                     getField(1),
