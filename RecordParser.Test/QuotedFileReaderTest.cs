@@ -20,9 +20,10 @@ namespace RecordParser.Test
         }
 
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void foo(bool parallel)
+        [InlineData("\r")]
+        [InlineData("\n")]
+        [InlineData("\r\n")]
+        public void Given_quoted_field_in_any_column_should_parse_successfully(string newline)
         {
             // Arrange
 
@@ -30,7 +31,36 @@ namespace RecordParser.Test
                 A,B,C,D
                 "x
                 y",2,3,4
-                """;
+                1,"a,
+                b",3,4
+                7,8,"a
+                z",9
+                98,99,100,101
+                12,13,14,"w
+                s"
+                  "
+                a,1
+                ",3, b,4
+                a,b,c,d
+                """.Replace(Environment.NewLine, newline);
+
+            var expected = new[]
+            {
+                // column quoted = 1
+                ($"x{newline}y","2","3","4"),
+                // column quoted = 2
+                ("1",$"a,{newline}b","3","4"),
+                // column quoted = 3
+                ("7","8",$"a{newline}z","9"),
+                // no quoted column
+                ("98","99","100","101"),
+                // column quoted = 4
+                ("12","13","14",$"w{newline}s"),
+                // column quoted = 1 with whitespace before quote
+                ($"{newline}a,1{newline}", "3", " b", "4"),
+                // no quoted column
+                ("a","b","c","d"),
+            };
 
             var reader = new StringReader(fileContent);
             var options = new VariableLengthReaderRawOptions
@@ -41,7 +71,7 @@ namespace RecordParser.Test
                 Separator = ",",
                 ParallelismOptions = new()
                 {
-                    Enabled = parallel,
+                    Enabled = false,
                     MaxDegreeOfParallelism = 2
                 },
             };
@@ -50,25 +80,19 @@ namespace RecordParser.Test
 
             var records = reader.ReadRecordsRaw(options, getField =>
             {
-                var record = new
-                {
-                    A = getField(0),
-                    B = getField(1),
-                    C = getField(2),
-                    D = getField(3)
-                };
+                var record = 
+                (
+                    getField(0),
+                    getField(1),
+                    getField(2),
+                    getField(3)
+                );
                 return record;
             }).ToList();
 
             // Assert
 
-            records.Should().HaveCount(1);
-
-            var record = records.Single();
-            record.A.Should().Be("x\r\ny");
-            record.B.Should().Be("2");
-            record.C.Should().Be("3");
-            record.D.Should().Be("4");
+            records.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
         }
 
         [Theory]

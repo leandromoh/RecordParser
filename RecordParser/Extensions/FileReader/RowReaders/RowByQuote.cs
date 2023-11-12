@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace RecordParser.Extensions.FileReader.RowReaders
 {
@@ -58,7 +59,7 @@ namespace RecordParser.Extensions.FileReader.RowReaders
                 else if (c == quote)
                 {
                     ReadOnlySpan<char> span = buffer.AsSpan().Slice(0, i - 1);
-                    var isQuotedField = i == 1 || span[span.Length - 1] == '\n' || span.TrimEnd().EndsWith(separator);
+                    var isQuotedField = IsFirstColumn(span) || span.TrimEnd().EndsWith(separator);
 
                     if (isQuotedField is false)
                         continue;
@@ -102,6 +103,28 @@ namespace RecordParser.Extensions.FileReader.RowReaders
                 yield return y;
 
             goto reloop;
+
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static bool IsFirstColumn(ReadOnlySpan<char> span)
+            {
+                var onlyWhiteSpace = true;
+
+                for (var i = span.Length - 1; i >= 0; i--)
+                {
+                    if (char.IsWhiteSpace(span[i]))
+                    {
+                        if (span[i] is '\n' or '\r')
+                            return true;
+                        else
+                            continue;
+                    }
+                    onlyWhiteSpace = false;
+                    break;
+                }
+
+                return onlyWhiteSpace;
+            }
         }
     }
 }
