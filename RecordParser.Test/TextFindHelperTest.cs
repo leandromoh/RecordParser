@@ -16,7 +16,7 @@ namespace RecordParser.Test
 
             var record = $"{id};{date};{color}";
             var finder = new TextFindHelper(record, ";", ('"', "\""));
-            ;
+
             // Act
 
             var a = finder.GetValue(0);
