@@ -109,6 +109,55 @@ namespace RecordParser.Test
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
+        public void Given_quoted_field_in_first_column_should_parse_successfully(bool parallel)
+        {
+            // Arrange
+
+            var fileContent = $"""
+                A,B,C,D
+                "x
+                y",2,3,4
+                """;
+
+            var expected = ($"x{Environment.NewLine}y","2","3","4");
+            var reader = new StringReader(fileContent);
+            var options = new VariableLengthReaderRawOptions
+            {
+                HasHeader = true,
+                ContainsQuotedFields = true,
+                ColumnCount = 4,
+                Separator = ",",
+                ParallelismOptions = new()
+                {
+                    Enabled = parallel,
+                    MaxDegreeOfParallelism = 2,
+                },
+            };
+
+            // Act
+
+            var result = reader.ReadRecordsRaw(options, getField =>
+            {
+                var record =
+                (
+                    getField(0),
+                    getField(1),
+                    getField(2),
+                    getField(3)
+                );
+                return record;
+            }).ToList();
+
+            // Assert
+
+            result.Should().HaveCount(1);
+            var row = result[0];
+            row.Should().Be(expected);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
         public void Read_csv_file_all_fields_unquoted(bool parallel)
         {
             // Arrange
