@@ -50,7 +50,7 @@ namespace RecordParser.Test
                 s"
                   "
                 a,1
-                ",3, b,4
+                ", 3,b , "4"
                 a,b,c,d
                 """.Replace(Environment.NewLine, newline);
 
@@ -66,8 +66,8 @@ namespace RecordParser.Test
                 ("98","99","100","101"),
                 // column quoted = 4
                 ("12","13","14",$"w{newline}s"),
-                // column quoted = 1 with whitespace before quote
-                ($"{newline}a,1{newline}", "3", " b", "4"),
+                // column quoted = 1 with leading & trailing whitespace
+                ($"{newline}a,1{newline}"," 3","b ","4"),
                 // no quoted column
                 ("a","b","c","d"),
             };
