@@ -16,4 +16,5 @@ jobs:
           dotnet-version: |
             6.0.x
             7.0.x
+            8.0.x
       - run: dotnet test RecordParser.Test/RecordParser.Test.csproj
