@@ -17,7 +17,7 @@ Even the focus of this library being data mapping to objects (classes, structs, 
 1. It supports .NET 6, 7, 8 and .NET Standard 2.1
 2. It has minimal heap allocations because it does intense use of [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a .NET type designed to have high-performance and reduce memory allocations [(see benchmark)](/Benchmark.md)
 3. It is even more performant because the relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is fast as handwriting code
-4. It supports parse for **ANY** type: classes, structs, records, arrays, tuples etc 
+4. It supports parse for ANY type: classes, structs, records, arrays, tuples etc 
 5. It supports to map values for properties, fields, indexers, etc.
 6. It does not do [boxing](https://docs.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing) for structs.
 7. It is flexible: you can choose the most convenient way to configure each of your parsers: indexed or sequential configuration

@@ -62,7 +62,7 @@ namespace RecordParser.Test
         [InlineData(48)]
         [InlineData(01)]
         [InlineData(00)]
-        public void Given_destination_shorter_than_max_position_especified_chars_written_should_be_zero(int destinationSize)
+        public void Given_destination_shorter_than_max_position_especified_then_chars_written_should_be_zero(int destinationSize)
         {
             // Arrange
 
