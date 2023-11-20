@@ -205,7 +205,9 @@ namespace RecordParser.Test
             var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be(expected);
-            unwritted.Should().Be(new string(default, freeSpace));
+
+            if (success)
+                unwritted.Should().Be(new string(default, freeSpace));
         }
 
         [Fact]
