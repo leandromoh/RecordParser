@@ -1,3 +1,6 @@
+## version 2.3.0
+- support dotnet 8 (#94)
+
 ## version 2.2.1
 - bugfix/first-field-quoted (#91) 
 - improvement/record-too-large-exception (#90)
