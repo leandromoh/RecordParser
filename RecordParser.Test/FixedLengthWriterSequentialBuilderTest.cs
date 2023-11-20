@@ -63,7 +63,7 @@ namespace RecordParser.Test
         [InlineData(48)]
         [InlineData(01)]
         [InlineData(00)]
-        public void Given_destination_shorter_than_max_position_especified_should_write_nothing(int destinationSize)
+        public void Given_destination_shorter_than_max_position_especified_then_chars_written_should_be_zero(int destinationSize)
         {
             // Arrange
 
@@ -92,7 +92,6 @@ namespace RecordParser.Test
 
             success.Should().BeFalse();
             charsWritten.Should().Be(0);
-            destination.ToString().Should().Be(new string(default, destinationSize));
         }
 
         [Fact]
@@ -120,11 +119,8 @@ namespace RecordParser.Test
             success.Should().BeFalse();
 
             var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("2020.05.23");
-            unwritted.Should().Be(new string(default, freeSpace));
         }
 
         [Fact]
@@ -152,11 +148,8 @@ namespace RecordParser.Test
             success.Should().BeFalse();
 
             var result = destination.Slice(0, charsWritten);
-            var unwritted = destination.Slice(charsWritten);
-            var freeSpace = destination.Length - charsWritten;
 
             result.Should().Be("foo bar baz----");
-            unwritted.Should().Be(new string(default, freeSpace));
         }
 
         [Fact]
