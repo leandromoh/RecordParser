@@ -2,45 +2,53 @@
 
   <PropertyGroup>
     <PackageId>RecordParser</PackageId>
-    <TargetFrameworks>netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Authors>Leandro Fernandes Vieira (leandromoh)</Authors>
     <Description>
-	RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance and zero allocations, thanks to Span type.  
-	It makes easier for developers to do parsing by automating non-relevant code, which allow you to focus on the essentials of mapping.  
-	Include readers and writers for variable-length and fixed-length records.  
+      RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance and zero allocations, thanks to Span type.
+      It makes easier for developers to do parsing by automating non-relevant code, which allow you to focus on the essentials of mapping.
+      Include readers and writers for variable-length and fixed-length records.
     </Description>
     <Copyright>Copyright 2023 (c) Leandro F. Vieira (leandromoh). All rights reserved.</Copyright>
     <PackageProjectUrl>https://github.com/leandromoh/RecordParser</PackageProjectUrl>
     <RepositoryUrl>https://github.com/leandromoh/RecordParser</RepositoryUrl>
     <PackageTags>tsv parser performance csv mapper file flat reader dotnet-core span flatfile expression-tree delimited fixedlength</PackageTags>
-    <Version>2.3.0</Version>
+    <Version>2.3.1</Version>
     <PackageReleaseNotes>
-     https://github.com/leandromoh/RecordParser/blob/master/release_notes.md
+      https://github.com/leandromoh/RecordParser/blob/master/release_notes.md
     </PackageReleaseNotes>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
-      <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-      <NoWarn>1591</NoWarn>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <NoWarn>1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-      <None Include="..\LICENSE.md" Pack="true" PackagePath="LICENSE.md"/>
+    <None Include="..\LICENSE.md" Pack="true" PackagePath="LICENSE.md" />
   </ItemGroup>
 
-    <ItemGroup>
-        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-            <_Parameter1>RecordParser.Test</_Parameter1>
-        </AssemblyAttribute>
-    </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>RecordParser.Test</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 
   <PropertyGroup Condition="
 		( '$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release') AND
 		( '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0') AND
 		( '$(Platform)' == 'AnyCPU') ">
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="PolySharp" Version="1.14.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
 </Project>

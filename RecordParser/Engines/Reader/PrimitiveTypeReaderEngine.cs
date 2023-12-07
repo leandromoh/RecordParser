@@ -17,30 +17,30 @@ namespace RecordParser.Engines.Reader
         {
             var mapping = new Dictionary<(Type from, Type to), Func<Type, Expression, Expression>>();
 
-            mapping.AddMapForReadOnlySpan(span => new string(span));
+            mapping.AddMapForReadOnlySpan(span => span.ToString());
             mapping.AddMapForReadOnlySpan(span => ToChar(span));
 
-            mapping.AddMapForReadOnlySpan(span => byte.Parse(span, NumberStyles.Integer, null));
-            mapping.AddMapForReadOnlySpan(span => sbyte.Parse(span, NumberStyles.Integer, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.Byte(span, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.SByte(span, null));
 
-            mapping.AddMapForReadOnlySpan(span => double.Parse(span, NumberStyles.AllowThousands | NumberStyles.Float, null));
-            mapping.AddMapForReadOnlySpan(span => float.Parse(span, NumberStyles.AllowThousands | NumberStyles.Float, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.Double(span, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.Single(span, null));
 
-            mapping.AddMapForReadOnlySpan(span => int.Parse(span, NumberStyles.Integer, null));
-            mapping.AddMapForReadOnlySpan(span => uint.Parse(span, NumberStyles.Integer, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.Int32(span, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.UInt32(span, null));
 
-            mapping.AddMapForReadOnlySpan(span => long.Parse(span, NumberStyles.Integer, null));
-            mapping.AddMapForReadOnlySpan(span => ulong.Parse(span, NumberStyles.Integer, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.Int64(span, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.UInt64(span, null));
 
-            mapping.AddMapForReadOnlySpan(span => short.Parse(span, NumberStyles.Integer, null));
-            mapping.AddMapForReadOnlySpan(span => ushort.Parse(span, NumberStyles.Integer, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.Int16(span, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.UInt16(span, null));
 
-            mapping.AddMapForReadOnlySpan(span => Guid.Parse(span));
-            mapping.AddMapForReadOnlySpan(span => DateTime.Parse(span, null, DateTimeStyles.AllowWhiteSpaces));
-            mapping.AddMapForReadOnlySpan(span => TimeSpan.Parse(span, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.Guid(span));
+            mapping.AddMapForReadOnlySpan(span => Parse.DateTime(span, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.TimeSpan(span, null));
 
-            mapping.AddMapForReadOnlySpan(span => bool.Parse(span));
-            mapping.AddMapForReadOnlySpan(span => decimal.Parse(span, NumberStyles.Number, null));
+            mapping.AddMapForReadOnlySpan(span => Parse.Boolean(span));
+            mapping.AddMapForReadOnlySpan(span => Parse.Decimal(span, null));
 
             mapping[(typeof(ReadOnlySpan<char>), typeof(Enum))] = GetEnumFromSpanParseExpression;
 
@@ -93,15 +93,22 @@ namespace RecordParser.Engines.Reader
                 })
                 .Reverse()
                 .Aggregate((Expression)Expression.Condition(
-                        test: Expression.Call(under, "TryParse", Type.EmptyTypes, trim, number),
-                        ifTrue: Expression.Convert(number, type),
-                        ifFalse: Expression.Call(typeof(Enum), "Parse", new[] { type },
-#if NET6_0_OR_GREATER
-                            span, 
+#if NETSTANDARD2_0
+                        test: Expression.Call(under, "TryParse", Type.EmptyTypes, SpanAsString(trim), Expression.Constant(NumberStyles.Number), Expression.Constant(null, typeof(IFormatProvider)), number),
 #else
-                            SpanAsString(trim),
+                        test: Expression.Call(under, "TryParse", Type.EmptyTypes, trim, number),
 #endif
-                            Expression.Constant(true))),
+
+                        ifTrue: Expression.Convert(number, type),
+
+#if NET6_0_OR_GREATER
+                        ifFalse: Expression.Call(typeof(Enum), "Parse", [type], span, Expression.Constant(true))),
+#elif NETSTANDARD2_1_OR_GREATER
+                        ifFalse: Expression.Call(typeof(Enum), "Parse", [type], SpanAsString(trim), Expression.Constant(true))),
+#else
+                        ifFalse: Expression.Convert(Expression.Call(typeof(Enum), "Parse", Type.EmptyTypes, Expression.Constant(type), SpanAsString(trim), Expression.Constant(true)), type)),
+#endif
+
                         (acc, item) =>
                             Expression.Condition(
                                 item.condition,

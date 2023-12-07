@@ -1,7 +1,6 @@
 ﻿using AutoFixture;
 using FluentAssertions;
 using RecordParser.Builders.Writer;
-using RecordParser.Test;
 using System;
 using System.Linq;
 using Xunit;
@@ -220,7 +219,7 @@ namespace RecordParser.Test
                 .Map(x => x.Date, 1)
                 .Map(x => x.Debit, 2)
                 .DefaultTypeConvert<decimal>((span, value) => (((long)(value * 100)).TryFormat(span, out var written), written))
-                .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy"), written))
+                .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy".AsSpan()), written))
                 .Build(" ; ");
 
             var instance = (Balance: 0123456789.01M,
@@ -252,7 +251,7 @@ namespace RecordParser.Test
 
             var writer = new VariableLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, string Nickname)>()
                 .Map(x => x.Name, 1, SpanExtensions.ToUpperInvariant)
-                .Map(x => x.Birthday, 2, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy"), written))
+                .Map(x => x.Birthday, 2, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy".AsSpan()), written))
                 .Map(x => x.Money, 3)
                 .Map(x => x.Nickname, 4, (span, text) => SpanExtensions.ToUpperInvariant(span, text.Slice(0, 4)))
                 .Build(" ; ");

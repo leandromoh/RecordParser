@@ -50,7 +50,7 @@ namespace RecordParser.Engines.Writer
                     return (false, 0);
                 }
 
-                var newLengh = MinLengthToQuote(text, separator, quote);
+                var newLengh = MinLengthToQuote(text, separator.AsSpan(), quote);
 
                 return TryFormat(text, span, quote, newLengh);
             };
@@ -64,7 +64,7 @@ namespace RecordParser.Engines.Writer
 #endif
                 (Span<char> span, ReadOnlySpan<char> text) =>
                 {
-                    var newLengh = MinLengthToQuote(text, separator, quote);
+                    var newLengh = MinLengthToQuote(text, separator.AsSpan(), quote);
 
                     if (newLengh == text.Length)
                         return f(span, text);
@@ -101,7 +101,7 @@ namespace RecordParser.Engines.Writer
 #endif
                 (Span<char> span, string text) =>
                 {
-                    var newLengh = MinLengthToQuote(text, separator, quote);
+                    var newLengh = MinLengthToQuote(text.AsSpan(), separator.AsSpan(), quote);
 
                     if (newLengh == text.Length)
                         return f(span, text);
@@ -115,12 +115,12 @@ namespace RecordParser.Engines.Writer
                                             : stackalloc char[newLengh])
                                           .Slice(0, newLengh);
 
-                        var (success, written) = TryFormat(text, temp, quote, newLengh);
+                        var (success, written) = TryFormat(text.AsSpan(), temp, quote, newLengh);
 
                         Debug.Assert(success);
                         Debug.Assert(written == newLengh);
 
-                        return f(span, new string(temp));
+                        return f(span, temp.ToString());
                     }
                     finally
                     {

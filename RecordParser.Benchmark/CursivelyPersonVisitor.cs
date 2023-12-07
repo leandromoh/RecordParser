@@ -33,7 +33,7 @@ namespace RecordParser.Benchmark
             if (_dataBufUsed != 0)
             {
                 VisitPartialFieldContents(chunk);
-                chunk = _dataBuf.AsSpan(.._dataBufUsed);
+                chunk = _dataBuf.AsSpan(0, _dataBufUsed);
                 _dataBufUsed = 0;
             }
 
@@ -55,8 +55,8 @@ namespace RecordParser.Benchmark
                 case 3:
                     // M/d/yyyy format is not supported by this for some reason.
                     ////_ = Utf8Parser.TryParse(chunk, out _person.birthday, out _);
-                    Span<char> birthdayChars = _decodeBuf.AsSpan(..Encoding.UTF8.GetChars(chunk, _decodeBuf));
-                    _person.birthday = DateTime.Parse(birthdayChars, DateTimeFormatInfo.InvariantInfo);
+                    Span<char> birthdayChars = _decodeBuf.AsSpan(0, Encoding.UTF8.GetChars(chunk, _decodeBuf));
+                    _person.birthday = Parse.DateTime(birthdayChars, DateTimeFormatInfo.InvariantInfo);
                     break;
 
                 case 4:
@@ -67,7 +67,7 @@ namespace RecordParser.Benchmark
                     // N.B.: there are ways to improve the efficiency of this for earlier
                     // targets, but I think it's fine for performance-sensitive applications to
                     // have to upgrade to .NET 6.0 or higher...
-                    _person.gender = Enum.Parse<Gender>(Encoding.UTF8.GetString(chunk));
+                    _person.gender = Parse.Enum<Gender>(Encoding.UTF8.GetString(chunk).AsSpan());
 #endif
                     break;
 
@@ -91,7 +91,7 @@ namespace RecordParser.Benchmark
         public override void VisitPartialFieldContents(ReadOnlySpan<byte> chunk)
         {
             EnsureCapacity(_dataBufUsed + chunk.Length);
-            chunk.CopyTo(_dataBuf.AsSpan(_dataBufUsed..));
+            chunk.CopyTo(_dataBuf.AsSpan(_dataBufUsed));
             _dataBufUsed += chunk.Length;
         }
 

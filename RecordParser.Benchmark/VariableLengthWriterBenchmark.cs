@@ -79,7 +79,7 @@ namespace RecordParser.Benchmark
                     sb.Append(";");
                     sb.Append(person.children);
 
-                    await streamWriter.WriteLineAsync(sb);
+                    await streamWriter.WriteLineAsync(sb.ToString());
                     sb.Clear();
                 }
             }
