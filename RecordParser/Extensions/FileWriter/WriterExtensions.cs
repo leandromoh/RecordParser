@@ -55,63 +55,36 @@ namespace RecordParser.Extensions
             }
         }
 
-        private class BufferContext
-        {
-            public int pow;
-            public char[] buffer;
-            public object lockObj;
-        }
-
         private static void WriteParallel<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
         {
-            var initialPool = 20;
-            var pool = new Stack<char[]>(initialPool);
+            var poolSize = 10_000;
+            var pool = new char[poolSize][];
 
-            for (var index = 0; index < initialPool; index++)
-                pool.Push(ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow)));
+            for (var index = 0; index < poolSize; index++)
+                pool[index] = new char[(int)Math.Pow(2, initialPow)];
 
-            var xs = items.AsParallel(options).Select((item, i) =>
+            foreach (var xx in items.Batch(poolSize))
             {
-                var buffer = Pop() ?? ArrayPool<char>.Shared.Rent((int)Math.Pow(2, initialPow));
-            retry:
-
-                if (tryFormat(item, buffer, out var charsWritten))
+                var xs = xx.AsParallel(options).Select((item, i) =>
                 {
-                    return (buffer, charsWritten);
-                }
-                else
+                    var buffer = pool[i];
+                retry:
+
+                    if (tryFormat(item, buffer, out var charsWritten))
+                    {
+                        return (buffer, charsWritten);
+                    }
+                    else
+                    {
+                        buffer = pool[i] = new char[buffer.Length * 2];
+                        goto retry;
+                    }
+                });
+
+                foreach (var x in xs)
                 {
-                    ArrayPool<char>.Shared.Return(buffer);
-                    buffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
-                    goto retry;
+                    textWriter.WriteLine(x.buffer, 0, x.charsWritten);
                 }
-            });
-
-            foreach (var x in xs)
-            {
-                textWriter.WriteLine(x.buffer, 0, x.charsWritten);
-                Push(x.buffer);
-            }
-
-            foreach (var x in pool)
-            {
-                ArrayPool<char>.Shared.Return(x);
-            }
-
-            pool.Clear();
-
-            char[] Pop()
-            {
-                char[] x;
-                lock (pool)
-                    pool.TryPop(out x);
-                return x;
-            }
-
-            void Push(char[] item)
-            {
-                lock (pool)
-                    pool.Push(item);
             }
         }
 
