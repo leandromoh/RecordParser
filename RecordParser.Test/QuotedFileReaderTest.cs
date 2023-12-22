@@ -52,7 +52,7 @@ namespace RecordParser.Test
                 a,1
                 ", 3,b , "4"
                 a,b,c,d
-                """.Replace(Environment.NewLine, newline);
+                """.Replace("\r\n", newline);
 
             var expected = new[]
             {
@@ -119,7 +119,7 @@ namespace RecordParser.Test
                 y",2,3,4
                 """;
 
-            var expected = ($"x{Environment.NewLine}y","2","3","4");
+            var expected = ("x\r\ny","2","3","4");
             var reader = new StringReader(fileContent);
             var options = new VariableLengthReaderRawOptions
             {
