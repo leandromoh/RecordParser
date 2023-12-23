@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace RecordParser.Extensions
 {
@@ -43,6 +44,19 @@ namespace RecordParser.Extensions
             hasHeader
             ? source.Skip(1)
             : source;
+
+        public static ParallelOptions AsParallel(this ParallelismOptions option)
+        {
+            var query = new ParallelOptions();
+
+            if (option.MaxDegreeOfParallelism is { } degree)
+                query.MaxDegreeOfParallelism = degree;
+
+            if (option.CancellationToken is { } token)
+                query.CancellationToken = token;
+
+            return query;
+        }
 
         public static ParallelQuery<T> AsParallel<T>(this IEnumerable<T> source, ParallelismOptions option)
         {

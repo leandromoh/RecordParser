@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace RecordParser.Extensions
 {
@@ -47,12 +48,57 @@ namespace RecordParser.Extensions
         {
             if (options.Enabled)
             {
-                WriteParallel(textWriter, items, tryFormat, options);
+                if (options.EnsureOriginalOrdering)
+                    WriteParallel(textWriter, items, tryFormat, options);
+                else
+                    WriteParallelUnordered(textWriter, items, tryFormat, options);
             }
             else
             {
                 WriteSequential(textWriter, items, tryFormat);
             }
+        }
+
+        private class BufferContext
+        {
+            public char[] buffer;
+            public object lockObj;
+        }
+
+        private static void WriteParallelUnordered<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)
+        {
+            var poolSize = 10_000;
+            var textWriterLock = new object();
+            var opt = options.AsParallel();
+            var pool = Enumerable
+                .Range(0, poolSize)
+                .Select(_ => new BufferContext
+                {
+                    buffer = new char[(int)Math.Pow(2, initialPow)],
+                    lockObj = new object()
+                })
+                .ToArray();
+
+            Parallel.ForEach(items, opt, (item, _, i) =>
+            {
+                var x = pool[i % poolSize];
+
+                lock (x.lockObj)
+                {
+                retry:
+
+                    if (tryFormat(item, x.buffer, out var charsWritten))
+                    {
+                        lock (textWriterLock)
+                            textWriter.WriteLine(x.buffer, 0, charsWritten);
+                    }
+                    else
+                    {
+                        x.buffer = new char[x.buffer.Length * 2];
+                        goto retry;
+                    }
+                }
+            });
         }
 
         private static void WriteParallel<T>(TextWriter textWriter, IEnumerable<T> items, TryFormat<T> tryFormat, ParallelismOptions options)

@@ -9,13 +9,13 @@ namespace RecordParser.Engines
             Expression.Call(f.Target is null ? null : Expression.Constant(f.Target), f.Method, args);
 
         public static Expression StringAsSpan(Expression str) =>
-            Expression.Call(typeof(MemoryExtensions), "AsSpan", Type.EmptyTypes, str);
+            Expression.Call(typeof(MemoryExtensions), nameof(MemoryExtensions.AsSpan), Type.EmptyTypes, str);
 
         public static Expression SpanAsString(Expression span) =>
             Expression.Call(span, "ToString", Type.EmptyTypes);
 
         public static Expression Trim(Expression str) =>
-            Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, str);
+            Expression.Call(typeof(MemoryExtensions), nameof(MemoryExtensions.Trim), Type.EmptyTypes, str);
 
         public static Expression Slice(Expression span, Expression start) =>
             Expression.Call(span, "Slice", Type.EmptyTypes, start);
@@ -30,6 +30,6 @@ namespace RecordParser.Engines
             Expression.Call(span, "Slice", Type.EmptyTypes, start, length);
 
         public static Expression IsWhiteSpace(Expression valueText) =>
-            Expression.Call(typeof(MemoryExtensions), "IsWhiteSpace", Type.EmptyTypes, valueText);
+            Expression.Call(typeof(MemoryExtensions), nameof(MemoryExtensions.IsWhiteSpace), Type.EmptyTypes, valueText);
     }
 }

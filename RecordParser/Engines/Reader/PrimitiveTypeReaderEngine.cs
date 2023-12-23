@@ -78,7 +78,7 @@ namespace RecordParser.Engines.Reader
                 {
                     var enumText = color.ToString();
 
-                    var compareTo = Expression.Call(typeof(MemoryExtensions), "CompareTo", Type.EmptyTypes,
+                    var compareTo = Expression.Call(typeof(MemoryExtensions), nameof(MemoryExtensions.CompareTo), Type.EmptyTypes,
                         StringAsSpan(Expression.Constant(enumText)),
                         trim,
                         Expression.Constant(StringComparison.OrdinalIgnoreCase));
