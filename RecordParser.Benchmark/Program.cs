@@ -11,37 +11,7 @@ namespace RecordParser.Benchmark
 #if DEBUG
             new VariableLengthReaderBenchmark() { LimitRecord = 500_000 }.Read_VariableLength_FullQuoted_RecordParser_Parallel(false, true);
 #else
-            Console.WriteLine("Benchmark options:");
-            Console.WriteLine("0 - all");
-            Console.WriteLine("1 - variable length writer");
-            Console.WriteLine("2 - variable length reader");
-            Console.WriteLine("3 - fixed length reader");
-            Console.WriteLine("Digit the number of desired benchmark: ");
-            var option = int.Parse(Console.ReadLine());
-
-            switch (option)
-            {
-                case 0:
-                    BenchmarkRunner.Run<VariableLengthWriterBenchmark>();
-                    BenchmarkRunner.Run<VariableLengthReaderBenchmark>();
-                    BenchmarkRunner.Run<FixedLengthReaderBenchmark>();
-                    break;
-
-                case 1:
-                    BenchmarkRunner.Run<VariableLengthWriterBenchmark>();
-                    break;
-
-                case 2:
-                    BenchmarkRunner.Run<VariableLengthReaderBenchmark>();
-                    break;
-
-                case 3:
-                    BenchmarkRunner.Run<FixedLengthReaderBenchmark>();
-                    break;
-
-                default:
-                    throw new NotSupportedException("invalid option");
-            }
+            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run();
 #endif
             Console.Out.Write("Hit <enter> to exit...");
             Console.In.ReadLine();
