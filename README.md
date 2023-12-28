@@ -15,20 +15,20 @@ Even the focus of this library being data mapping to objects (classes, structs, 
 ## RecordParser is a Zero Allocation Writer/Reader Parser for .NET Core
 
 1. It supports .NET 6, 7, 8 and .NET Standard 2.1
-2. It has minimal heap allocations because it does intense use of [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a .NET type designed to have high-performance and reduce memory allocations [(see benchmark)](/Benchmark.md)
-3. It is even more performant because the relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is fast as handwriting code
-4. It supports parse for ANY type: classes, structs, records, arrays, tuples etc 
-5. It supports to map values for properties, fields, indexers, etc.
-6. It does not do [boxing](https://docs.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing) for structs.
-7. It is flexible: you can choose the most convenient way to configure each of your parsers: indexed or sequential configuration
-8. It is extensible: you can totally customize your parsing with lambdas/delegates 
-9. It is even more extensible because you can easily create extension methods that wraps custom mappings
-10. It is efficient: you can take advantage of multicore to use parallel processing and speed up parsing
-11. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your classes with minimised dependencies and low coupling  
-12. It provides clean API with familiar methods: Parse, TryParse and TryFormat
-13. It is easy configurated with a builder object, even programmatically, because does not require to define a class each time you want to define a parser
-14. Compliant with [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt) standard
-15. It supports to parse individual records as well whole files
+2. It supports to parse individual records as well as [whole files](#file-processing---read)
+3. It has minimal heap allocations because it does intense use of [Span](https://docs.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay) type, a .NET type designed to have high-performance and reduce memory allocations [(see benchmark)](/Benchmark.md)
+4. It is even more performant because the relevant code is generated using [expression trees](https://docs.microsoft.com/dotnet/csharp/expression-trees), which once compiled is fast as handwriting code
+5. It supports parse for ANY type: classes, structs, records, arrays, tuples etc 
+6. It supports to map values for properties, fields, indexers, etc.
+7. It does not do [boxing](https://docs.microsoft.com/dotnet/csharp/programming-guide/types/boxing-and-unboxing) for structs.
+8. It is flexible: you can choose the most convenient way to configure each of your parsers: indexed or sequential configuration
+9. It is extensible: you can totally customize your parsing with lambdas/delegates 
+10. It is even more extensible because you can easily create extension methods that wraps custom mappings
+11. It is efficient: you can take advantage of multicore to use parallel processing and speed up parsing
+12. It is not intrusive: all mapping configuration is done outside of the mapped type. It keeps your classes with minimised dependencies and low coupling  
+13. It provides clean API with familiar methods: Parse, TryParse and TryFormat
+14. It is easy configurated with a builder object, even programmatically, because does not require to define a class each time you want to define a parser
+15. Compliant with [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt) standard
 
 ## Benchmark
 
@@ -41,7 +41,7 @@ Third Party Benchmarks
 - [Fastest CSV parser in C sharp](https://github.com/mohammadeunus/Fastest-CSV-parser-in-C-sharp)
 
 ## Currently there are parsers for 2 record formats: 
-1. Fixed length, common in positional files, e.g. financial services, mainframe use, etc
+1. Fixed length, common in positional/flat files, e.g. financial services, mainframe use, etc
     * [Reader](#fixed-length-reader)
     * [Writer](#fixed-length-writer)
 2. Variable length, common in delimited files, e.g. CSV, TSV files, etc
@@ -56,7 +56,9 @@ Third Party Benchmarks
     * [Default Type Convert](#default-type-convert---writer)
     * [Custom Property Convert](#custom-property-convert---writer)
 
-*ㅤyou can use a "string pool" to avoid creating multiple instances of strings with same content.
+*ㅤyou can use a "string pool" to avoid creating multiple instances of strings with same content. This optimization is useful when there are a lot of repeated string values present. In this scenario, it may reduce allocated memory and speed-up processing time.   
+
+### Parsing Files
 
 NOTE: MOST EXAMPLES USE TUPLES FOR SIMPLICITY. PARSER ACTUALLY WORKS FOR ANY TYPE (CLASSES, STRUCTS, RECORDS, ARRAYS, TUPLES, ETC)
 
@@ -457,4 +459,192 @@ public void Given_specified_custom_parser_for_member_should_have_priority_over_c
 
     result.Should().Be("15 ; 42 ; 50");
 }
+```
+
+## File Processing - Read
+
+While version 1 of the library allows to parse individual records, version 2 introduced features to read/write records directly from/to files.
+This functionality bridged the gap between the existing readers/writers and `TextReader`/`TextWriter`.
+
+One awesome feature that makes RecordParser innovative and special is the hability to process files using the power of the parallel programmimg!
+You can take advantage of multicore to use parallel processing and speed up reading and writing! 
+You can disable the parallelism just by set the feature flag to `false`, thus using sequential processing. 
+
+Just import the namespace `RecordParser.Extensions` to see the extension methods to interact in `TextReader` and `TextWriter`.
+
+### File reading for FixedLengthReader
+
+```csharp
+using System;
+using RecordParser.Builders.Reader;
+using RecordParser.Extensions;
+using System.IO;
+
+var fileContent = 
+    """
+    01 123-456-789 00033.5
+    99 abc-def-ghk 00050.7
+    """;
+
+// I am using StringReader because in the example the content is a string
+// but could be StreamReader or any TextReader
+using TextReader textReader = new StringReader(fileContent);
+
+var reader = new FixedLengthReaderSequentialBuilder<Record>()
+    .Map(x => x.Foo, 2)
+    .Skip(1)
+    .Map(x => x.Bar, 11)
+    .Skip(1)
+    .Map(x => x.Qux, 7)
+    .Build();
+
+var readOptions = new FixedLengthReaderOptions<Record>
+{
+    Parser = reader.Parse,
+    ParallelismOptions = new()
+    {
+        Enabled = true,
+        EnsureOriginalOrdering = true,
+        MaxDegreeOfParallelism = 4
+    }
+};
+
+var records = textReader.ReadRecords(readOptions);
+
+foreach (var r in records)
+    Console.WriteLine(r);
+
+public record class Record(int Foo, string Bar, decimal Qux);
+```
+
+### File reading for VariableLengthReader
+
+```csharp
+using System;
+using RecordParser.Builders.Reader;
+using RecordParser.Extensions;
+using System.IO;
+
+var fileContent = 
+    """
+    Foo,Bar,Qux
+    1,123456789,33
+    12,abc-def-ghk,50.7
+    """;
+
+// I am using StringReader because in the example the content is a string
+// but could be StreamReader or any TextReader
+using TextReader textReader = new StringReader(fileContent);
+
+var reader = new VariableLengthReaderBuilder<Record>()
+    .Map(x => x.Foo, 0)
+    .Map(x => x.Bar, 1)
+    .Map(x => x.Qux, 2)
+    .Build(",");
+
+var readOptions = new VariableLengthReaderOptions
+{
+    HasHeader = true,
+    ContainsQuotedFields = false,
+    ParallelismOptions = new()
+    {
+        Enabled = true,
+        EnsureOriginalOrdering = true,
+        MaxDegreeOfParallelism = 4
+    }
+};
+
+var records = textReader.ReadRecords(reader, readOptions);
+
+foreach (var r in records)
+    Console.WriteLine(r);
+
+public record class Record(int Foo, string Bar, decimal Qux);
+```
+
+### File reading for VariableLength Raw
+
+```csharp
+using System;
+using RecordParser.Extensions;
+using System.IO;
+
+var fileContent = """
+    A,B,C,D
+    1,2,3,X
+    5,6,7,Y
+    9,10,11,Z
+    """;
+
+// I am using StringReader because in the example the content is a string
+// but could be StreamReader or any TextReader
+using TextReader textReader = new StringReader(fileContent);
+
+var readOptions = new VariableLengthReaderRawOptions
+{
+    HasHeader = true,
+    ContainsQuotedFields = false,
+    ColumnCount = 4,
+    Separator = ",",
+    ParallelismOptions = new()
+    {
+        Enabled = true,
+        EnsureOriginalOrdering = true,
+        MaxDegreeOfParallelism = 4
+    }
+};
+
+// getField is a callback of type Func<int, string>, that receives the index column and returns its content as string
+var records = textReader.ReadRecordsRaw(readOptions, getField =>
+{
+    var record = new
+    {
+        A = getField(0),
+        B = getField(1),
+        C = getField(2),
+        D = getField(3)
+    };
+    return record;
+});
+
+foreach (var r in records)
+    Console.WriteLine(r);
+```
+
+## File Processing - Write
+
+This feature is agnostic to builder type since it just receives the delegate of `TryFormat` method.  
+So you can use it with instances of both `FixedLengthWriter` and `VariableLengthWriter`.
+
+```csharp
+using RecordParser.Builders.Writer;
+using RecordParser.Extensions;
+using System.IO;
+
+var writer = new VariableLengthWriterBuilder<Record>()
+    .Map(x => x.Foo, 0)
+    .Map(x => x.Bar, 1)
+    .Map(x => x.Qux, 2)
+    .Build(",");
+
+// I am using StreamWriter + MemoryStream in the example but could be any TextWriter
+using var memory = new MemoryStream();
+using TextWriter textWriter = new StreamWriter(memory);
+
+var parallelOptions = new ParallelismOptions()
+{
+    Enabled = true,
+    EnsureOriginalOrdering = true,
+    MaxDegreeOfParallelism = 4,
+};
+
+var records = new []
+{
+    new Record(12, "123456789", 33),
+    new Record(34, "abc-def-ghk", 50.7M)
+};
+
+textWriter.WriteRecords(records, writer.TryFormat, parallelOptions);
+    
+public record class Record(int Foo, string Bar, decimal Qux);
 ```
