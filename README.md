@@ -59,6 +59,12 @@ Third Party Benchmarks
 *ㅤyou can use a "string pool" to avoid creating multiple instances of strings with same content. This optimization is useful when there are a lot of repeated string values present. In this scenario, it may reduce allocated memory and speed-up processing time.   
 
 ### Parsing Files
+1. Readers
+    * [Fixed length](#file-reading-for-fixedlengthreader)
+    * [Variable length](#file-reading-for-variablelengthreader)
+    * [Variable length raw](#file-reading-for-variablelength-raw)
+2. Writers
+    * [Default Type Convert](#file-processing---write)
 
 NOTE: MOST EXAMPLES USE TUPLES FOR SIMPLICITY. PARSER ACTUALLY WORKS FOR ANY TYPE (CLASSES, STRUCTS, RECORDS, ARRAYS, TUPLES, ETC)
 
