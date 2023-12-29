@@ -596,7 +596,8 @@ var readOptions = new VariableLengthReaderRawOptions
     }
 };
 
-// getField is a callback of type Func<int, string>, that receives the index column and returns its content as string
+// getField is a callback of type Func<int, string>,
+// it receives the index column and returns its content as string
 var records = textReader.ReadRecordsRaw(readOptions, getField =>
 {
     var record = new
