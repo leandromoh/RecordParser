@@ -46,14 +46,14 @@ namespace RecordParser.Benchmark
             {
                 if (i++ == LimitRecord) return;
 
-                var coluns = line.Split(",");
+                var coluns = line.Split(',');
                 var person = new Person()
                 {
                     id = Guid.Parse(coluns[0]),
                     name = coluns[1].Trim(),
                     age = int.Parse(coluns[2]),
                     birthday = DateTime.Parse(coluns[3], CultureInfo.InvariantCulture),
-                    gender = Enum.Parse<Gender>(coluns[4]),
+                    gender = Parse.Enum<Gender>(coluns[4].AsSpan()),
                     email = coluns[5].Trim(),
                     children = bool.Parse(coluns[7])
                 };
@@ -203,7 +203,7 @@ namespace RecordParser.Benchmark
                     name = getColumnValue(1).Trim(),
                     age = int.Parse(getColumnValue(2)),
                     birthday = DateTime.Parse(getColumnValue(3), CultureInfo.InvariantCulture),
-                    gender = Enum.Parse<Gender>(getColumnValue(4)),
+                    gender = Parse.Enum<Gender>(getColumnValue(4).AsSpan()),
                     email = getColumnValue(5).Trim(),
                     children = bool.Parse(getColumnValue(7))
                 };
@@ -262,13 +262,13 @@ namespace RecordParser.Benchmark
 
                 return new Person
                 {
-                    id = Guid.Parse(id),
+                    id = Parse.Guid(id),
                     name = name.ToString(),
-                    age = int.Parse(age),
-                    birthday = DateTime.Parse(birthday, DateTimeFormatInfo.InvariantInfo),
-                    gender = Enum.Parse<Gender>(gender),
+                    age = Parse.Int32(age),
+                    birthday = Parse.DateTime(birthday, DateTimeFormatInfo.InvariantInfo),
+                    gender = Parse.Enum<Gender>(gender),
                     email = email.ToString(),
-                    children = bool.Parse(children)
+                    children = Parse.Boolean(children)
                 };
             });
         }

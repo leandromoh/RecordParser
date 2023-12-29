@@ -226,7 +226,7 @@ namespace RecordParser.Test
                 .Map(x => x.Date)
                 .Map(x => x.Debit)
                 .DefaultTypeConvert<decimal>((span, value) => (((long)(value * 100)).TryFormat(span, out var written), written))
-                .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy"), written))
+                .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy".AsSpan()), written))
                 .Build(" ; ");
 
             var instance = (Balance: 0123456789.01M,
@@ -259,7 +259,7 @@ namespace RecordParser.Test
             var writer = new VariableLengthWriterSequentialBuilder<(string Name, DateTime Birthday, decimal Money, string Nickname)>()
                 .Skip(1)
                 .Map(x => x.Name, SpanExtensions.ToUpperInvariant)
-                .Map(x => x.Birthday, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy"), written))
+                .Map(x => x.Birthday, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy".AsSpan()), written))
                 .Map(x => x.Money)
                 .Map(x => x.Nickname, (span, text) => SpanExtensions.ToUpperInvariant(span, text.Slice(0, 4)))
                 .Build(" ; ");
