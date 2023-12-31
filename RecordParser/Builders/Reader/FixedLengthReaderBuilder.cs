@@ -98,7 +98,9 @@ namespace RecordParser.Builders.Reader
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
 
-            return new FixedLengthReader<T>(func.Compile());
+            var memory = new SpanReplacerVisitor().Modify(func);
+
+            return new FixedLengthReader<T>(func.Compile(true), memory.Compile(true));
         }
     }
 }
