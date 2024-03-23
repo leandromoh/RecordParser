@@ -24,7 +24,7 @@ namespace RecordParser.Test
                 .Map(x => x.Money, 23, 7)
                 .Build(factory: () => { called++; return (default, date, default); });
 
-            var result = reader.Parse("foo bar baz yyyy.MM.dd 0123.45");
+            var result = reader.Parse("foo bar baz yyyy.MM.dd 0123.45".AsMemory());
 
             called.Should().Be(1);
 

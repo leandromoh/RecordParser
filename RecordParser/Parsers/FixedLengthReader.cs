@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RecordParser.Visitors;
+using System;
 
 namespace RecordParser.Parsers
 {
@@ -12,9 +13,9 @@ namespace RecordParser.Parsers
     internal class FixedLengthReader<T> : IFixedLengthReader<T>
     {
         private readonly FuncSpanT<T> parser;
-        private readonly Func<ReadOnlyMemory<char>, T> parser2;
+        private readonly Func<Foo, T> parser2;
 
-        internal FixedLengthReader(FuncSpanT<T> parser, Func<ReadOnlyMemory<char>, T> parser2)
+        internal FixedLengthReader(FuncSpanT<T> parser, Func<Foo, T> parser2)
         {
             this.parser = parser;
             this.parser2 = parser2;
@@ -22,7 +23,7 @@ namespace RecordParser.Parsers
 
         public T Parse(ReadOnlyMemory<char> line)
         {
-            return parser2(line);
+            return parser2(new Foo(line));
         }
 
         public T Parse(ReadOnlySpan<char> line)

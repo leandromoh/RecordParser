@@ -27,7 +27,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-      <None Include="..\LICENSE.md" Pack="true" PackagePath="LICENSE.md"/>
+      <None Include="..\LICENSE.md" Pack="true" PackagePath="LICENSE.md" />
   </ItemGroup>
 
     <ItemGroup>
@@ -36,10 +36,11 @@
         </AssemblyAttribute>
     </ItemGroup>
 
-  <PropertyGroup Condition="
-		( '$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release') AND
-		( '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0') AND
-		( '$(Platform)' == 'AnyCPU') ">
+    <ItemGroup>
+      <PackageReference Include="AgileObjects.ReadableExpressions" Version="4.1.1" />
+    </ItemGroup>
+
+  <PropertyGroup Condition="&#xD;&#xA;		( '$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release') AND&#xD;&#xA;		( '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0') AND&#xD;&#xA;		( '$(Platform)' == 'AnyCPU') ">
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

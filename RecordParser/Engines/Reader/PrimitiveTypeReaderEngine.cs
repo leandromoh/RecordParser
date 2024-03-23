@@ -47,7 +47,7 @@ namespace RecordParser.Engines.Reader
             dic = mapping;
         }
 
-        private static char ToChar(ReadOnlySpan<char> span) => span[0];
+        public static char ToChar(ReadOnlySpan<char> span) => span[0];
 
         private static void AddMapForReadOnlySpan<T>(
             this IDictionary<(Type, Type), Func<Type, Expression, Expression>> dic,

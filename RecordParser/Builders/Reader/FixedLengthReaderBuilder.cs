@@ -1,4 +1,5 @@
-﻿using RecordParser.Engines.Reader;
+﻿using AgileObjects.ReadableExpressions;
+using RecordParser.Engines.Reader;
 using RecordParser.Parsers;
 using RecordParser.Visitors;
 using System;
@@ -95,12 +96,22 @@ namespace RecordParser.Builders.Reader
         {
             var map = MappingReadConfiguration.Merge(list, dic);
             var func = ReaderEngine.RecordParserSpanFlat(map, factory);
+            var func2 = ReaderEngine.RecordParserSpanFlatAOT(map, factory);
 
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
+            func2 = CultureInfoVisitor.ReplaceCulture(func2, cultureInfo);
+            var saf = func2.ToReadableString();
 
-            var memory = new SpanReplacerVisitor().Modify(func);
-
-            return new FixedLengthReader<T>(func.Compile(true), memory.Compile(true));
+            try
+            {
+                var f1 = func.Compile(true);
+                var f2 = func2.Compile(true);
+                return new FixedLengthReader<T>(f1, f2);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RecordParser.Visitors;
+using System;
 using System.Linq.Expressions;
 
 namespace RecordParser.Engines
@@ -15,7 +16,9 @@ namespace RecordParser.Engines
             Expression.Call(span, "ToString", Type.EmptyTypes);
 
         public static Expression Trim(Expression str) =>
-            Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, str);
+            str.Type == typeof(ReadOnlySpan<char>)
+            ? Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, str)
+            : Expression.Call(str, nameof(Foo.Trim), Type.EmptyTypes);
 
         public static Expression Slice(Expression span, Expression start) =>
             Expression.Call(span, "Slice", Type.EmptyTypes, start);
