@@ -8,7 +8,7 @@
 RecordParser is a expression tree based parser that helps you to write maintainable parsers with high-performance and zero allocations, thanks to Span type.
 It makes easier for developers to do parsing by automating non-relevant code, which allow you to focus on the essentials of mapping.
 
-## 🏆 1st place in [The fastest CSV parser in .NET](https://www.joelverhagen.com/blog/2020/12/fastest-net-csv-parsers) blog post
+## 🏆 2nd place in [The fastest CSV parser in .NET](https://www.joelverhagen.com/blog/2020/12/fastest-net-csv-parsers) blog post
 
 Even the focus of this library being data mapping to objects (classes, structs, etc), it got an excellent result in the blog benchmark which tested how fast libraries can transform a CSV row into an array of strings. We got 1st place by parsing a 1 million lines file in 826ms.
 
