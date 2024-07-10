@@ -1,7 +1,6 @@
 ﻿using AutoFixture;
 using FluentAssertions;
 using RecordParser.Builders.Writer;
-using RecordParser.Test;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
@@ -41,7 +40,7 @@ namespace RecordParser.Test
             success.Should().BeTrue();
             charsWritten.Should().Be(50);
 
-            var expected = string.Join('\0', new[]
+            var expected = string.Join("\0", new[]
             {
                 instance.Name.PadRight(15, ' '),
                 instance.Birthday.ToString("yyyy.MM.dd"),
@@ -156,7 +155,7 @@ namespace RecordParser.Test
                 .Map(x => x.Date, 13, 8)
                 .Map(x => x.Debit, 22, 6, padding: Padding.Left, paddingChar: '0')
                 .DefaultTypeConvert<decimal>((span, value) => (((long)(value * 100)).TryFormat(span, out var written), written))
-                .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy"), written))
+                .DefaultTypeConvert<DateTime>((span, value) => (value.TryFormat(span, out var written, "ddMMyyyy".AsSpan()), written))
                 .Build();
 
             var instance = (Balance: 0123456789.01M,
@@ -188,7 +187,7 @@ namespace RecordParser.Test
 
             var writer = new FixedLengthWriterBuilder<(string Name, DateTime Birthday, decimal Money, string Nickname)>()
                 .Map(x => x.Name, 0, 12, (span, text) => (true, text.AsSpan().ToUpperInvariant(span)))
-                .Map(x => x.Birthday, 12, 8, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy"), written))
+                .Map(x => x.Birthday, 12, 8, (span, date) => (date.TryFormat(span, out var written, "ddMMyyyy".AsSpan()), written))
                 .Map(x => x.Money, 21, 7, padding: Padding.Left, paddingChar: '0')
                 .Map(x => x.Nickname, 29, 8, (span, text) => (true, text.AsSpan().Slice(0, 4).ToUpperInvariant(span)), paddingChar: '-')
                 .Build();
@@ -378,7 +377,7 @@ namespace RecordParser.Test
             var multiply = (int)Math.Pow(10, precision);
 
             return builder.Map(ex, startIndex, length,
-                (span, value) => (((int)(value * multiply)).TryFormat(span, out var written, format), written),
+                (span, value) => (((int)(value * multiply)).TryFormat(span, out var written, format.AsSpan()), written),
                 padding, paddingChar);
         }
     }

@@ -58,7 +58,7 @@ namespace RecordParser.Benchmark
 
             if (sequence.IsSingleSegment)
             {
-                return Parse(sequence.FirstSpan, parser);
+                return Parse(sequence.First.Span, parser);
             }
 
             var length = (int)sequence.Length;

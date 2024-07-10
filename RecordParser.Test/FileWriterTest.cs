@@ -59,7 +59,7 @@ namespace RecordParser.Test
 
             var reader = new VariableLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color, int Index)>()
                 .Map(x => x.Name, 0)
-                .Map(x => x.Birthday, 1, value => new DateTime(long.Parse(value)))
+                .Map(x => x.Birthday, 1, value => new DateTime(Parse.Int64(value)))
                 .Map(x => x.Money, 2)
                 .Map(x => x.Color, 3)
                 .Map(x => x.Index, 4)

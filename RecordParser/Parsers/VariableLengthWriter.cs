@@ -22,7 +22,7 @@ namespace RecordParser.Parsers
 
         public bool TryFormat(T instance, Span<char> destination, out int charsWritten)
         {
-            var result = parse(destination, separator, instance);
+            var result = parse(destination, separator.AsSpan(), instance);
 
             charsWritten = result.charsWritten;
             return result.success;
