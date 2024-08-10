@@ -56,7 +56,7 @@ Third Party Benchmarks
     * [Default Type Convert](#default-type-convert---writer)
     * [Custom Property Convert](#custom-property-convert---writer)
 
-*ㅤyou can use a "string pool" to avoid creating multiple instances of strings with same content. This optimization is useful when there are a lot of repeated string values present. In this scenario, it may reduce allocated memory and speed-up processing time.   
+*ㅤyou can use a "string pool" (function that converts a `ReadOnlySpan<char>` to `string`) to avoid creating multiple instances of strings with same content. This optimization is useful when there are a lot of repeated string values present. In this scenario, it may reduce allocated memory and speed-up processing time.   
 
 ### Parsing Files
 1. [Readers](#file-processing---read)
@@ -565,6 +565,9 @@ public record class Record(int Foo, string Bar, decimal Qux);
 ```
 
 ### File reading for VariableLength Raw
+
+Note: only recommended when user need to receive each field as `string`. 
+Other methods that does not force `string` uses `ReadOnlySpan<char>`, which speed up processing and reduces unnecessary allocations.
 
 ```csharp
 using System;
