@@ -246,7 +246,7 @@ namespace RecordParser.Test
                 new () { id = new Guid("63858071-cbb3-5abd-9f88-3dfd565cc4ab"), name = "Lucy Berry", age = 49, birthday = DateTime.Parse("11/12/1961"), gender = Gender.Female, email = "vanvo@ro.pk", children = false },
                 new () { id = new Guid("203804f9-93e7-5510-8bb2-177296bafe6a"), name = "Frank Fox", age = 36, birthday = DateTime.Parse("3/19/1977"), gender = Gender.Male, email = "vav@ped.fj", children = true },
                 new () { id = new Guid("a8af66fb-bad4-51eb-810c-bf3ca22337c6"), name = "Isabel Todd", age = 51, birthday = DateTime.Parse("9/16/1999"), gender = Gender.Female, email = "gu@or.bz", children = false },
-                new () { id = new Guid("1a3d8a66-3e0c-50eb-99c1-a3926bce15ed"), name = $"Joseph {Environment.NewLine}Scott", age = 55, birthday = DateTime.Parse("10/26/1986"), gender = Gender.Male, email = "bup@vugeb.tt", children = false },
+                new () { id = new Guid("1a3d8a66-3e0c-50eb-99c1-a3926bce15ed"), name = "Joseph \r\nScott", age = 55, birthday = DateTime.Parse("10/26/1986"), gender = Gender.Male, email = "bup@vugeb.tt", children = false },
                 new () { id = new Guid("aa7d4395-f10f-5776-9912-e3d86c4b9d3c"), name = "Gilbert Brooks", age = 56, birthday = DateTime.Parse("3/1/1956"), gender = Gender.Female, email = "epiju@ba.ly", children = true },
                 new () { id = new Guid("1d25b811-4002-5744-ac40-93a50f2a442c"), name = "Louis \"Ronaldo\" Bennett", age = 25, birthday = DateTime.Parse("4/4/1967"), gender = Gender.Male, email = "ma@itrovive.tv", children = true },
                 new () { id = new Guid("8e963ae5-a9ed-5572-b11c-566abc6a8a56"), name = "Norman Parker", age = 57, birthday = DateTime.Parse("4/17/1969"), gender = Gender.Male, email = "omi@hewepa.bw", children = true },
@@ -291,7 +291,7 @@ namespace RecordParser.Test
             var expectedItems = new Quoted[]
             {
                 new Quoted { Id = 1, Date = new DateTime(2010, 01, 02), Name = "Ana", Rate = "Good", Ranking = 56 },
-                new Quoted { Id = 2, Date = new DateTime(2011, 05, 12), Name = "Bob", Rate = $"Much {Environment.NewLine}Good", Ranking = 4 },
+                new Quoted { Id = 2, Date = new DateTime(2011, 05, 12), Name = "Bob", Rate = "Much \r\nGood", Ranking = 4 },
                 new Quoted { Id = 3, Date = new DateTime(2013, 12, 10), Name = "Carla", Rate = "\"Medium\"", Ranking = 5 },
                 new Quoted { Id = 4, Date = new DateTime(2015, 03, 03), Name = "Derik", Rate = "Absolute, Awesome", Ranking = 1 },
             }

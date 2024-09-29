@@ -24,7 +24,7 @@ namespace RecordParser.Test
                 .Map(x => x.Money)
                 .Build(";", factory: () => { called++; return (default, date, default, color); });
 
-            var result = reader.Parse("foo bar baz ; yyyy.MM.dd ; 0123.45; IGNORE ");
+            var result = reader.Parse("foo bar baz ; yyyy.MM.dd ; 0123.45; IGNORE ".AsSpan());
 
             called.Should().Be(1);
 
@@ -43,7 +43,7 @@ namespace RecordParser.Test
                 .Map(x => x.Money)
                 .Build(";");
 
-            var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45");
+            var result = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45".AsSpan());
 
             result.Should().BeEquivalentTo((Name: "foo bar baz",
                                             Birthday: new DateTime(2020, 05, 23),
@@ -61,7 +61,7 @@ namespace RecordParser.Test
                 .Map(x => x.Money)
                 .Build(";");
 
-            var result = reader.Parse("foo bar baz ; IGNORE; 2020.05.23 ; IGNORE ; IGNORE ; 0123.45");
+            var result = reader.Parse("foo bar baz ; IGNORE; 2020.05.23 ; IGNORE ; IGNORE ; 0123.45".AsSpan());
 
             result.Should().BeEquivalentTo((Name: "foo bar baz",
                                             Birthday: new DateTime(2020, 05, 23),
@@ -75,11 +75,11 @@ namespace RecordParser.Test
                 .Map(x => x.Balance)
                 .Map(x => x.Date)
                 .Map(x => x.Debit)
-                .DefaultTypeConvert(value => decimal.Parse(value) / 100)
-                .DefaultTypeConvert(value => DateTime.ParseExact(value, "ddMMyyyy", null))
+                .DefaultTypeConvert(value => Parse.Decimal(value) / 100)
+                .DefaultTypeConvert(value => Parse.DateTimeExact(value, "ddMMyyyy", null))
                 .Build(";");
 
-            var result = reader.Parse("012345678901 ; 23052020 ; 012345");
+            var result = reader.Parse("012345678901 ; 23052020 ; 012345".AsSpan());
 
             result.Should().BeEquivalentTo((Balance: 0123456789.01M,
                                             Date: new DateTime(2020, 05, 23),
@@ -91,12 +91,12 @@ namespace RecordParser.Test
         {
             var reader = new VariableLengthReaderSequentialBuilder<(string Name, DateTime Birthday, decimal Money, string Nickname)>()
                 .Map(x => x.Name, value => value.ToUpper())
-                .Map(x => x.Birthday, value => DateTime.ParseExact(value, "ddMMyyyy", null))
+                .Map(x => x.Birthday, value => Parse.DateTimeExact(value, "ddMMyyyy", null))
                 .Map(x => x.Money)
                 .Map(x => x.Nickname, value => value.Slice(0, 4).ToString())
                 .Build(";");
 
-            var result = reader.Parse("foo bar baz ; 23052020 ; 012345 ; nickname");
+            var result = reader.Parse("foo bar baz ; 23052020 ; 012345 ; nickname".AsSpan());
 
             result.Should().BeEquivalentTo((Name: "FOO BAR BAZ",
                                             Birthday: new DateTime(2020, 05, 23),
@@ -108,13 +108,13 @@ namespace RecordParser.Test
         public void Given_specified_custom_parser_for_member_should_have_priority_over_custom_parser_for_type()
         {
             var reader = new VariableLengthReaderSequentialBuilder<(int Age, int MotherAge, int FatherAge)>()
-                .Map(x => x.Age, value => int.Parse(value) * 2)
+                .Map(x => x.Age, value => Parse.Int32(value) * 2)
                 .Map(x => x.MotherAge)
                 .Map(x => x.FatherAge)
-                .DefaultTypeConvert(value => int.Parse(value) + 2)
+                .DefaultTypeConvert(value => Parse.Int32(value) + 2)
                 .Build(";");
 
-            var result = reader.Parse(" 15 ; 40 ; 50 ");
+            var result = reader.Parse(" 15 ; 40 ; 50 ".AsSpan());
 
             result.Should().BeEquivalentTo((Age: 30,
                                             MotherAge: 42,
@@ -128,12 +128,12 @@ namespace RecordParser.Test
                 .Skip(2)
                 .Map(x => x.MotherAge)
                 .Skip(1)
-                .Map(x => x.Age, value => int.Parse(value) * 2)
+                .Map(x => x.Age, value => Parse.Int32(value) * 2)
                 .Map(x => x.FatherAge)
-                .DefaultTypeConvert(value => int.Parse(value) + 2)
+                .DefaultTypeConvert(value => Parse.Int32(value) + 2)
                 .Build(";");
 
-            var result = reader.Parse(" XX ; XX ; 40 ; XX ; 15 ; 50 ; XX");
+            var result = reader.Parse(" XX ; XX ; 40 ; XX ; 15 ; 50 ; XX".AsSpan());
 
             result.Should().BeEquivalentTo((Age: 30,
                                             MotherAge: 42,
@@ -149,7 +149,7 @@ namespace RecordParser.Test
                 .Map(x => x.Name)
                 .MyBuild();
 
-            var result = reader.Parse("012345678.901 ; 23052020 ; FOOBAR ");
+            var result = reader.Parse("012345678.901 ; 23052020 ; FOOBAR ".AsSpan());
 
             result.Should().BeEquivalentTo((Name: "foobar",
                                             Balance: 012345678.901M,
@@ -168,7 +168,7 @@ namespace RecordParser.Test
                 .Map(_ => color)
                 .Build(";");
 
-            _ = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue");
+            _ = reader.Parse("foo bar baz ; 2020.05.23 ; 0123.45; LightBlue".AsSpan());
 
             var result = (name, birthday, money, color);
 
@@ -208,9 +208,9 @@ namespace RecordParser.Test
                 expected.Color.ToString(),
             };
 
-            var line = string.Join(';', values.Select(x => $"  {x}  "));
+            var line = string.Join(";", values.Select(x => $"  {x}  "));
 
-            var result = reader.Parse(line);
+            var result = reader.Parse(line.AsSpan());
 
             result.Should().BeEquivalentTo(expected);
         }
@@ -308,9 +308,9 @@ namespace RecordParser.Test
             };
 
             CultureInfo.CurrentCulture = new CultureInfo(cultureName);
-            var line = string.Join(';', values.Select(x => $"  {x}  "));
+            var line = string.Join(";", values.Select(x => $"  {x}  "));
 
-            var result = reader.Parse(line);
+            var result = reader.Parse(line.AsSpan());
 
             result.Should().BeEquivalentTo(expected);
         }
@@ -323,7 +323,7 @@ namespace RecordParser.Test
             Expression<Func<T, DateTime>> ex, 
             string format)
         {
-            return source.Map(ex, value => DateTime.ParseExact(value, format, null));
+            return source.Map(ex, value => Parse.DateTimeExact(value, format, null));
         }
 
         public static IVariableLengthReader<T> MyBuild<T>(this IVariableLengthReaderSequentialBuilder<T> source)

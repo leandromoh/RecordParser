@@ -15,7 +15,7 @@ namespace RecordParser.Test
             var color = "LightBlue";
 
             var record = $"{id};{date};{color}";
-            var finder = new TextFindHelper(record, ";", ('"', "\""));
+            var finder = new TextFindHelper(record.AsSpan(), ";", ('"', "\""));
 
             // Act
 
@@ -50,7 +50,7 @@ namespace RecordParser.Test
 
             var action = () =>
             {
-                var finder = new TextFindHelper(record, ";", ('"', "\""));
+                var finder = new TextFindHelper(record.AsSpan(), ";", ('"', "\""));
 
                 a = finder.GetValue(0).ToString();
                 b = finder.GetValue(1).ToString();

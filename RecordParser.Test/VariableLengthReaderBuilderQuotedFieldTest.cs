@@ -18,7 +18,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("\"1997\",\"Ford\",\"Super, luxurious truck\",\"30100.99\"");
+            var result = reader.Parse("\"1997\",\"Ford\",\"Super, luxurious truck\",\"30100.99\"".AsSpan());
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford",
@@ -38,7 +38,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(separator);
 
-            var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ");
+            var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ".AsSpan());
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford",
@@ -56,7 +56,7 @@ namespace RecordParser.Test
                 .Map(x => x.Comment, 2)
                 .Build(separator);
 
-            var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ");
+            var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ".AsSpan());
 
             result.Should().BeEquivalentTo((Year: default(int),
                                             Model: default(string),
@@ -73,7 +73,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(separator);
 
-            var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ");
+            var result = reader.Parse("  \"1997\"  ,  \"Ford\"  ,  \"Super, \"\"luxurious\"\" truck\"  ,  \"30100.99\"  ".AsSpan());
 
             result.Should().BeEquivalentTo((Year: default(int),
                                             Model: default(string),
@@ -91,7 +91,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("1997,Ford,\"Super, luxurious truck\",30100.99");
+            var result = reader.Parse("1997,Ford,\"Super, luxurious truck\",30100.99".AsSpan());
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford",
@@ -109,7 +109,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("1997,Ford,\"\"\"It is fast\"\"\",30100.99");
+            var result = reader.Parse("1997,Ford,\"\"\"It is fast\"\"\",30100.99".AsSpan());
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford",
@@ -127,7 +127,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("1997,Ford,\"\"\"It is fast\"\"\",30100.99");
+            var result = reader.Parse("1997,Ford,\"\"\"It is fast\"\"\",30100.99".AsSpan());
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "FORD",
@@ -144,7 +144,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("1997,Ford,\"Super, luxurious truck\",30100.99");
+            var result = reader.Parse("1997,Ford,\"Super, luxurious truck\",30100.99".AsSpan());
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford",
@@ -164,7 +164,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            Action result = () => reader.Parse(line);
+            Action result = () => reader.Parse(line.AsSpan());
 
             result.Should().Throw<Exception>().WithMessage("Quoted field is missing closing quote.");
         }
@@ -180,7 +180,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            Action result = () => reader.Parse(line);
+            Action result = () => reader.Parse(line.AsSpan());
 
             result.Should().Throw<Exception>().WithMessage("Double quote is not escaped or there is extra data after a quoted field.");
         }
@@ -195,7 +195,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("1997,TV 47\", Super \"luxurious\" truck,30100.99");
+            var result = reader.Parse("1997,TV 47\", Super \"luxurious\" truck,30100.99".AsSpan());
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "TV 47\"",
@@ -213,7 +213,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("1997,Ford,\"Super, \"\"luxurious\"\" truck\",30100.99");
+            var result = reader.Parse("1997,Ford,\"Super, \"\"luxurious\"\" truck\",30100.99".AsSpan());
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford",
@@ -241,7 +241,7 @@ namespace RecordParser.Test
                 .Map(x => x.Owner, 4)
                 .Build(",");
 
-            var result = reader.Parse($"{model},1997,{comment},30100.99,{owner}");
+            var result = reader.Parse($"{model},1997,{comment},30100.99,{owner}".AsSpan());
 
             result.Should().BeEquivalentTo((Model: model,
                                             Year: 1997,
@@ -260,7 +260,7 @@ namespace RecordParser.Test
                 .Map(x => x.Price, 3)
                 .Build(",");
 
-            var result = reader.Parse("\"\n1997\",Ford \n Model, Super \"luxu\nrious\" truck,30100.99\n");
+            var result = reader.Parse("\"\n1997\",Ford \n Model, Super \"luxu\nrious\" truck,30100.99\n".AsSpan());
 
             result.Should().BeEquivalentTo((Year: 1997,
                                             Model: "Ford \n Model",
