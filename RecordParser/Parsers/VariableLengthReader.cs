@@ -7,6 +7,7 @@ namespace RecordParser.Parsers
     {
         T Parse(ReadOnlySpan<char> line);
         bool TryParse(ReadOnlySpan<char> line, out T result);
+        T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler);
 
         internal string Separator { get; }
     }
@@ -14,14 +15,16 @@ namespace RecordParser.Parsers
     internal class VariableLengthReader<T> : IVariableLengthReader<T>
     {
         private readonly FuncSpanArrayT<T> parser;
+        private readonly FuncSpanArrayTSafe<T> parserWithExceptionHandler;
         private readonly string delimiter;
         private readonly (char ch, string str) quote;
 
         string IVariableLengthReader<T>.Separator => delimiter;
 
-        internal VariableLengthReader(FuncSpanArrayT<T> parser, string separator, char quote)
+        internal VariableLengthReader(FuncSpanArrayT<T> parser, FuncSpanArrayTSafe<T> parserWithExceptionHandler, string separator, char quote)
         {
             this.parser = parser;
+            this.parserWithExceptionHandler = parserWithExceptionHandler;
             delimiter = separator;
             this.quote = (quote, quote.ToString());
         }
@@ -51,6 +54,20 @@ namespace RecordParser.Parsers
             {
                 result = default;
                 return false;
+            }
+        }
+
+        public T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler)
+        {
+            var finder = new TextFindHelper(line, delimiter, quote);
+
+            try
+            {
+                return parserWithExceptionHandler(in finder, exceptionHandler);
+            }
+            finally
+            {
+                finder.Dispose();
             }
         }
     }

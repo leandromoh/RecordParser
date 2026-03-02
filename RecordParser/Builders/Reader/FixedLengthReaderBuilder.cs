@@ -95,10 +95,12 @@ namespace RecordParser.Builders.Reader
         {
             var map = MappingReadConfiguration.Merge(list, dic);
             var func = ReaderEngine.RecordParserSpanFlat(map, factory);
-
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
 
-            return new FixedLengthReader<T>(func.Compile());
+            var func2 = ReaderEngine.RecordParserSpanFlatSafe(map, factory);
+            func2 = CultureInfoVisitor.ReplaceCulture(func2, cultureInfo);
+
+            return new FixedLengthReader<T>(func.Compile(), func2.Compile());
         }
     }
 }

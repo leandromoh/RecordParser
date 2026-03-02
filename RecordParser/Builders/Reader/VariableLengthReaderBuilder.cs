@@ -101,11 +101,14 @@ namespace RecordParser.Builders.Reader
             var quote = QuoteHelper.Quote.Char;
 
             var map = MappingReadConfiguration.Merge(list.Select(x => x.Value), dic);
-            var func = ReaderEngine.RecordParserSpanCSV(map, factory);
 
+            var func = ReaderEngine.RecordParserSpanCSV(map, factory);
             func = CultureInfoVisitor.ReplaceCulture(func, cultureInfo);
 
-            return new VariableLengthReader<T>(func.Compile(), separator, quote);
+            var func2 = ReaderEngine.RecordParserSpanCSVSafe(map, factory);
+            func2 = CultureInfoVisitor.ReplaceCulture(func2, cultureInfo);
+
+            return new VariableLengthReader<T>(func.Compile(), func2.Compile(), separator, quote);
         }
     }
 }
