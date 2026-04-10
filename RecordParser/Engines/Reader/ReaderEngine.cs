@@ -7,9 +7,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.Engines.ExpressionHelper;
 
-// todo apagar
-internal delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
-
 public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
 internal delegate T FuncSpanTSafe<T>(ReadOnlySpan<char> text, Action<Exception, int> exceptionHandler);
 

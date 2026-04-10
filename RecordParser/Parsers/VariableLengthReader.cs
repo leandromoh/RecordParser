@@ -5,9 +5,9 @@ namespace RecordParser.Parsers
 {
     public interface IVariableLengthReader<T>
     {
+        T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler);
         T Parse(ReadOnlySpan<char> line);
         bool TryParse(ReadOnlySpan<char> line, out T result);
-        T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler);
 
         internal string Separator { get; }
     }
@@ -27,6 +27,20 @@ namespace RecordParser.Parsers
             this.parserWithExceptionHandler = parserWithExceptionHandler;
             delimiter = separator;
             this.quote = (quote, quote.ToString());
+        }
+
+        public T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler)
+        {
+            var finder = new TextFindHelper(line, delimiter, quote);
+
+            try
+            {
+                return parserWithExceptionHandler(in finder, exceptionHandler);
+            }
+            finally
+            {
+                finder.Dispose();
+            }
         }
 
         public T Parse(ReadOnlySpan<char> line)
@@ -54,20 +68,6 @@ namespace RecordParser.Parsers
             {
                 result = default;
                 return false;
-            }
-        }
-
-        public T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler)
-        {
-            var finder = new TextFindHelper(line, delimiter, quote);
-
-            try
-            {
-                return parserWithExceptionHandler(in finder, exceptionHandler);
-            }
-            finally
-            {
-                finder.Dispose();
             }
         }
     }

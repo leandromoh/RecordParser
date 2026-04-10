@@ -4,9 +4,9 @@ namespace RecordParser.Parsers
 {
     public interface IFixedLengthReader<T>
     {
+        T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler);
         T Parse(ReadOnlySpan<char> line);
         bool TryParse(ReadOnlySpan<char> line, out T result);
-        T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler);
     }
 
     internal class FixedLengthReader<T> : IFixedLengthReader<T>
@@ -20,6 +20,11 @@ namespace RecordParser.Parsers
             this.parserWithExceptionHandler = parserWithExceptionHandler;
         }
 
+        public T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler)
+        {
+            return parserWithExceptionHandler(line, exceptionHandler);
+        }
+        
         public T Parse(ReadOnlySpan<char> line)
         {
             return parser(line);
@@ -37,11 +42,6 @@ namespace RecordParser.Parsers
                 result = default;
                 return false;
             }
-        }
-
-        public T Parse(ReadOnlySpan<char> line, Action<Exception, int> exceptionHandler)
-        {
-            return parserWithExceptionHandler(line, exceptionHandler);
         }
     }
 }
