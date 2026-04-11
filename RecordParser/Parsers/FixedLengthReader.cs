@@ -13,7 +13,7 @@ namespace RecordParser.Parsers
         /// <param name="exceptionHandler">
         /// Callback function to be invoked when any property mapping throws an exception.
         /// The first parameter is the thrown exception.
-        /// The second parameter is the index of the property whose mapping failed.
+        /// The second parameter is the specified index of the property whose mapping failed.
         /// </param>
         /// <returns>
         /// An object that is equivalent to the values contained in <paramref name="line"/>.
