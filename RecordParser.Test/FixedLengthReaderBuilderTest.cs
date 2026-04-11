@@ -166,17 +166,17 @@ namespace RecordParser.Test
                 e1 =>
                 {
                     e1.ex.Should().Match<FormatException>(ex => ex.Message.StartsWith("String '_datehere_' was not recognized as a valid DateTime."));
-                    e1.index.Should().Be(1);
+                    e1.index.Should().Be(5);
                 },
                 e2 =>
                 {
                     e2.ex.Should().Match<ArgumentException>(ex => ex.Message.StartsWith("Requested value '_invalid_color_' was not found."));
-                    e2.index.Should().Be(3);
+                    e2.index.Should().Be(22);
                 },
                 e3 =>
                 {
                     e3.ex.Should().Match<MyCustomException>(ex => ex.Message.StartsWith($"Invalid boolean value: _FOO_"));
-                    e3.index.Should().Be(5);
+                    e3.index.Should().Be(52);
                 });
         }
 

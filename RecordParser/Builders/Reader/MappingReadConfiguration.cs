@@ -42,7 +42,10 @@ namespace RecordParser.Builders.Reader
                     });
 
             result = result
-                .OrderBy(x => x.start)
+                .Select((x, i) => (item: x, index: i))
+                .OrderBy(x => x.item.start)
+                .ThenBy(x => x.index)
+                .Select(x => x.item)
                 .ToList();
 
             return result;

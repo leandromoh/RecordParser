@@ -25,7 +25,7 @@ namespace RecordParser.Engines.Reader
             // variables
             var instanceVariable = Expression.Variable(typeof(T), "inst");
 
-            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
+            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, mapConfig =>
             {
                 return Expression.Call(configParameter, nameof(TextFindHelper.GetValue), Type.EmptyTypes, Expression.Constant(mapConfig.start));
             });
@@ -45,13 +45,13 @@ namespace RecordParser.Engines.Reader
             // variables
             var instanceVariable = Expression.Variable(typeof(T), "inst");
 
-            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
+            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, mapConfig =>
             {
                 return Expression.Call(configParameter, nameof(TextFindHelper.GetValue), Type.EmptyTypes, Expression.Constant(mapConfig.start));
             },
-            (i, assign) =>
+            (mapConfig, assign) =>
             {
-                var visitor = new TryCatchVisitor(exceptionHandler, i);
+                var visitor = new TryCatchVisitor(exceptionHandler, mapConfig.start);
                 var result = visitor.Visit(assign);
                 return result;
             });
@@ -70,7 +70,7 @@ namespace RecordParser.Engines.Reader
             // variables
             var instanceVariable = Expression.Variable(typeof(T), "inst");
 
-            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
+            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, mapConfig =>
             {
                 return Slice(line, Expression.Constant(mapConfig.start), Expression.Constant(mapConfig.length.Value));
             });
@@ -90,13 +90,13 @@ namespace RecordParser.Engines.Reader
             // variables
             var instanceVariable = Expression.Variable(typeof(T), "inst");
 
-            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
+            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, mapConfig =>
             {
                 return Slice(line, Expression.Constant(mapConfig.start), Expression.Constant(mapConfig.length.Value));
             },
-            (i, assign) =>
+            (mapConfig, assign) =>
             {
-                var visitor = new TryCatchVisitor(exceptionHandler, i);
+                var visitor = new TryCatchVisitor(exceptionHandler, mapConfig.start);
                 var result = visitor.Visit(assign);
                 return result;
             });
@@ -129,18 +129,15 @@ namespace RecordParser.Engines.Reader
         private static BlockExpression MountSetProperties(
             ParameterExpression objectParameter,
             IEnumerable<MappingReadConfiguration> mappedColumns,
-            Func<int, MappingReadConfiguration, Expression> getTextValue,
-            Func<int, BinaryExpression, Expression> assignHandler = null)
+            Func<MappingReadConfiguration, Expression> getTextValue,
+            Func<MappingReadConfiguration, BinaryExpression, Expression> assignHandler = null)
         {
             var replacer = new ParameterReplacerVisitor(objectParameter);
             var assignsExpressions = new List<Expression>();
-            var i = -1;
 
             foreach (var x in mappedColumns)
             {
-                i++;
-
-                Expression textValue = getTextValue(i, x);
+                Expression textValue = getTextValue(x);
 
                 if (x.ShouldTrim)
                     textValue = Trim(textValue);
@@ -170,7 +167,7 @@ namespace RecordParser.Engines.Reader
 
                 var assign = Expression.Assign(replacer.Visit(x.prop), valueToBeSetExpression);
 
-                assignsExpressions.Add(assignHandler?.Invoke(i, assign) ?? assign);
+                assignsExpressions.Add(assignHandler?.Invoke(x, assign) ?? assign);
             }
 
             assignsExpressions.Add(objectParameter);
