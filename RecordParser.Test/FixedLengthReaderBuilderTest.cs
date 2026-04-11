@@ -4,6 +4,7 @@ using RecordParser.Builders.Reader;
 using RecordParser.Builders.Writer;
 using RecordParser.Parsers;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -134,6 +135,51 @@ namespace RecordParser.Test
                                             Baz: "baz"));
         }
 
+        private class MyCustomException : Exception
+        {
+            public MyCustomException(string msg) : base(msg) { }
+        }
+
+        [Fact]
+        public void Given_partial_invalid_record_called_with_parse_that_handle_exception_should_not_throw_and_parse_valid_values()
+        {
+            var reader = new FixedLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color1, Color Color2, bool? IsValid)>()
+                .Map(x => x.Name, 0, 5)
+                .Map(x => x.Birthday, 5, 10)
+                .Map(x => x.Money, 15, 7)
+                .Map(x => x.Color1, 22, 15)
+                .Map(x => x.Color2, 37, 15)
+                .Map(x => x.IsValid, 52, 5, text => bool.TryParse(text, out bool result) ? result : throw new MyCustomException($"Invalid boolean value: {text}"))
+                .Build();
+
+            var erros = new List<(Exception ex, int index)>();
+            var result = reader.Parse(" foo _datehere_ 123.45_invalid_color_  LightBlue    _FOO_", (ex, index) => erros.Add((ex, index)));
+
+            result.Should().BeEquivalentTo((Name: "foo",
+                                            Birthday: default(DateTime),
+                                            Money: 123.45M,
+                                            Color1: default(Color),
+                                            Color2: Color.LightBlue,
+                                            IsValid: default(bool?)));
+
+            erros.Should().SatisfyRespectively(
+                e1 =>
+                {
+                    e1.ex.Should().Match<FormatException>(ex => ex.Message.StartsWith("String '_datehere_' was not recognized as a valid DateTime."));
+                    e1.index.Should().Be(5);
+                },
+                e2 =>
+                {
+                    e2.ex.Should().Match<ArgumentException>(ex => ex.Message.StartsWith("Requested value '_invalid_color_' was not found."));
+                    e2.index.Should().Be(22);
+                },
+                e3 =>
+                {
+                    e3.ex.Should().Match<MyCustomException>(ex => ex.Message.StartsWith($"Invalid boolean value: _FOO_"));
+                    e3.index.Should().Be(52);
+                });
+        }
+
         [Fact]
         public void Given_invalid_record_called_with_try_parse_should_not_throw()
         {
@@ -146,6 +192,31 @@ namespace RecordParser.Test
 
             parsed.Should().BeFalse();
             result.Should().Be(default);
+        }
+
+        [Fact]
+        public void Given_valid_record_called_with_parse_that_handle_exception_should_not_throw_and_parse_valid_values()
+        {
+            var reader = new FixedLengthReaderBuilder<(string Name, DateTime Birthday, decimal Money, Color Color1, Color Color2, bool? IsValid)>()
+                .Map(x => x.Name, 0, 5)
+                .Map(x => x.Birthday, 5, 10)
+                .Map(x => x.Money, 15, 7)
+                .Map(x => x.Color1, 22, 15)
+                .Map(x => x.Color2, 37, 15)
+                .Map(x => x.IsValid, 52, 5, text => bool.TryParse(text, out bool result) ? result : throw new MyCustomException($"Invalid boolean value: {text}"))
+                .Build();
+
+            var erros = new List<(Exception ex, int index)>();
+            var result = reader.Parse(" foo 2026.03.19 123.45   White         LightBlue    TRUE ", (ex, index) => erros.Add((ex, index)));
+
+            result.Should().BeEquivalentTo((Name: "foo",
+                                            Birthday: new DateTime(2026, 03, 19),
+                                            Money: 123.45M,
+                                            Color1: Color.White,
+                                            Color2: Color.LightBlue,
+                                            IsValid: true));
+
+            erros.Should().BeEmpty();
         }
 
         [Fact]

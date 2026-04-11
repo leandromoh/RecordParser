@@ -8,7 +8,7 @@ namespace RecordParser.Visitors
     {
         private readonly ConstantExpression cultureExpression;
 
-        public CultureInfoVisitor(CultureInfo cultureInfo)
+        private CultureInfoVisitor(CultureInfo cultureInfo)
         {
             cultureExpression = Expression.Constant(cultureInfo, typeof(CultureInfo));
         }

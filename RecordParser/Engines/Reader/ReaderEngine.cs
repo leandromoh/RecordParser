@@ -7,9 +7,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using static RecordParser.Engines.ExpressionHelper;
 
-internal delegate T FuncSpanIntT<T>(ReadOnlySpan<T> span, int index);
 public delegate T FuncSpanT<T>(ReadOnlySpan<char> text);
+internal delegate T FuncSpanTSafe<T>(ReadOnlySpan<char> text, Action<Exception, int> exceptionHandler);
+
 internal delegate T FuncSpanArrayT<T>(in TextFindHelper finder);
+internal delegate T FuncSpanArrayTSafe<T>(in TextFindHelper finder, Action<Exception, int> exceptionHandler);
 
 namespace RecordParser.Engines.Reader
 {
@@ -23,13 +25,39 @@ namespace RecordParser.Engines.Reader
             // variables
             var instanceVariable = Expression.Variable(typeof(T), "inst");
 
-            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
+            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, mapConfig =>
             {
                 return Expression.Call(configParameter, nameof(TextFindHelper.GetValue), Type.EmptyTypes, Expression.Constant(mapConfig.start));
             });
 
             var body = MountBody(instanceVariable, blockThatSetProperties, mappedColumns, factory);
             var result = Expression.Lambda<FuncSpanArrayT<T>>(body, configParameter);
+
+            return result;
+        }
+
+        public static Expression<FuncSpanArrayTSafe<T>> RecordParserSpanCSVSafe<T>(IEnumerable<MappingReadConfiguration> mappedColumns, Func<T> factory)
+        {
+            // parameters
+            var configParameter = Expression.Parameter(typeof(TextFindHelper).MakeByRefType(), "config");
+            var exceptionHandler = Expression.Parameter(typeof(Action<Exception, int>), "exceptionHandler");
+
+            // variables
+            var instanceVariable = Expression.Variable(typeof(T), "inst");
+
+            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, mapConfig =>
+            {
+                return Expression.Call(configParameter, nameof(TextFindHelper.GetValue), Type.EmptyTypes, Expression.Constant(mapConfig.start));
+            },
+            (mapConfig, assign) =>
+            {
+                var visitor = new TryCatchVisitor(exceptionHandler, mapConfig.start);
+                var result = visitor.Visit(assign);
+                return result;
+            });
+
+            var body = MountBody(instanceVariable, blockThatSetProperties, mappedColumns, factory);
+            var result = Expression.Lambda<FuncSpanArrayTSafe<T>>(body, configParameter, exceptionHandler);
 
             return result;
         }
@@ -42,13 +70,39 @@ namespace RecordParser.Engines.Reader
             // variables
             var instanceVariable = Expression.Variable(typeof(T), "inst");
 
-            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, (i, mapConfig) =>
+            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, mapConfig =>
             {
                 return Slice(line, Expression.Constant(mapConfig.start), Expression.Constant(mapConfig.length.Value));
             });
 
             var body = MountBody(instanceVariable, blockThatSetProperties, mappedColumns, factory);
             var result = Expression.Lambda<FuncSpanT<T>>(body, line);
+
+            return result;
+        }
+
+        public static Expression<FuncSpanTSafe<T>> RecordParserSpanFlatSafe<T>(IEnumerable<MappingReadConfiguration> mappedColumns, Func<T> factory)
+        {
+            // parameters
+            var line = Expression.Parameter(typeof(ReadOnlySpan<char>), "span");
+            var exceptionHandler = Expression.Parameter(typeof(Action<Exception, int>), "exceptionHandler");
+
+            // variables
+            var instanceVariable = Expression.Variable(typeof(T), "inst");
+
+            var blockThatSetProperties = MountSetProperties(instanceVariable, mappedColumns, mapConfig =>
+            {
+                return Slice(line, Expression.Constant(mapConfig.start), Expression.Constant(mapConfig.length.Value));
+            },
+            (mapConfig, assign) =>
+            {
+                var visitor = new TryCatchVisitor(exceptionHandler, mapConfig.start);
+                var result = visitor.Visit(assign);
+                return result;
+            });
+
+            var body = MountBody(instanceVariable, blockThatSetProperties, mappedColumns, factory);
+            var result = Expression.Lambda<FuncSpanTSafe<T>>(body, line, exceptionHandler);
 
             return result;
         }
@@ -75,17 +129,15 @@ namespace RecordParser.Engines.Reader
         private static BlockExpression MountSetProperties(
             ParameterExpression objectParameter,
             IEnumerable<MappingReadConfiguration> mappedColumns,
-            Func<int, MappingReadConfiguration, Expression> getTextValue)
+            Func<MappingReadConfiguration, Expression> getTextValue,
+            Func<MappingReadConfiguration, BinaryExpression, Expression> assignHandler = null)
         {
             var replacer = new ParameterReplacerVisitor(objectParameter);
             var assignsExpressions = new List<Expression>();
-            var i = -1;
 
             foreach (var x in mappedColumns)
             {
-                i++;
-
-                Expression textValue = getTextValue(i, x);
+                Expression textValue = getTextValue(x);
 
                 if (x.ShouldTrim)
                     textValue = Trim(textValue);
@@ -115,7 +167,7 @@ namespace RecordParser.Engines.Reader
 
                 var assign = Expression.Assign(replacer.Visit(x.prop), valueToBeSetExpression);
 
-                assignsExpressions.Add(assign);
+                assignsExpressions.Add(assignHandler?.Invoke(x, assign) ?? assign);
             }
 
             assignsExpressions.Add(objectParameter);
