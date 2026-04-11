@@ -1,13 +1,17 @@
-﻿using RecordParser.Extensions.FileReader.RowReaders;
+﻿using RecordParser.Builders.Reader;
+using RecordParser.Extensions.FileReader.RowReaders;
 using RecordParser.Parsers;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using static RecordParser.Extensions.ReaderCommon;
 
 namespace RecordParser.Extensions
 {
-    public class VariableLengthReaderOptions
+    public record class VariableLengthReaderOptions
     {
         /// <summary>
         /// Indicates if there is a header record present in the reader's content.
@@ -52,6 +56,105 @@ namespace RecordParser.Extensions
             return parallelOptions.Enabled
                 ? ReadRecordsParallel(selector, func, options.HasHeader, parallelOptions)
                 : ReadRecordsSequential(selector, func, options.HasHeader);
+        }
+
+        public static IEnumerable<T> ReadRecords<T>(this
+            TextReader reader,
+            VariableLengthReaderOptions options,
+            bool skipMismatchedColumns = false,
+            Action<IVariableLengthReaderSequentialBuilder<T>> action = null)
+        {
+            string header;
+
+            if (!options.HasHeader || string.IsNullOrEmpty(header = reader.ReadLine()))
+                throw new InvalidOperationException("header is mandatory");
+
+            var separator = DetectDelimiter(header.AsMemory());
+            var columns = header.Split(separator);
+            var parser = BuildParser(columns, separator, skipMismatchedColumns, action);
+
+            return ReadRecords(reader, parser, options with { HasHeader = false });
+        }
+
+        private static IVariableLengthReader<T> BuildParser<T>(IEnumerable<string> columns, string separator, bool skipMismatchedColumns, Action<IVariableLengthReaderSequentialBuilder<T>> action)
+        {
+            var builder = new VariableLengthReaderSequentialBuilder<T>();
+            foreach (var column in columns)
+            {
+                try
+                {
+                    var expression = CreateExpression<T>(column.Trim());
+                    builder.Map((dynamic)expression);
+                }
+                catch when (skipMismatchedColumns)
+                {
+                    builder.Skip(1);
+                }
+            }
+
+            action?.Invoke(builder);
+
+            return builder.Build(separator);
+        }
+
+        private static LambdaExpression CreateExpression<T>(string propertyName)
+        {
+            var param = Expression.Parameter(typeof(T), "x");
+            Expression body = param;
+            var parts = propertyName.Split('.');
+
+            foreach (var part in parts)
+            {
+                // starts in T, then loop recursively
+                var currentType = body.Type;
+
+                var member = (MemberInfo)
+                    currentType.GetProperty(part, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance) ??
+                    currentType.GetField(part, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+
+                if (member == null)
+                    throw new ArgumentException($"Can not find property or field '{part}' in type '{currentType.Name}'.");
+
+                body = Expression.MakeMemberAccess(body, member);
+            }
+
+            return Expression.Lambda(body, param);
+        }
+
+        internal static string DetectDelimiter(ReadOnlyMemory<char> header)
+        {
+            var candidates = new string[] { ",", ";", "\t", "|", "||", "::", "@" };
+            var headerSpan = header.Span;
+            var bestCandidate = ",";
+            var maxCount = 0;
+
+            foreach (var candidate in candidates)
+            {
+                var currentCount = 0;
+                var candidateSpan = candidate.AsSpan();
+                var candidateLen = candidateSpan.Length;
+
+                if (candidateLen == 0 || candidateLen > headerSpan.Length)
+                    continue;
+
+                for (var i = 0; i <= headerSpan.Length - candidateLen; i++)
+                {
+                    if (headerSpan.Slice(i, candidateLen).SequenceEqual(candidateSpan))
+                    {
+                        currentCount++;
+                        // avoid overlap
+                        i += candidateLen - 1;
+                    }
+                }
+
+                if (currentCount > maxCount)
+                {
+                    maxCount = currentCount;
+                    bestCandidate = candidate;
+                }
+            }
+
+            return bestCandidate;
         }
     }
 }
