@@ -67,7 +67,7 @@ namespace RecordParser.Extensions
             string header;
 
             if (!options.HasHeader || string.IsNullOrEmpty(header = reader.ReadLine()))
-                throw new InvalidOperationException("header is mandatory");
+                throw new InvalidOperationException("Header is mandatory when using auto-binding overload.");
 
             var separator = DetectDelimiter(header.AsMemory());
             var columns = header.Split(separator);
@@ -119,7 +119,7 @@ namespace RecordParser.Extensions
                     currentType.GetField(part, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
                 if (member == null)
-                    throw new ArgumentException($"Can not find property or field '{part}' in type '{currentType.Name}'.");
+                    throw new ArgumentException($"Can not bind column '{propertyName}': Type '{currentType.Name}' does not have property or field '{part}'.");
 
                 body = Expression.MakeMemberAccess(body, member);
             }

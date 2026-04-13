@@ -658,12 +658,143 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, false, builder => 
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, false, builder =>
                 builder.DefaultTypeConvert(x => int.Parse(x) * 10));
 
             // Assert
 
             items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Fact]
+        public void Read_csv_file_with_header_containing_nested_fields_should_automatic_bind_mapping()
+        {
+            // Arrange
+
+            var fileContent = $"""
+                BirthDay ; Name ; Mother.BirthDay; Mother.Name
+                2020.05.23 ; son name ; 1980.01.15 ; mother name
+                """;
+
+            var reader = new StringReader(fileContent);
+            var expected = new Person[]
+            {
+                new Person
+                {
+                    BirthDay = new DateTime(2020, 05, 23),
+                    Name = "son name",
+                    Mother = new Person
+                    {
+                        BirthDay = new DateTime(1980, 01, 15),
+                        Name = "mother name",
+                    }
+                }
+            };
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<Person>(readOptions, skipMismatchedColumns: false);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Fact]
+        public void Read_csv_file_with_header_containing_inherited_fields_should_automatic_bind_mapping()
+        {
+            // Arrange
+
+            var fileContent = $"""
+                Id ; BirthDay ; Name ; Mother.Id ; Mother.BirthDay; Mother.Name
+                99 ; 2020.05.23 ; son name ; 100 ; 1980.01.15 ; mother name
+                """;
+
+            var reader = new StringReader(fileContent);
+            var expected = new PersonDerivated[]
+            {
+                new ()
+                {
+                    Id = 99,
+                    BirthDay = new DateTime(2020, 05, 23),
+                    Name = "son name",
+                    Mother = new ()
+                    {
+                        // can not find 'Id' because property 'Mother' has type 'Person' and not 'PersonDerivated'
+                        // Id = 100,
+                        BirthDay = new DateTime(1980, 01, 15),
+                        Name = "mother name",
+                    }
+                }
+            };
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<PersonDerivated>(readOptions, skipMismatchedColumns: true);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Theory]
+        [InlineData(" ", false)]
+        [InlineData(" ", true)]
+        [InlineData("BirthDay ; Name ; Mother.BirthDay; Mother.Name", false)]
+        public void Read_csv_file_without_header_should_throw_when_automatic_bind_mapping(string header, bool hasHeader)
+        {
+            // Arrange
+
+            var fileContent = $"""
+                {header}
+                99 ; 2020.05.23 ; son name ; 100 ; 1980.01.15 ; mother name
+                """;
+
+            var reader = new StringReader(fileContent);
+            var expected = new Person[]
+            {
+                new ()
+                {
+                    BirthDay = new DateTime(2020, 05, 23),
+                    Name = "son name",
+                    Mother = new ()
+                    {
+                        BirthDay = new DateTime(1980, 01, 15),
+                        Name = "mother name",
+                    }
+                }
+            };
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                HasHeader = hasHeader,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+            };
+
+            // Act
+
+            var action = () => reader.ReadRecords<Person>(readOptions, skipMismatchedColumns: true);
+
+            // Assert
+
+            action.Should()
+                .Throw<InvalidOperationException>()
+                .WithMessage("Header is mandatory when using auto-binding overload.");
         }
     }
 }
