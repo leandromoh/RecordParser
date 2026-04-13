@@ -44,7 +44,7 @@ namespace RecordParser.Benchmark
                     name = line.Substring(2, 30).Trim(),
                     age = int.Parse(line.Substring(32, 2)),
                     birthday = DateTime.Parse(line.Substring(39, 10), CultureInfo.InvariantCulture),
-                    gender = Enum.Parse<Gender>(line.Substring(85, 6)),
+                    gender = Parse.Enum<Gender>(line.Substring(85, 6).AsSpan()),
                     email = line.Substring(92, 22).Trim(),
                     children = bool.Parse(line.Substring(121, 5))
                 };
@@ -151,12 +151,12 @@ namespace RecordParser.Benchmark
                 return new Person
                 {
                     alfa = line[0],
-                    name = new string(line.Slice(2, 30).Trim()),
-                    age = int.Parse(line.Slice(32, 2)),
-                    birthday = DateTime.Parse(line.Slice(39, 10), CultureInfo.InvariantCulture),
-                    gender = Enum.Parse<Gender>(line.Slice(85, 6)),
-                    email = new string(line.Slice(92, 22).Trim()),
-                    children = bool.Parse(line.Slice(121, 5))
+                    name = line.Slice(2, 30).Trim().ToString(),
+                    age = Parse.Int32(line.Slice(32, 2)),
+                    birthday = Parse.DateTime(line.Slice(39, 10), CultureInfo.InvariantCulture),
+                    gender = Parse.Enum<Gender>(line.Slice(85, 6)),
+                    email = line.Slice(92, 22).Trim().ToString(),
+                    children = Parse.Boolean(line.Slice(121, 5))
                 };
             });
 

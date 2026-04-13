@@ -79,11 +79,17 @@ namespace RecordParser.Engines.Writer
                     _ when prop.Type == typeof(char) || prop.Type == typeof(bool) =>
                         Expression.Call(typeof(WriteEngine), "TryFormat", Type.EmptyTypes, prop, temp, charsWritten),
 
+#if NETSTANDARD2_0
+                    _ => Expression.Call(typeof(Format), "TryFormat", [prop.Type], prop, temp, charsWritten, format,
+                        Expression.Constant(cultureInfo, typeof(CultureInfo))),
+#else
+
                     _ when prop.Type == typeof(Guid) =>
                         Expression.Call(prop, "TryFormat", Type.EmptyTypes, temp, charsWritten, format),
 
                     _ => Expression.Call(prop, "TryFormat", Type.EmptyTypes, temp, charsWritten, format,
                             Expression.Constant(cultureInfo, typeof(CultureInfo)))
+#endif
                 };
 
                 return Expression.IfThen(Expression.Not(tryFormat), gotoReturn);
