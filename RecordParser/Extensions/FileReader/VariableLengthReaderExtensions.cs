@@ -83,8 +83,14 @@ namespace RecordParser.Extensions
             {
                 try
                 {
-                    var expression = CreateExpression<T>(column.Trim());
-                    builder.Map((dynamic)expression);
+                    var cleaned = column
+                        .Replace("_", string.Empty)
+                        .Replace("'", string.Empty)
+                        .Replace("\"", string.Empty)
+                        .Trim();
+
+                    dynamic expression = CreateExpression<T>(cleaned);
+                    builder.Map(expression);
                 }
                 catch when (skipMismatchedColumns)
                 {

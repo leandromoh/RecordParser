@@ -570,48 +570,100 @@ namespace RecordParser.Test
             result.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
         }
 
-        [Theory]
-        [MemberData(nameof(Given_quoted_csv_file_should_read_quoted_properly_theory), new object[] { "AllFieldsQuotedCsv.csv" })]
-        public void Read_csv_file_with_header_should_automatic_bind_mapping(string fileContent, bool hasHeader, bool parallelProcessing, bool blankLineAtEnd, int repeat)
-        {
-            if (!hasHeader)
-                return;
+        public record RegularCaseRecord(int Aaa, int Bbb, int Ccc, int Ddd);
 
+        [Theory]
+        [InlineData("\"AAA\",\"BBB\",\"CCC\",\"DDD\"")]
+        [InlineData("AAA,BBB,CCC,DDD")]
+        [InlineData("aaa,bbb,ccc,ddd")]
+        [InlineData("AAA , BBB , CCC , DDD")]
+        [InlineData("A_AA,B_BB,C_CC,D_DD")]
+        public void Read_csv_file_with_header_in_different_case_should_automatic_bind_mapping(string header)
+        {
             // Arrange
 
-            fileContent = fileContent.Replace(Header, "id,name,age,birthday,gender,email,UNMAPPED,children");
-            using var fileStream = fileContent.ToStream();
-            using var streamReader = new StreamReader(fileStream, Encoding.UTF8);
+            var fileContent = $"""
+                {header}
+                1,2,3,4
+                5,6,7,8
+                9,10,11,12
+                13,14,15,16
+                87,88,89,100
+                89,99,100,101
+                88,89,90,91
+                """;
 
-            var expectedItems = new PersonComplete[]
+            var reader = new StringReader(fileContent);
+            var expected = new RegularCaseRecord[]
             {
-                new () { id = new Guid("ec9a8be9-a000-503b-adcf-7266804f1eb1"), name = "Lilly Bradley", age = 21, birthday = DateTime.Parse("11/16/1977"), gender = Gender.Male, email = "pak@witak.bf", children = true },
-                new () { id = new Guid("63858071-cbb3-5abd-9f88-3dfd565cc4ab"), name = "Lucy Berry", age = 49, birthday = DateTime.Parse("11/12/1961"), gender = Gender.Female, email = "vanvo@ro.pk", children = false },
-                new () { id = new Guid("203804f9-93e7-5510-8bb2-177296bafe6a"), name = "Frank Fox", age = 36, birthday = DateTime.Parse("3/19/1977"), gender = Gender.Male, email = "vav@ped.fj", children = true },
-                new () { id = new Guid("a8af66fb-bad4-51eb-810c-bf3ca22337c6"), name = "Isabel Todd", age = 51, birthday = DateTime.Parse("9/16/1999"), gender = Gender.Female, email = "gu@or.bz", children = false },
-                new () { id = new Guid("1a3d8a66-3e0c-50eb-99c1-a3926bce15ed"), name = $"Joseph {Environment.NewLine}Scott", age = 55, birthday = DateTime.Parse("10/26/1986"), gender = Gender.Male, email = "bup@vugeb.tt", children = false },
-                new () { id = new Guid("aa7d4395-f10f-5776-9912-e3d86c4b9d3c"), name = "Gilbert Brooks", age = 56, birthday = DateTime.Parse("3/1/1956"), gender = Gender.Female, email = "epiju@ba.ly", children = true },
-                new () { id = new Guid("1d25b811-4002-5744-ac40-93a50f2a442c"), name = "Louis \"Ronaldo\" Bennett", age = 25, birthday = DateTime.Parse("4/4/1967"), gender = Gender.Male, email = "ma@itrovive.tv", children = true },
-                new () { id = new Guid("8e963ae5-a9ed-5572-b11c-566abc6a8a56"), name = "Norman Parker", age = 57, birthday = DateTime.Parse("4/17/1969"), gender = Gender.Male, email = "omi@hewepa.bw", children = true },
-                new () { id = new Guid("4d373cfb-79e3-54ce-87ff-f2a08fde8f28"), name = "Gary Doyle", age = 20, birthday = DateTime.Parse("1/21/1958"), gender = Gender.Male, email = "orjohma@cabmofa.ps", children = true },
-                new () { id = new Guid("5af00cdf-0758-5317-bcdf-c9a3337cc266"), name = "Bruce Silva", age = 39, birthday = DateTime.Parse("1/11/1968"), gender = Gender.Female, email = "ta@ovonib.ir", children = true },
-            }
-            .Repeat(repeat);
+                new(1,2,3,4),
+                new(5,6,7,8),
+                new(9,10,11,12),
+                new(13,14,15,16),
+                new(87,88,89,100),
+                new(89,99,100,101),
+                new(88,89,90,91),
+            };
 
             var readOptions = new VariableLengthReaderOptions
             {
-                HasHeader = hasHeader,
-                ParallelismOptions = new() { Enabled = parallelProcessing },
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
                 ContainsQuotedFields = true,
             };
 
             // Act
 
-            var items = streamReader.ReadRecords<PersonComplete>(readOptions, skipMismatchedColumns: true);
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, skipMismatchedColumns: false);
 
             // Assert
 
-            items.Should().BeEquivalentTo(expectedItems, cfg => cfg.WithStrictOrdering());
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Fact]
+        public void Read_csv_file_with_header_should_automatic_bind_support_additional_configuration()
+        {
+            // Arrange
+
+            var fileContent = $"""
+                AAA,BBB,CCC,DDD
+                1,2,3,4
+                5,6,7,8
+                9,10,11,12
+                13,14,15,16
+                87,88,89,100
+                89,99,100,101
+                88,89,90,91
+                """;
+
+            var reader = new StringReader(fileContent);
+            var expected = new RegularCaseRecord[]
+            {
+                new(10,20,30,40),
+                new(50,60,70,80),
+                new(90,100,110,120),
+                new(130,140,150,160),
+                new(870,880,890,1000),
+                new(890,990,1000,1010),
+                new(880,890,900,910),
+            };
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, false, builder => 
+                builder.DefaultTypeConvert(x => int.Parse(x) * 10));
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
         }
     }
 }
