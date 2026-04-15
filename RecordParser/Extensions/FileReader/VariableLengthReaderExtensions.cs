@@ -85,7 +85,7 @@ namespace RecordParser.Extensions
         {
             string header;
 
-            if (!options.HasHeader || string.IsNullOrEmpty(header = reader.ReadLine()))
+            if (!options.HasHeader || string.IsNullOrWhiteSpace(header = reader.ReadLine()))
                 throw new InvalidOperationException("Header is mandatory when using auto-binding overload.");
 
             var separator = DetectDelimiter(header.AsMemory());
