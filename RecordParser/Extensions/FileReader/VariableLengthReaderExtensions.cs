@@ -148,7 +148,7 @@ namespace RecordParser.Extensions
 
         internal static string DetectDelimiter(ReadOnlyMemory<char> header)
         {
-            var candidates = new string[] { ",", ";", "\t", "|", "||", "::", "@" };
+            var candidates = new string[] { ",", ";", "\t", "|", ":" };
             var headerSpan = header.Span;
             var bestCandidate = ",";
             var maxCount = 0;

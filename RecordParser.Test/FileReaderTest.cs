@@ -797,5 +797,54 @@ namespace RecordParser.Test
                 .Throw<InvalidOperationException>()
                 .WithMessage("Header is mandatory when using auto-binding overload.");
         }
+
+        [Theory]
+        [InlineData(",")]
+        [InlineData(";")]
+        [InlineData("\t")]
+        [InlineData("|")]
+        [InlineData(":")]
+        public void Read_csv_file_with_autobind_should_detect_common_separators(string separator)
+        {
+            // Arrange
+
+            var fileContent = $"""
+                Aaa,Bbb,Ccc,Ddd
+                1,2,3,4
+                5,6,7,8
+                9,10,11,12
+                13,14,15,16
+                87,88,89,100
+                89,99,100,101
+                88,89,90,91
+                """;
+
+            var reader = new StringReader(fileContent.Replace(",", separator));
+            var expected = new RegularCaseRecord[]
+            {
+                new(1,2,3,4),
+                new(5,6,7,8),
+                new(9,10,11,12),
+                new(13,14,15,16),
+                new(87,88,89,100),
+                new(89,99,100,101),
+                new(88,89,90,91),
+            };
+
+            var readOptions = new VariableLengthReaderOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, skipUnmatchedColumns: false);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
     }
 }
