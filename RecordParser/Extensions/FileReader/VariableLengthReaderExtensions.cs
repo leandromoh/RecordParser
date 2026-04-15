@@ -35,7 +35,7 @@ namespace RecordParser.Extensions
     {
         /// <summary>
         /// Reads the records from a variable length file, 
-        /// then parses the records into objects.
+        /// then parses the records to objects.
         /// </summary>
         /// <typeparam name="T">type of objects read from file</typeparam>
         /// <param name="reader">variable length file</param>
@@ -58,10 +58,29 @@ namespace RecordParser.Extensions
                 : ReadRecordsSequential(selector, func, options.HasHeader);
         }
 
+        /// <summary>
+        /// Reads the records from a variable length file
+        /// using the header of the file to auto-bind columns to properties in the process of parsing the records to objects. 
+        /// </summary>
+        /// <typeparam name="T">type of objects read from file</typeparam>
+        /// <param name="reader">variable length file</param>
+        /// <param name="options">options to configure the parsing</param>
+        /// <param name="skipUnmatchedColumns">
+        /// If true then header columns without a matching property or field will simply be ignored;
+        /// otherwise, an exception will be thrown indicating the non-matching column.
+        /// Default value is true.
+        /// </param>
+        /// <param name="action">callback to set additional bind or default type converters</param>
+        /// <returns>
+        /// Sequence of records.
+        /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// If the header is missing on <paramref name="reader"/> or <paramref name="options"/> indicating that header is absent.
+        /// </exception>
         public static IEnumerable<T> ReadRecords<T>(this
             TextReader reader,
             VariableLengthReaderOptions options,
-            bool skipMismatchedColumns = false,
+            bool skipUnmatchedColumns = true,
             Action<IVariableLengthReaderSequentialBuilder<T>> action = null)
         {
             string header;
@@ -71,7 +90,7 @@ namespace RecordParser.Extensions
 
             var separator = DetectDelimiter(header.AsMemory());
             var columns = header.Split(separator);
-            var parser = BuildParser(columns, separator, skipMismatchedColumns, action);
+            var parser = BuildParser(columns, separator, skipUnmatchedColumns, action);
 
             return ReadRecords(reader, parser, options with { HasHeader = false });
         }

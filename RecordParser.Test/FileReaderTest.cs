@@ -574,11 +574,12 @@ namespace RecordParser.Test
 
         [Theory]
         [InlineData("\"AAA\",\"BBB\",\"CCC\",\"DDD\"")]
+        [InlineData("Aaa,Bbb,Ccc,Ddd")]
         [InlineData("AAA,BBB,CCC,DDD")]
         [InlineData("aaa,bbb,ccc,ddd")]
         [InlineData("AAA , BBB , CCC , DDD")]
         [InlineData("A_AA,B_BB,C_CC,D_DD")]
-        public void Read_csv_file_with_header_in_different_case_should_automatic_bind_mapping(string header)
+        public void Read_csv_file_with_autobind_should_match_header_case_insensitive(string header)
         {
             // Arrange
 
@@ -614,7 +615,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, skipMismatchedColumns: false);
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, skipUnmatchedColumns: false);
 
             // Assert
 
@@ -622,7 +623,7 @@ namespace RecordParser.Test
         }
 
         [Fact]
-        public void Read_csv_file_with_header_should_automatic_bind_support_additional_configuration()
+        public void Read_csv_file_with_autobind_should_support_additional_configuration()
         {
             // Arrange
 
@@ -658,7 +659,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, false, builder =>
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, skipUnmatchedColumns: false, builder =>
                 builder.DefaultTypeConvert(x => int.Parse(x) * 10));
 
             // Assert
@@ -667,7 +668,7 @@ namespace RecordParser.Test
         }
 
         [Fact]
-        public void Read_csv_file_with_header_containing_nested_fields_should_automatic_bind_mapping()
+        public void Read_csv_file_with_autobind_should_support_nested_fields()
         {
             // Arrange
 
@@ -700,7 +701,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = reader.ReadRecords<Person>(readOptions, skipMismatchedColumns: false);
+            var items = reader.ReadRecords<Person>(readOptions, skipUnmatchedColumns: false);
 
             // Assert
 
@@ -708,7 +709,7 @@ namespace RecordParser.Test
         }
 
         [Fact]
-        public void Read_csv_file_with_header_containing_inherited_fields_should_automatic_bind_mapping()
+        public void Read_csv_file_with_autobind_should_support_inherited_properties()
         {
             // Arrange
 
@@ -744,7 +745,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var items = reader.ReadRecords<PersonDerivated>(readOptions, skipMismatchedColumns: true);
+            var items = reader.ReadRecords<PersonDerivated>(readOptions, skipUnmatchedColumns: true);
 
             // Assert
 
@@ -755,7 +756,7 @@ namespace RecordParser.Test
         [InlineData(" ", false)]
         [InlineData(" ", true)]
         [InlineData("BirthDay ; Name ; Mother.BirthDay; Mother.Name", false)]
-        public void Read_csv_file_without_header_should_throw_when_automatic_bind_mapping(string header, bool hasHeader)
+        public void Read_csv_file_with_autobind_should_throw_when_missing_header(string header, bool hasHeader)
         {
             // Arrange
 
@@ -788,7 +789,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var action = () => reader.ReadRecords<Person>(readOptions, skipMismatchedColumns: true);
+            var action = () => reader.ReadRecords<Person>(readOptions, skipUnmatchedColumns: true);
 
             // Assert
 
