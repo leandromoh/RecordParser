@@ -13,7 +13,7 @@ namespace RecordParser.Extensions
         /// </summary>
         public ParallelismOptions ParallelismOptions { get; set; }
         /// <summary>
-        /// Function which parses text into object
+        /// Function which parses text to object
         /// </summary>
         public FuncSpanT<T> Parser { get; set; }
     }
@@ -24,7 +24,7 @@ namespace RecordParser.Extensions
 
         /// <summary>
         /// Reads the records (i.e., lines) from a fixed length file, 
-        /// then parses the records into objects.
+        /// then parses the records to objects.
         /// </summary>
         /// <typeparam name="T">type of objects read from file</typeparam>
         /// <param name="reader">fixed length file</param>

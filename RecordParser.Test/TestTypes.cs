@@ -27,7 +27,12 @@ namespace RecordParser.Test
         None = 8
     }
 
-    internal class Person
+    public class PersonDerivated : Person
+    {
+        public int Id { get; set; }
+    }
+
+    public class Person
     {
         public DateTime BirthDay { get; set; }
         public string Name { get; set; }

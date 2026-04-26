@@ -155,7 +155,7 @@ namespace RecordParser.Test
                 var records = reader.ReadRecords(parser, new()
                 {
                     HasHeader = true,
-                //  BufferSize = bufferSize,
+                    //  BufferSize = bufferSize,
                 });
 
                 foreach (var item in records)
@@ -176,6 +176,7 @@ namespace RecordParser.Test
 
         public static string GetFilePath(string fileName) => Path.Combine(Directory.GetCurrentDirectory(), fileName);
 
+        public const string Header = "HEADER";
         public static IEnumerable<object[]> Given_quoted_csv_file_should_read_quoted_properly_theory(string file)
         {
             var fileNames = new[]
@@ -206,7 +207,7 @@ namespace RecordParser.Test
                                 }
 
                                 if (hasHeader)
-                                    fileBuilder.Insert(index: 0, "Id,Date,Name,Rate,Ranking" + Environment.NewLine);
+                                    fileBuilder.Insert(index: 0, Header + Environment.NewLine);
 
                                 if (blankLineAtEnd)
                                     fileBuilder.AppendLine();
@@ -567,6 +568,354 @@ namespace RecordParser.Test
             // Assert
 
             result.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        public record RegularCaseRecord(int Aaa, int Bbb, int Ccc, int Ddd);
+
+        [Theory]
+        [InlineData("\"AAA\",\"BBB\",\"CCC\",\"DDD\"")]
+        [InlineData("Aaa,Bbb,Ccc,Ddd")]
+        [InlineData("AAA,BBB,CCC,DDD")]
+        [InlineData("aaa,bbb,ccc,ddd")]
+        [InlineData("AAA , BBB , CCC , DDD")]
+        [InlineData("A_AA,B_BB,C_CC,D_DD")]
+        public void Read_csv_file_with_autobind_should_match_header_case_insensitive(string header)
+        {
+            // Arrange
+
+            var fileContent = $"""
+                {header}
+                1,2,3,4
+                5,6,7,8
+                9,10,11,12
+                13,14,15,16
+                87,88,89,100
+                89,99,100,101
+                88,89,90,91
+                """;
+
+            var reader = new StringReader(fileContent);
+            var expected = new RegularCaseRecord[]
+            {
+                new(1,2,3,4),
+                new(5,6,7,8),
+                new(9,10,11,12),
+                new(13,14,15,16),
+                new(87,88,89,100),
+                new(89,99,100,101),
+                new(88,89,90,91),
+            };
+
+            var readOptions = new VariableLengthReaderAutoBindOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Fact]
+        public void Read_csv_file_with_autobind_should_support_additional_configuration()
+        {
+            // Arrange
+
+            var fileContent = $"""
+                AAA,BBB,CCC,DDD
+                1,2,3,4
+                5,6,7,8
+                9,10,11,12
+                13,14,15,16
+                87,88,89,100
+                89,99,100,101
+                88,89,90,91
+                """;
+
+            var reader = new StringReader(fileContent);
+            var expected = new RegularCaseRecord[]
+            {
+                new(10,20,30,40),
+                new(50,60,70,80),
+                new(90,100,110,120),
+                new(130,140,150,160),
+                new(870,880,890,1000),
+                new(890,990,1000,1010),
+                new(880,890,900,910),
+            };
+
+            var readOptions = new VariableLengthReaderAutoBindOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, builder =>
+                builder.DefaultTypeConvert(x => int.Parse(x) * 10));
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Fact]
+        public void Read_csv_file_with_autobind_should_support_nested_fields()
+        {
+            // Arrange
+
+            var fileContent = $"""
+                BirthDay ; Name ; Mother.BirthDay; Mother.Name
+                2020.05.23 ; son name ; 1980.01.15 ; mother name
+                """;
+
+            var reader = new StringReader(fileContent);
+            var expected = new Person[]
+            {
+                new Person
+                {
+                    BirthDay = new DateTime(2020, 05, 23),
+                    Name = "son name",
+                    Mother = new Person
+                    {
+                        BirthDay = new DateTime(1980, 01, 15),
+                        Name = "mother name",
+                    }
+                }
+            };
+
+            var readOptions = new VariableLengthReaderAutoBindOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<Person>(readOptions);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Fact]
+        public void Read_csv_file_with_autobind_should_support_inherited_properties()
+        {
+            // Arrange
+
+            var fileContent = $"""
+                Id ; BirthDay ; Name ; Mother.Id ; Mother.BirthDay; Mother.Name
+                99 ; 2020.05.23 ; son name ; 100 ; 1980.01.15 ; mother name
+                """;
+
+            var reader = new StringReader(fileContent);
+            var expected = new PersonDerivated[]
+            {
+                new ()
+                {
+                    Id = 99,
+                    BirthDay = new DateTime(2020, 05, 23),
+                    Name = "son name",
+                    Mother = new ()
+                    {
+                        // can not find 'Id' because property 'Mother' has type 'Person' and not 'PersonDerivated'
+                        // Id = 100,
+                        BirthDay = new DateTime(1980, 01, 15),
+                        Name = "mother name",
+                    }
+                }
+            };
+
+            var readOptions = new VariableLengthReaderAutoBindOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+                SkipUnmatchedColumns = true,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<PersonDerivated>(readOptions);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Theory]
+        [InlineData(" ", false)]
+        [InlineData(" ", true)]
+        [InlineData("BirthDay ; Name ; Mother.BirthDay ; Mother.Name", false)]
+        public void Read_csv_file_with_autobind_should_throw_when_missing_header(string header, bool hasHeader)
+        {
+            // Arrange
+
+            var fileContent = $"""
+                {header}
+                99 ; 2020.05.23 ; son name ; 100 ; 1980.01.15 ; mother name
+                """;
+
+            var reader = new StringReader(fileContent);
+            var expected = new Person[]
+            {
+                new ()
+                {
+                    BirthDay = new DateTime(2020, 05, 23),
+                    Name = "son name",
+                    Mother = new ()
+                    {
+                        BirthDay = new DateTime(1980, 01, 15),
+                        Name = "mother name",
+                    }
+                }
+            };
+
+            var readOptions = new VariableLengthReaderAutoBindOptions
+            {
+                HasHeader = hasHeader,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+            };
+
+            // Act
+
+            var action = () => reader.ReadRecords<Person>(readOptions);
+
+            // Assert
+
+            action.Should()
+                .Throw<InvalidOperationException>()
+                .WithMessage("Header is mandatory when using auto-binding overload.");
+        }
+
+        [Theory]
+        [InlineData(",")]
+        [InlineData(";")]
+        [InlineData("\t")]
+        [InlineData("|")]
+        [InlineData(":")]
+        public void Read_csv_file_with_autobind_should_detect_common_separators(string separator)
+        {
+            // Arrange
+
+            var fileContent = $"""
+                Aaa,Bbb,Ccc,Ddd
+                1,2,3,4
+                5,6,7,8
+                9,10,11,12
+                13,14,15,16
+                87,88,89,100
+                89,99,100,101
+                88,89,90,91
+                """
+                .Replace(",", separator);
+
+            var reader = new StringReader(fileContent);
+            var expected = new RegularCaseRecord[]
+            {
+                new(1,2,3,4),
+                new(5,6,7,8),
+                new(9,10,11,12),
+                new(13,14,15,16),
+                new(87,88,89,100),
+                new(89,99,100,101),
+                new(88,89,90,91),
+            };
+
+            var readOptions = new VariableLengthReaderAutoBindOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Theory]
+
+        // inferred
+        [InlineData(",", null)]
+        [InlineData(";", null)]
+        [InlineData("\t", null)]
+        [InlineData("|", null)]
+        [InlineData(":", null)]
+
+        // explicit (detectable)
+        [InlineData(",", ",")]
+        [InlineData(";", ";")]
+        [InlineData("\t", "\t")]
+        [InlineData("|", "|")]
+        [InlineData(":", ":")]
+
+        // explicit (not detectable)
+        [InlineData("||", "||")]
+        [InlineData("@", "@")]
+        public void Read_csv_file_with_autobind_should_support_explict_separators(string fileSeparator, string informedSeparator)
+        {
+            // Arrange
+
+            var fileContent = $"""
+                Aaa,Bbb,Ccc,Ddd
+                1,2,3,4
+                5,6,7,8
+                9,10,11,12
+                13,14,15,16
+                87,88,89,100
+                89,99,100,101
+                88,89,90,91
+                """
+                .Replace(",", fileSeparator);
+
+            var reader = new StringReader(fileContent);
+            var expected = new RegularCaseRecord[]
+            {
+                new(1,2,3,4),
+                new(5,6,7,8),
+                new(9,10,11,12),
+                new(13,14,15,16),
+                new(87,88,89,100),
+                new(89,99,100,101),
+                new(88,89,90,91),
+            };
+
+            var readOptions = new VariableLengthReaderAutoBindOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
+                Separator = informedSeparator,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
         }
     }
 }
