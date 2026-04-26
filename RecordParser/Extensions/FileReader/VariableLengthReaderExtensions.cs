@@ -11,6 +11,23 @@ using static RecordParser.Extensions.ReaderCommon;
 
 namespace RecordParser.Extensions
 {
+    public record class VariableLengthReaderAutoBindOptions : VariableLengthReaderOptions
+    {
+        /// <summary>
+        /// The text (usually a character) that delimits columns and separate values
+        /// If value is null then separator will be detected automatically by observing the header.
+        /// Default value is null.
+        /// </summary>
+        public string Separator { get; set; } = null;
+
+        /// <summary>
+        /// If true then header columns without a matching property or field will simply be ignored;
+        /// otherwise, an exception will be thrown indicating the non-matching column.
+        /// Default value is true.
+        /// </summary>
+        public bool SkipUnmatchedColumns { get; set; } = true;
+    }
+
     public record class VariableLengthReaderOptions
     {
         /// <summary>
@@ -65,11 +82,6 @@ namespace RecordParser.Extensions
         /// <typeparam name="T">type of objects read from file</typeparam>
         /// <param name="reader">variable length file</param>
         /// <param name="options">options to configure the parsing</param>
-        /// <param name="skipUnmatchedColumns">
-        /// If true then header columns without a matching property or field will simply be ignored;
-        /// otherwise, an exception will be thrown indicating the non-matching column.
-        /// Default value is true.
-        /// </param>
         /// <param name="action">callback to set additional bind or default type converters</param>
         /// <returns>
         /// Sequence of records.
@@ -79,8 +91,7 @@ namespace RecordParser.Extensions
         /// </exception>
         public static IEnumerable<T> ReadRecords<T>(this
             TextReader reader,
-            VariableLengthReaderOptions options,
-            bool skipUnmatchedColumns = true,
+            VariableLengthReaderAutoBindOptions options,
             Action<IVariableLengthReaderSequentialBuilder<T>> action = null)
         {
             string header;
@@ -88,9 +99,9 @@ namespace RecordParser.Extensions
             if (!options.HasHeader || string.IsNullOrWhiteSpace(header = reader.ReadLine()))
                 throw new InvalidOperationException("Header is mandatory when using auto-binding overload.");
 
-            var separator = DetectDelimiter(header.AsMemory());
+            var separator = options.Separator ?? DetectSeparator(header.AsMemory());
             var columns = header.Split(separator);
-            var parser = BuildParser(columns, separator, skipUnmatchedColumns, action);
+            var parser = BuildParser(columns, separator, options.SkipUnmatchedColumns, action);
 
             return ReadRecords(reader, parser, options with { HasHeader = false });
         }
@@ -146,7 +157,7 @@ namespace RecordParser.Extensions
             return Expression.Lambda(body, param);
         }
 
-        internal static string DetectDelimiter(ReadOnlyMemory<char> header)
+        internal static string DetectSeparator(ReadOnlyMemory<char> header)
         {
             var candidates = new string[] { ",", ";", "\t", "|", ":" };
             var headerSpan = header.Span;

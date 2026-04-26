@@ -606,16 +606,17 @@ namespace RecordParser.Test
                 new(88,89,90,91),
             };
 
-            var readOptions = new VariableLengthReaderOptions
+            var readOptions = new VariableLengthReaderAutoBindOptions
             {
                 HasHeader = true,
                 ParallelismOptions = new() { Enabled = false },
                 ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
             };
 
             // Act
 
-            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, skipUnmatchedColumns: false);
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions);
 
             // Assert
 
@@ -650,16 +651,17 @@ namespace RecordParser.Test
                 new(880,890,900,910),
             };
 
-            var readOptions = new VariableLengthReaderOptions
+            var readOptions = new VariableLengthReaderAutoBindOptions
             {
                 HasHeader = true,
                 ParallelismOptions = new() { Enabled = false },
                 ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
             };
 
             // Act
 
-            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, skipUnmatchedColumns: false, builder =>
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, builder =>
                 builder.DefaultTypeConvert(x => int.Parse(x) * 10));
 
             // Assert
@@ -692,16 +694,17 @@ namespace RecordParser.Test
                 }
             };
 
-            var readOptions = new VariableLengthReaderOptions
+            var readOptions = new VariableLengthReaderAutoBindOptions
             {
                 HasHeader = true,
                 ParallelismOptions = new() { Enabled = false },
                 ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
             };
 
             // Act
 
-            var items = reader.ReadRecords<Person>(readOptions, skipUnmatchedColumns: false);
+            var items = reader.ReadRecords<Person>(readOptions);
 
             // Assert
 
@@ -736,16 +739,17 @@ namespace RecordParser.Test
                 }
             };
 
-            var readOptions = new VariableLengthReaderOptions
+            var readOptions = new VariableLengthReaderAutoBindOptions
             {
                 HasHeader = true,
                 ParallelismOptions = new() { Enabled = false },
                 ContainsQuotedFields = true,
+                SkipUnmatchedColumns = true,
             };
 
             // Act
 
-            var items = reader.ReadRecords<PersonDerivated>(readOptions, skipUnmatchedColumns: true);
+            var items = reader.ReadRecords<PersonDerivated>(readOptions);
 
             // Assert
 
@@ -755,7 +759,7 @@ namespace RecordParser.Test
         [Theory]
         [InlineData(" ", false)]
         [InlineData(" ", true)]
-        [InlineData("BirthDay ; Name ; Mother.BirthDay; Mother.Name", false)]
+        [InlineData("BirthDay ; Name ; Mother.BirthDay ; Mother.Name", false)]
         public void Read_csv_file_with_autobind_should_throw_when_missing_header(string header, bool hasHeader)
         {
             // Arrange
@@ -780,7 +784,7 @@ namespace RecordParser.Test
                 }
             };
 
-            var readOptions = new VariableLengthReaderOptions
+            var readOptions = new VariableLengthReaderAutoBindOptions
             {
                 HasHeader = hasHeader,
                 ParallelismOptions = new() { Enabled = false },
@@ -789,7 +793,7 @@ namespace RecordParser.Test
 
             // Act
 
-            var action = () => reader.ReadRecords<Person>(readOptions, skipUnmatchedColumns: true);
+            var action = () => reader.ReadRecords<Person>(readOptions);
 
             // Assert
 
@@ -817,9 +821,10 @@ namespace RecordParser.Test
                 87,88,89,100
                 89,99,100,101
                 88,89,90,91
-                """;
+                """
+                .Replace(",", separator);
 
-            var reader = new StringReader(fileContent.Replace(",", separator));
+            var reader = new StringReader(fileContent);
             var expected = new RegularCaseRecord[]
             {
                 new(1,2,3,4),
@@ -831,16 +836,82 @@ namespace RecordParser.Test
                 new(88,89,90,91),
             };
 
-            var readOptions = new VariableLengthReaderOptions
+            var readOptions = new VariableLengthReaderAutoBindOptions
             {
                 HasHeader = true,
                 ParallelismOptions = new() { Enabled = false },
                 ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
             };
 
             // Act
 
-            var items = reader.ReadRecords<RegularCaseRecord>(readOptions, skipUnmatchedColumns: false);
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions);
+
+            // Assert
+
+            items.Should().BeEquivalentTo(expected, cfg => cfg.WithStrictOrdering());
+        }
+
+        [Theory]
+
+        // inferred
+        [InlineData(",", null)]
+        [InlineData(";", null)]
+        [InlineData("\t", null)]
+        [InlineData("|", null)]
+        [InlineData(":", null)]
+
+        // explicit (detectable)
+        [InlineData(",", ",")]
+        [InlineData(";", ";")]
+        [InlineData("\t", "\t")]
+        [InlineData("|", "|")]
+        [InlineData(":", ":")]
+
+        // explicit (not detectable)
+        [InlineData("||", "||")]
+        [InlineData("@", "@")]
+        public void Read_csv_file_with_autobind_should_support_explict_separators(string fileSeparator, string informedSeparator)
+        {
+            // Arrange
+
+            var fileContent = $"""
+                Aaa,Bbb,Ccc,Ddd
+                1,2,3,4
+                5,6,7,8
+                9,10,11,12
+                13,14,15,16
+                87,88,89,100
+                89,99,100,101
+                88,89,90,91
+                """
+                .Replace(",", fileSeparator);
+
+            var reader = new StringReader(fileContent);
+            var expected = new RegularCaseRecord[]
+            {
+                new(1,2,3,4),
+                new(5,6,7,8),
+                new(9,10,11,12),
+                new(13,14,15,16),
+                new(87,88,89,100),
+                new(89,99,100,101),
+                new(88,89,90,91),
+            };
+
+            var readOptions = new VariableLengthReaderAutoBindOptions
+            {
+                HasHeader = true,
+                ParallelismOptions = new() { Enabled = false },
+                ContainsQuotedFields = true,
+                SkipUnmatchedColumns = false,
+                Separator = informedSeparator,
+            };
+
+            // Act
+
+            var items = reader.ReadRecords<RegularCaseRecord>(readOptions);
 
             // Assert
 
