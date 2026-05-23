@@ -1,8 +1,11 @@
-﻿using System;
+﻿using RecordParser.Builders.Writer;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace RecordParser.Extensions
 {
@@ -117,6 +120,97 @@ namespace RecordParser.Extensions
             {
                 ArrayPool<char>.Shared.Return(buffer);
             }
+        }
+
+        private class NodeState
+        {
+            public Type Type { get; set; }
+            public Expression CurrentExpression { get; set; }
+            public int Depth { get; set; }
+        }
+
+        /// <summary>
+        /// Writes the elements of a sequence into the <paramref name="textWriter"/> as well the header of file.
+        /// </summary>
+        /// <typeparam name="T">Type of items in the sequence.</typeparam>
+        /// <param name="textWriter">The TextWriter where the items will be written into.</param>
+        /// <param name="items">Sequence of the elements.</param>
+        /// <param name="options">Options to configure parallel processing.</param>
+        public static void WriteRecords<T>(this TextWriter textWriter, IEnumerable<T> items, ParallelismOptions options)
+        {
+            const string separator = ";";
+            var members = GetPropertyExpressions(typeof(T), 64);
+            var builder = new VariableLengthWriterSequentialBuilder<T>();
+
+            foreach (dynamic item in members.Select(x => x.exp))
+                builder.Map(item);
+
+            var parser = builder.Build(separator);
+            var header = string.Join(separator, members.Select(x => x.column));
+            
+            textWriter.WriteLine(header);
+            WriteRecords(textWriter, items, parser.TryFormat, options);
+        }
+
+        private static IReadOnlyList<(LambdaExpression exp, string column)> GetPropertyExpressions(Type type, int maxDepth)
+        {
+            var expressions = new List<(LambdaExpression, string)>();
+
+            if (maxDepth < 1)
+                return expressions;
+
+            var paramText = Guid.NewGuid().ToString();
+            var rootParameter = Expression.Parameter(type, paramText);
+
+            var queue = new Queue<NodeState>();
+
+            queue.Enqueue(new NodeState
+            {
+                Type = type,
+                CurrentExpression = rootParameter,
+                Depth = 1
+            });
+
+            // loop BFS
+            while (queue.Count > 0)
+            {
+                var currentState = queue.Dequeue();
+
+                if (currentState.Depth > maxDepth)
+                    continue;
+
+                var properties = currentState.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                foreach (var prop in properties)
+                {
+                    if (prop.CanRead == false)
+                        continue;
+
+                    var propertyAccess = Expression.Property(currentState.CurrentExpression, prop);
+                    var pType = prop.PropertyType;
+
+                    if (pType.IsPrimitive || pType.IsEnum
+                        || pType == typeof(string)
+                        || pType == typeof(decimal)
+                        || pType == typeof(DateTime))
+                    {
+                        var lambda = Expression.Lambda(propertyAccess, rootParameter);
+                        var column = propertyAccess.ToString().Replace(paramText + ".", string.Empty);
+                        expressions.Add((lambda, column));
+                    }
+                    else
+                    {
+                        queue.Enqueue(new NodeState
+                        {
+                            Type = prop.PropertyType,
+                            CurrentExpression = propertyAccess,
+                            Depth = currentState.Depth + 1
+                        });
+                    }
+                }
+            }
+
+            return expressions;
         }
     }
 }
