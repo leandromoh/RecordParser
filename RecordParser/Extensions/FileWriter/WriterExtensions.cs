@@ -1,4 +1,6 @@
 ﻿using RecordParser.Builders.Writer;
+using RecordParser.Engines.Reader;
+using RecordParser.Parsers;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -142,8 +144,11 @@ namespace RecordParser.Extensions
             var members = GetPropertyExpressions(typeof(T), 64);
             var builder = new VariableLengthWriterSequentialBuilder<T>();
 
-            foreach (dynamic item in members.Select(x => x.exp))
-                builder.Map(item);
+            foreach (var item in members.Select(x => x.exp))
+                if (item.ReturnType == typeof(string))
+                    builder.Map((dynamic)item, converter: default(FuncSpanTIntBool));
+                else
+                    builder.Map((dynamic)item);
 
             var parser = builder.Build(separator);
             var header = string.Join(separator, members.Select(x => x.column));
@@ -187,12 +192,8 @@ namespace RecordParser.Extensions
                         continue;
 
                     var propertyAccess = Expression.Property(currentState.CurrentExpression, prop);
-                    var pType = prop.PropertyType;
 
-                    if (pType.IsPrimitive || pType.IsEnum
-                        || pType == typeof(string)
-                        || pType == typeof(decimal)
-                        || pType == typeof(DateTime))
+                    if (PrimitiveTypeReaderEngine.IsPrimitiveType(prop.PropertyType))
                     {
                         var lambda = Expression.Lambda(propertyAccess, rootParameter);
                         var column = propertyAccess.ToString().Replace(paramText + ".", string.Empty);

@@ -149,5 +149,56 @@ namespace RecordParser.Test
 
             content.Should<string>().Be(expected);
         }
+
+        [Fact]
+        public void Write_csv_file_with_autobind_should_support_nested_properties()
+        {
+            // Arrange
+
+            var items = new Person[]
+            {
+                new("Bob",22,new("CPF", "123")),
+                new("Carla",26, new("Other", "ABC")),
+            };
+
+            var expected = $"""
+                Name;Age;Document.Type;Document.Value
+                Bob;22;CPF;123
+                Carla;26;Other;ABC
+
+                """;
+
+            // Act
+
+            using var memory = new MemoryStream();
+            using var textWriter = new StreamWriter(memory);
+
+            var parallelOptions = new ParallelismOptions()
+            {
+                Enabled = false,
+                EnsureOriginalOrdering = false,
+                MaxDegreeOfParallelism = MaxParallelism,
+            };
+
+            textWriter.WriteRecords(items, parallelOptions);
+            textWriter.Flush();
+
+            // Assert
+
+            memory.Seek(0, SeekOrigin.Begin);
+            using var textReader = new StreamReader(memory);
+            var content = textReader.ReadToEnd();
+
+            content.Should<string>().Be(expected);
+
+            memory.Seek(0, SeekOrigin.Begin);
+            var opt = new VariableLengthReaderAutoBindOptions() { HasHeader = true };
+            var readItems = textReader.ReadRecords<Person>(opt);
+
+            readItems.Should().BeEquivalentTo(items);
+        }
+
+        public record class Person(string Name, int Age, Documento Document);
+        public record class Documento(string Type, string Value);
     }
 }

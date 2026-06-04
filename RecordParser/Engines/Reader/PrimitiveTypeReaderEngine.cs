@@ -47,6 +47,9 @@ namespace RecordParser.Engines.Reader
             dic = mapping;
         }
 
+        public static bool IsPrimitiveType(Type type) =>
+            type.IsPrimitive || type.IsEnum || dic.Any(kvp => kvp.Key.to == type);
+
         private static char ToChar(ReadOnlySpan<char> span) => span[0];
 
         private static void AddMapForReadOnlySpan<T>(
