@@ -23,6 +23,19 @@ namespace RecordParser.Extensions
     /// </returns>
     public delegate bool TryFormat<T>(T instance, Span<char> destination, out int charsWritten);
 
+    public record class VariableLengthWriterAutoBindOptions
+    {
+        /// <summary>
+        /// Maximum depth to search for nested properties.
+        /// </summary>
+        public int MaxDepth { get; set; } = 3;
+
+        /// <summary>
+        /// Options to configure parallel processing
+        /// </summary>
+        public ParallelismOptions ParallelismOptions { get; set; }
+    }
+
     public static class WriterExtensions
     {
         private const int initialPow = 10;
@@ -132,16 +145,28 @@ namespace RecordParser.Extensions
         }
 
         /// <summary>
-        /// Writes the elements of a sequence into the <paramref name="textWriter"/> as well the header of file.
+        /// Writes each item of the sequence as a csv record into the <paramref name="textWriter"/> as well the header.
         /// </summary>
         /// <typeparam name="T">Type of items in the sequence.</typeparam>
         /// <param name="textWriter">The TextWriter where the items will be written into.</param>
         /// <param name="items">Sequence of the elements.</param>
-        /// <param name="options">Options to configure parallel processing.</param>
-        public static void WriteRecords<T>(this TextWriter textWriter, IEnumerable<T> items, ParallelismOptions options)
+        public static void WriteRecords<T>(this TextWriter textWriter, IEnumerable<T> items) =>
+            WriteRecords(textWriter, items, default(VariableLengthWriterAutoBindOptions));
+
+        /// <summary>
+        /// Writes each item of the sequence as a csv record into the <paramref name="textWriter"/> as well the header.
+        /// </summary>
+        /// <typeparam name="T">Type of items in the sequence.</typeparam>
+        /// <param name="textWriter">The TextWriter where the items will be written into.</param>
+        /// <param name="items">Sequence of the elements.</param>
+        /// <param name="options">Options to configure autobind processing.</param>
+        public static void WriteRecords<T>(this TextWriter textWriter, IEnumerable<T> items, VariableLengthWriterAutoBindOptions options)
         {
+            options ??= new();
+            var parallel = options.ParallelismOptions ?? new();
+
             const string separator = ";";
-            var members = GetPropertyExpressions(typeof(T), 64);
+            var members = GetPropertyExpressions(typeof(T), options.MaxDepth);
             var builder = new VariableLengthWriterSequentialBuilder<T>();
 
             foreach (var item in members.Select(x => x.exp))
@@ -154,7 +179,8 @@ namespace RecordParser.Extensions
             var header = string.Join(separator, members.Select(x => x.column));
             
             textWriter.WriteLine(header);
-            WriteRecords(textWriter, items, parser.TryFormat, options);
+
+            WriteRecords(textWriter, items, parser.TryFormat, parallel);
         }
 
         private static IReadOnlyList<(LambdaExpression exp, string column)> GetPropertyExpressions(Type type, int maxDepth)

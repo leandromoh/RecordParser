@@ -131,14 +131,7 @@ namespace RecordParser.Test
             using var memory = new MemoryStream();
             using var textWriter = new StreamWriter(memory);
 
-            var parallelOptions = new ParallelismOptions()
-            {
-                Enabled = false,
-                EnsureOriginalOrdering = false,
-                MaxDegreeOfParallelism = MaxParallelism,
-            };
-
-            textWriter.WriteRecords(items, parallelOptions);
+            textWriter.WriteRecords(items);
             textWriter.Flush();
 
             // Assert
@@ -146,7 +139,6 @@ namespace RecordParser.Test
             memory.Seek(0, SeekOrigin.Begin);
             using var textReader = new StreamReader(memory);
             var content = textReader.ReadToEnd();
-
             content.Should<string>().Be(expected);
         }
 
@@ -173,14 +165,7 @@ namespace RecordParser.Test
             using var memory = new MemoryStream();
             using var textWriter = new StreamWriter(memory);
 
-            var parallelOptions = new ParallelismOptions()
-            {
-                Enabled = false,
-                EnsureOriginalOrdering = false,
-                MaxDegreeOfParallelism = MaxParallelism,
-            };
-
-            textWriter.WriteRecords(items, parallelOptions);
+            textWriter.WriteRecords(items);
             textWriter.Flush();
 
             // Assert
@@ -188,13 +173,11 @@ namespace RecordParser.Test
             memory.Seek(0, SeekOrigin.Begin);
             using var textReader = new StreamReader(memory);
             var content = textReader.ReadToEnd();
-
             content.Should<string>().Be(expected);
 
             memory.Seek(0, SeekOrigin.Begin);
             var opt = new VariableLengthReaderAutoBindOptions() { HasHeader = true };
             var readItems = textReader.ReadRecords<Person>(opt);
-
             readItems.Should().BeEquivalentTo(items);
         }
 
