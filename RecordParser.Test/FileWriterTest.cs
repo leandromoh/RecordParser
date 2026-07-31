@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Xunit;
+using static RecordParser.Test.FileReaderTest;
 
 namespace RecordParser.Test
 {
@@ -95,6 +96,131 @@ namespace RecordParser.Test
                 items.Should().BeEquivalentTo(expectedItems, cfg => cfg.WithStrictOrdering());
             else
                 items.Should().BeEquivalentTo(expectedItems);
-        }       
+        }
+
+        [Fact]
+        public void Write_csv_file_with_autobind_should_support_regular_properties()
+        {
+            // Arrange
+
+            var items = new RegularCaseRecord[]
+            {
+                new(1,2,3,4),
+                new(5,6,7,8),
+                new(9,10,11,12),
+                new(13,14,15,16),
+                new(87,88,89,100),
+                new(89,99,100,101),
+                new(88,89,90,91),
+            };
+
+            var expected = $"""
+                Aaa;Bbb;Ccc;Ddd
+                1;2;3;4
+                5;6;7;8
+                9;10;11;12
+                13;14;15;16
+                87;88;89;100
+                89;99;100;101
+                88;89;90;91
+
+                """;
+
+            // Act
+
+            using var memory = new MemoryStream();
+            using var textWriter = new StreamWriter(memory);
+
+            textWriter.WriteRecords(items);
+            textWriter.Flush();
+
+            // Assert
+
+            memory.Seek(0, SeekOrigin.Begin);
+            using var textReader = new StreamReader(memory);
+            var content = textReader.ReadToEnd();
+            content.Should<string>().Be(expected);
+        }
+
+        [Fact]
+        public void Write_csv_file_with_autobind_should_respect_max_depth_configuration()
+        {
+            // Arrange
+
+            var items = new Person[]
+            {
+                new("Bob",22,new("CPF", "123")),
+                new("Carla",26, new("Other", "ABC")),
+            };
+
+            var expected = $"""
+                Name;Age
+                Bob;22
+                Carla;26
+
+                """;
+
+            // Act
+
+            using var memory = new MemoryStream();
+            using var textWriter = new StreamWriter(memory);
+            var options = new VariableLengthWriterAutoBindOptions
+            {
+                MaxDepth = 1
+            };
+
+            textWriter.WriteRecords(items, options);
+            textWriter.Flush();
+
+            // Assert
+
+            memory.Seek(0, SeekOrigin.Begin);
+            using var textReader = new StreamReader(memory);
+            var content = textReader.ReadToEnd();
+            content.Should<string>().Be(expected);
+        }
+
+
+        [Fact]
+        public void Write_csv_file_with_autobind_should_support_nested_properties()
+        {
+            // Arrange
+
+            var items = new Person[]
+            {
+                new("Bob",22,new("CPF", "123")),
+                new("Carla",26, new("Other", "ABC")),
+            };
+
+            var expected = $"""
+                Name;Age;Document.Type;Document.Value
+                Bob;22;CPF;123
+                Carla;26;Other;ABC
+
+                """;
+
+            // Act
+
+            using var memory = new MemoryStream();
+            using var textWriter = new StreamWriter(memory);
+
+            textWriter.WriteRecords(items);
+            textWriter.Flush();
+
+            // Assert
+
+            memory.Seek(0, SeekOrigin.Begin);
+            using var textReader = new StreamReader(memory);
+            var content = textReader.ReadToEnd();
+            content.Should<string>().Be(expected);
+
+            memory.Seek(0, SeekOrigin.Begin);
+            var opt = new VariableLengthReaderAutoBindOptions() { HasHeader = true };
+            var readItems = textReader.ReadRecords<Person>(opt);
+            readItems.Should().BeEquivalentTo(items);
+        }
+
+        public record class Person(string Name, int Age, Documento Document);
+        public record class Documento(string Type, string Value);
     }
 }

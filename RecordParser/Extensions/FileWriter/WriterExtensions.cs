@@ -1,8 +1,13 @@
-﻿using System;
+﻿using RecordParser.Builders.Writer;
+using RecordParser.Engines.Reader;
+using RecordParser.Parsers;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace RecordParser.Extensions
 {
@@ -17,6 +22,19 @@ namespace RecordParser.Extensions
     /// True if the writting was succeeded, otherwise false.
     /// </returns>
     public delegate bool TryFormat<T>(T instance, Span<char> destination, out int charsWritten);
+
+    public record class VariableLengthWriterAutoBindOptions
+    {
+        /// <summary>
+        /// Maximum depth to search for nested properties.
+        /// </summary>
+        public int MaxDepth { get; set; } = 3;
+
+        /// <summary>
+        /// Options to configure parallel processing
+        /// </summary>
+        public ParallelismOptions ParallelismOptions { get; set; }
+    }
 
     public static class WriterExtensions
     {
@@ -117,6 +135,109 @@ namespace RecordParser.Extensions
             {
                 ArrayPool<char>.Shared.Return(buffer);
             }
+        }
+
+        private class NodeState
+        {
+            public Type Type { get; set; }
+            public Expression CurrentExpression { get; set; }
+            public int Depth { get; set; }
+        }
+
+        /// <summary>
+        /// Writes each item of the sequence as a csv record into the <paramref name="textWriter"/> as well the header.
+        /// </summary>
+        /// <typeparam name="T">Type of items in the sequence.</typeparam>
+        /// <param name="textWriter">The TextWriter where the items will be written into.</param>
+        /// <param name="items">Sequence of the elements.</param>
+        public static void WriteRecords<T>(this TextWriter textWriter, IEnumerable<T> items) =>
+            WriteRecords(textWriter, items, default(VariableLengthWriterAutoBindOptions));
+
+        /// <summary>
+        /// Writes each item of the sequence as a csv record into the <paramref name="textWriter"/> as well the header.
+        /// </summary>
+        /// <typeparam name="T">Type of items in the sequence.</typeparam>
+        /// <param name="textWriter">The TextWriter where the items will be written into.</param>
+        /// <param name="items">Sequence of the elements.</param>
+        /// <param name="options">Options to configure autobind processing.</param>
+        public static void WriteRecords<T>(this TextWriter textWriter, IEnumerable<T> items, VariableLengthWriterAutoBindOptions options)
+        {
+            options ??= new();
+            var parallel = options.ParallelismOptions ?? new();
+
+            const string separator = ";";
+            var members = GetPropertyExpressions(typeof(T), options.MaxDepth);
+            var builder = new VariableLengthWriterSequentialBuilder<T>();
+
+            foreach (var item in members.Select(x => x.exp))
+                if (item.ReturnType == typeof(string))
+                    builder.Map((dynamic)item, converter: default(FuncSpanTIntBool));
+                else
+                    builder.Map((dynamic)item);
+
+            var parser = builder.Build(separator);
+            var header = string.Join(separator, members.Select(x => x.column));
+            
+            textWriter.WriteLine(header);
+
+            WriteRecords(textWriter, items, parser.TryFormat, parallel);
+        }
+
+        private static IReadOnlyList<(LambdaExpression exp, string column)> GetPropertyExpressions(Type type, int maxDepth)
+        {
+            var expressions = new List<(LambdaExpression, string)>();
+
+            if (maxDepth < 1)
+                return expressions;
+
+            var paramText = Guid.NewGuid().ToString();
+            var rootParameter = Expression.Parameter(type, paramText);
+
+            var queue = new Queue<NodeState>();
+
+            queue.Enqueue(new NodeState
+            {
+                Type = type,
+                CurrentExpression = rootParameter,
+                Depth = 1
+            });
+
+            // loop BFS
+            while (queue.Count > 0)
+            {
+                var currentState = queue.Dequeue();
+
+                if (currentState.Depth > maxDepth)
+                    continue;
+
+                var properties = currentState.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                foreach (var prop in properties)
+                {
+                    if (prop.CanRead == false)
+                        continue;
+
+                    var propertyAccess = Expression.Property(currentState.CurrentExpression, prop);
+
+                    if (PrimitiveTypeReaderEngine.IsPrimitiveType(prop.PropertyType))
+                    {
+                        var lambda = Expression.Lambda(propertyAccess, rootParameter);
+                        var column = propertyAccess.ToString().Replace(paramText + ".", string.Empty);
+                        expressions.Add((lambda, column));
+                    }
+                    else
+                    {
+                        queue.Enqueue(new NodeState
+                        {
+                            Type = prop.PropertyType,
+                            CurrentExpression = propertyAccess,
+                            Depth = currentState.Depth + 1
+                        });
+                    }
+                }
+            }
+
+            return expressions;
         }
     }
 }

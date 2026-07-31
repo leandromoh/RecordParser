@@ -39,7 +39,7 @@ namespace RecordParser.Test
             // construct a CSV with a header row
             // and a *single* data row, where the 4th column contains a large inlined, CSV file enclosed in quotes.
             // this is an extreme case, but is a valid CSV according to the spec. 
-            var tw = new StringWriter();
+            using var tw = new StringWriter();
             tw.WriteLine("A,B,C,D");
             tw.Write("1,2,3,\"");
 
@@ -51,7 +51,7 @@ namespace RecordParser.Test
             tw.WriteLine("\"");
 
             var fileContent = tw.ToString();
-            var reader = new StringReader(fileContent);
+            using var reader = new StringReader(fileContent);
 
             // Act
 
@@ -138,7 +138,7 @@ namespace RecordParser.Test
                 (88,89,90,91),
             };
 
-            var reader = new StringReader(fileContent);
+            using var reader = new StringReader(fileContent);
 
             var parser = new VariableLengthReaderSequentialBuilder<(int A, int B, int C, int D)>()
                 .Map(x => x.A)
@@ -639,7 +639,7 @@ namespace RecordParser.Test
                 88,89,90,91
                 """;
 
-            var reader = new StringReader(fileContent);
+            using var reader = new StringReader(fileContent);
             var expected = new RegularCaseRecord[]
             {
                 new(10,20,30,40),
@@ -679,7 +679,7 @@ namespace RecordParser.Test
                 2020.05.23 ; son name ; 1980.01.15 ; mother name
                 """;
 
-            var reader = new StringReader(fileContent);
+            using var reader = new StringReader(fileContent);
             var expected = new Person[]
             {
                 new Person
@@ -721,7 +721,7 @@ namespace RecordParser.Test
                 99 ; 2020.05.23 ; son name ; 100 ; 1980.01.15 ; mother name
                 """;
 
-            var reader = new StringReader(fileContent);
+            using var reader = new StringReader(fileContent);
             var expected = new PersonDerivated[]
             {
                 new ()
@@ -769,7 +769,7 @@ namespace RecordParser.Test
                 99 ; 2020.05.23 ; son name ; 100 ; 1980.01.15 ; mother name
                 """;
 
-            var reader = new StringReader(fileContent);
+            using var reader = new StringReader(fileContent);
             var expected = new Person[]
             {
                 new ()
@@ -824,7 +824,7 @@ namespace RecordParser.Test
                 """
                 .Replace(",", separator);
 
-            var reader = new StringReader(fileContent);
+            using var reader = new StringReader(fileContent);
             var expected = new RegularCaseRecord[]
             {
                 new(1,2,3,4),
@@ -888,7 +888,7 @@ namespace RecordParser.Test
                 """
                 .Replace(",", fileSeparator);
 
-            var reader = new StringReader(fileContent);
+            using var reader = new StringReader(fileContent);
             var expected = new RegularCaseRecord[]
             {
                 new(1,2,3,4),
