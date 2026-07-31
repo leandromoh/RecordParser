@@ -143,6 +143,45 @@ namespace RecordParser.Test
         }
 
         [Fact]
+        public void Write_csv_file_with_autobind_should_respect_max_depth_configuration()
+        {
+            // Arrange
+
+            var items = new Person[]
+            {
+                new("Bob",22,new("CPF", "123")),
+                new("Carla",26, new("Other", "ABC")),
+            };
+
+            var expected = $"""
+                Name;Age
+                Bob;22
+                Carla;26
+
+                """;
+
+            // Act
+
+            using var memory = new MemoryStream();
+            using var textWriter = new StreamWriter(memory);
+            var options = new VariableLengthWriterAutoBindOptions
+            {
+                MaxDepth = 1
+            };
+
+            textWriter.WriteRecords(items, options);
+            textWriter.Flush();
+
+            // Assert
+
+            memory.Seek(0, SeekOrigin.Begin);
+            using var textReader = new StreamReader(memory);
+            var content = textReader.ReadToEnd();
+            content.Should<string>().Be(expected);
+        }
+
+
+        [Fact]
         public void Write_csv_file_with_autobind_should_support_nested_properties()
         {
             // Arrange
