@@ -1,6 +1,6 @@
-﻿using RecordParser.Engines;
-using RecordParser.Engines.Reader;
+﻿using RecordParser.Builders.Reader;
 using RecordParser.Extensions.FileReader.RowReaders;
+using RecordParser.Parsers;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -12,7 +12,6 @@ using static RecordParser.Extensions.ReaderCommon;
 namespace RecordParser.Extensions
 {
     public delegate string StringPool(ReadOnlySpan<char> text);
-    internal delegate void Get(ref TextFindHelper finder, string[] inst, StringPool cache);
 
     public class VariableLengthReaderRawOptions
     {
@@ -59,39 +58,6 @@ namespace RecordParser.Extensions
 
     public static class VariableLengthReaderRawExtensions
     {
-        private static Get BuildRaw(int collumnCount, bool hasTransform, bool trim)
-        {
-            var configParameter = Expression.Parameter(typeof(TextFindHelper).MakeByRefType(), "config");
-            var instanceVariable = Expression.Parameter(typeof(string[]), "inst");
-            var cacheParameter = Expression.Parameter(typeof(StringPool), "cache");
-
-            var commands = new Expression[collumnCount];
-            for (int i = 0; i < collumnCount; i++)
-            {
-                var arrayAccessExpr = Expression.ArrayAccess(instanceVariable, Expression.Constant(i));
-                var getValue = (Expression)Expression.Call(configParameter, nameof(TextFindHelper.GetValue), Type.EmptyTypes, Expression.Constant(i));
-
-                if (trim)
-                    getValue = Expression.Call(typeof(MemoryExtensions), "Trim", Type.EmptyTypes, getValue);
-
-                if (hasTransform)
-                {
-                    getValue = Expression.Invoke(cacheParameter, getValue);
-                }
-                else
-                {
-                    getValue = Expression.Call(getValue, "ToString", Type.EmptyTypes);
-                }
-
-                commands[i] = Expression.Assign(arrayAccessExpr, getValue);
-            }
-
-            var block = Expression.Block(commands);
-            var final = Expression.Lambda<Get>(block, configParameter, instanceVariable, cacheParameter);
-
-            return final.Compile();
-        }
-
         /// <summary>
         /// Reads the records from a variable length file, then parses each record
         /// to object by accessing each field's value by index.
@@ -105,41 +71,28 @@ namespace RecordParser.Extensions
         /// </returns>
         public static IEnumerable<T> ReadRecordsRaw<T>(this TextReader reader, VariableLengthReaderRawOptions options, Func<Func<int, string>, T> parser)
         {
-            var get = BuildRaw(options.ColumnCount, options.StringPoolFactory != null, options.Trim);
-            var sep = options.Separator;
-
             Func<IFL> func = options.ContainsQuotedFields
-                           ? () => new RowByQuote(reader, Length, sep)
-                           : () => new RowByLine(reader, Length);
+                            ? () => new RowByQuote(reader, Length, options.Separator)
+                            : () => new RowByLine(reader, Length);
 
             var parallelOptions = options.ParallelismOptions ?? new();
 
             return parallelOptions.Enabled
-                    ? GetParallel()
-                    : GetSequential();
+                ? GetParallel()
+                : GetSequential();
 
             IEnumerable<T> GetSequential()
             {
                 var buffer = new string[options.ColumnCount];
-                var stringCache = options.StringPoolFactory?.Invoke();
+                var reader = BuildReader(options.Separator, options.ColumnCount, options.Trim, () => buffer, options.StringPoolFactory);
                 var getField = (int i) => buffer[i];
 
                 return ReadRecordsSequential(Parser, func, options.HasHeader);
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    var finder = new TextFindHelper(memory.Span, sep, QuoteHelper.Quote);
-
-                    try
-                    {
-                        get(ref finder, buffer, stringCache);
-
-                        return parser(getField);
-                    }
-                    finally
-                    {
-                        finder.Dispose();
-                    }
+                    reader.Parse(memory.Span);
+                    return parser(getField);
                 }
             }
 
@@ -151,14 +104,14 @@ namespace RecordParser.Extensions
                         .Range(0, maxParallelism)
                         .Select(_ =>
                         {
-                            var buf = new string[options.ColumnCount];
+                            var buffer = new string[options.ColumnCount];
 
                             return new
                             {
-                                buffer = buf,
+                                buffer,
                                 lockObj = new object(),
-                                stringCache = options.StringPoolFactory?.Invoke(),
-                                getField = new Func<int, string>(i => buf[i])
+                                reader = BuildReader(options.Separator, options.ColumnCount, options.Trim, () => buffer, options.StringPoolFactory),
+                                getField = new Func<int, string>(i => buffer[i]),
                             };
                         })
                         .ToArray();
@@ -167,23 +120,43 @@ namespace RecordParser.Extensions
 
                 T Parser(ReadOnlyMemory<char> memory, int i)
                 {
-                    var finder = new TextFindHelper(memory.Span, sep, QuoteHelper.Quote);
-
-                    try
+                    var r = funcs[i % maxParallelism];
+                    lock (r.lockObj)
                     {
-                        var r = funcs[i % maxParallelism];
-                        lock (r.lockObj)
-                        {
-                            get(ref finder, r.buffer, r.stringCache);
-
-                            return parser(r.getField);
-                        }
-                    }
-                    finally
-                    {
-                        finder.Dispose();
+                        r.reader.Parse(memory.Span);
+                        return parser(r.getField);
                     }
                 }
+            }
+        }
+
+        private static IVariableLengthReader<string[]> BuildReader(string separator, int columnCount, bool trim, Func<string[]> factory, Func<StringPool> poolFactory)
+        {
+            var builder = new VariableLengthReaderSequentialBuilder<string[]>();
+
+            for (var i = 0; i < columnCount; i++)
+                builder.Map(buildExpression(i));
+
+            if (poolFactory != null)
+            {
+                var pool = poolFactory();
+                builder.DefaultTypeConvert<string>(trim 
+                    ? x => pool(x.Trim()) 
+                    : x => pool(x));
+            }
+
+            var reader = builder.Build(separator, factory: factory);
+
+            return reader;
+
+            // builds the lambda: array => array[i]
+            static Expression<Func<string[], string>> buildExpression(int i)
+            {
+                var arrayExpr = Expression.Parameter(typeof(string[]));
+                var indexExpr = Expression.Constant(i);
+                var arrayAccessExpr = Expression.ArrayAccess(arrayExpr, indexExpr);
+
+                return Expression.Lambda<Func<string[], string>>(arrayAccessExpr, arrayExpr);
             }
         }
     }
